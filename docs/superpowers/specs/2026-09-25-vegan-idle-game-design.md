@@ -2,7 +2,8 @@
 
 - **Date:** 2026-09-25
 - **Status:** Approved concept, pre-implementation
-- **Working title:** open — strong candidate is **"Leverkas"** (domain leberkas.org is available to host it)
+- **Title:** **"Wurst Case"** (chosen 2026-09-25). "Leverkas" is the Act 1 flagship product; the
+  domain leberkas.org can point to the game.
 
 ## 1. Vision
 
@@ -285,7 +286,6 @@ drives the implementation, one change at a time.
 
 ## 9. Open items for the author (content, not design)
 
-- Final game title (candidate: "Leverkas").
 - Writing and verifying the Act 1 fact cards with sources, in DE and EN.
 - Ticker headlines and Aktion/upgrade names in DE and EN.
 - Checking the legal side of parody names (e.g. "MegaMeat Corp" must not resemble a real company).

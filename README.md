@@ -1,6 +1,6 @@
-# Leverkas
+# Wurst Case
 
-A browser idle game with a vegan theme (working title). Build a plant-based food empire, rescue
+A browser idle game with a vegan theme. Build a plant-based food empire, rescue
 animals from MegaMeat Corp and give them a home on your Lebenshof. The concept lives in
 [`docs/superpowers/specs/2026-09-25-vegan-idle-game-design.md`](docs/superpowers/specs/2026-09-25-vegan-idle-game-design.md);
 detailed specs are managed with [OpenSpec](https://github.com/Fission-AI/OpenSpec) in `openspec/`.

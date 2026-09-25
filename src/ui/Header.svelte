@@ -1,10 +1,15 @@
 <script lang="ts">
+  import logoUrl from '../assets/logo.svg'
   import { LANGS } from '../i18n/lang'
   import { currentLang, setLanguage, t } from './i18n.svelte'
 </script>
 
 <header>
-  <h1>{t('app.title')}</h1>
+  <div class="brand">
+    <!-- Decorative: the title text right next to it names the game. -->
+    <img src={logoUrl} alt="" width="56" height="56" />
+    <h1>{t('app.title')}</h1>
+  </div>
   <div class="language" role="group" aria-label={t('language.toggle.label')}>
     {#each LANGS as lang (lang)}
       <button
@@ -27,6 +32,16 @@
     gap: 12px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  img {
+    display: block;
   }
 
   h1 {

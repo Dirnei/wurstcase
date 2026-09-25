@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  Product: a browser idle game with a vegan theme. The player builds a plant-based food empire
+  Product: "Wurst Case", a browser idle game with a vegan theme. The player builds a plant-based food empire
   (fields -> processing -> products such as the flagship "Leverkas") and uses the profits to buy
   animals out of the food industry (villain: MegaMeat Corp) and house them in a Lebenshof
   (animal sanctuary). Animals produce awareness, which converts townspeople into customers, which
