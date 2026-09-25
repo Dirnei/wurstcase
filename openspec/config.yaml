@@ -1,32 +1,43 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Product: a browser idle game with a vegan theme. The player builds a plant-based food empire
+  (fields -> processing -> products such as the flagship "Leverkas") and uses the profits to buy
+  animals out of the food industry (villain: MegaMeat Corp) and house them in a Lebenshof
+  (animal sanctuary). Animals produce awareness, which converts townspeople into customers, which
+  raises demand. Prestige ("Neustart", currency "Rezepte") carries the story forward act by act.
+  Full concept: docs/superpowers/specs/2026-09-25-vegan-idle-game-design.md (source of truth for
+  vision, tone, mechanics and the planned change sequence).
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Goal: a hobby project that gets published (itch.io, leberkas.org) so people have fun and think
+  about veganism. Tone: funny satire first, German food parodies, short real facts (always with a
+  source), a dark turn only in later acts. Never preachy.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  Tech stack: TypeScript, Vite, Svelte 5, break_eternity.js for big numbers, Vitest for tests.
+  Output is static files; no backend, no accounts, saves live in localStorage.
+
+  Architecture rules:
+  - Game logic in src/game/ is pure TypeScript and never imports Svelte or touches the DOM.
+  - src/ui/ Svelte components only read state and call actions; they contain no game rules.
+  - Content is data: crops, processors, products, animals, upgrades, Aktionen, events, facts and
+    acts are entries in src/game/content/, not code branches.
+  - One simulation path: tick(state, seconds) drives the live loop, offline progress and tests.
+  - GameState is a single plain, serializable object; saves are versioned with step-by-step
+    migrations and a backup of the previous autosave.
+  - No hard-coded player-facing text: every string goes through i18n (DE and EN, both required).
+  - Resource amounts and costs use break_eternity Decimal; building counts may be plain numbers.
+  - Keep files small and single-purpose; one system per file in src/game/systems/.
+
+  Conventions:
+  - Git commit messages are a single subject line, max 74 characters, no body, no trailers.
+  - Every change must leave the game buildable and runnable.
+
+rules:
+  proposal:
+    - Reference the matching row of the change sequence in section 8 of the concept doc
+    - Include a Non-goals section that names what is deferred to later changes
+  design:
+    - State which src/game/ files and content entries are added or changed
+  tasks:
+    - Write Vitest tests for game logic before implementing it
+    - End with a verification task - run tests, run the build, and play-check in the browser
