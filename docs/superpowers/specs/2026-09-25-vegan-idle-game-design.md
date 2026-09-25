@@ -245,8 +245,9 @@ The UI is verified by playing.
 
 ### 7.6 Deployment
 
-`npm run build` → zip upload to itch.io, and a copy of the files to leberkas.org. CI automation
-comes later.
+`npm run build` → zip upload to itch.io. For leberkas.org the game ships as a Docker image
+(the build, served by a small static web server); the same image runs locally with
+`docker compose up` to check the real production build. CI automation comes later.
 
 ## 8. Development workflow — OpenSpec
 
@@ -269,17 +270,18 @@ drives the implementation, one change at a time.
 | # | Change | Delivers |
 |---|---|---|
 | 1 | `project-scaffold` | Vite + Svelte + TS + Vitest, break_eternity, i18n skeleton (DE/EN), empty game loop |
-| 2 | `game-state-and-save` | GameState, `tick()`, autosave with versioning and backup, export/import |
-| 3 | `production-chain` | Manual actions, fields, processing with stalls, products, cost scaling |
-| 4 | `sales-and-customers` | Demand, min(stock, demand), most-expensive-first, starting neighbours |
-| 5 | `lebenshof-rescue` | Animals, space, names, awareness production, passive conversion |
-| 6 | `aktionen-and-megameat` | Campaigns, counter-events, news ticker with tutorial hints |
-| 7 | `upgrades` | Act 1 one-time upgrades |
-| 8 | `faktenbuch` | Fact cards, milestone unlocks, sources display |
-| 9 | `prestige-and-act-1` | Act goal, lawsuit event, Neustart, Rezepte tree |
-| 10 | `offline-progress` | Offline simulation with cap and "while you were away" summary |
-| 11 | `settings-and-debug` | Settings screen, dev debug panel |
-| 12 | `release-v1` | Pacing tuning pass, build, itch.io and leberkas.org deployment |
+| 2 | `docker-container` | Production Docker image (build + static web server) and compose file for local runs; later deploys leberkas.org |
+| 3 | `game-state-and-save` | GameState, `tick()`, autosave with versioning and backup, export/import |
+| 4 | `production-chain` | Manual actions, fields, processing with stalls, products, cost scaling |
+| 5 | `sales-and-customers` | Demand, min(stock, demand), most-expensive-first, starting neighbours |
+| 6 | `lebenshof-rescue` | Animals, space, names, awareness production, passive conversion |
+| 7 | `aktionen-and-megameat` | Campaigns, counter-events, news ticker with tutorial hints |
+| 8 | `upgrades` | Act 1 one-time upgrades |
+| 9 | `faktenbuch` | Fact cards, milestone unlocks, sources display |
+| 10 | `prestige-and-act-1` | Act goal, lawsuit event, Neustart, Rezepte tree |
+| 11 | `offline-progress` | Offline simulation with cap and "while you were away" summary |
+| 12 | `settings-and-debug` | Settings screen, dev debug panel |
+| 13 | `release-v1` | Pacing tuning pass, build, itch.io and leberkas.org deployment |
 
 ## 9. Open items for the author (content, not design)
 
