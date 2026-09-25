@@ -9,11 +9,16 @@ be run locally with one command and deployed unchanged to a production host.
 
 ### Requirement: One-command local run
 Running `docker compose up --build` in the repository root SHALL build the image and serve the
-production build of the game at `http://localhost:8080`.
+production build of the game at `http://localhost:8234`. The host port SHALL be changeable
+through the `VEGLE_PORT` environment variable without editing any file.
 
 #### Scenario: Fresh checkout
 - **WHEN** a developer with Docker runs `docker compose up --build` in a fresh clone
-- **THEN** opening `http://localhost:8080` shows the game with its play-time counter running
+- **THEN** opening `http://localhost:8234` shows the game with its play-time counter running
+
+#### Scenario: Host port already in use
+- **WHEN** port 8234 is taken and the developer runs `VEGLE_PORT=8480 docker compose up --build`
+- **THEN** the game is served at `http://localhost:8480`
 
 ### Requirement: Image serves only the built game
 The image SHALL contain and serve only the production build output. Source files, tests,

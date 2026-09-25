@@ -15,7 +15,7 @@ in section 8 of `docs/superpowers/specs/2026-09-25-vegan-idle-game-design.md` (a
 - A web server configuration for the game: caching that makes new releases reach players on their
   next page load, compression, basic security headers, and 404 for missing files.
 - A `compose.yaml` so `docker compose up --build` runs the production build locally at
-  `http://localhost:8080`.
+  `http://localhost:8234` (the host port can be changed).
 - A `.dockerignore` so the build context stays small and never includes local `node_modules`,
   `dist` or Git data.
 - A short `README.md` explaining how to run the game in development (`npm run dev`) and with

@@ -1,0 +1,7 @@
+services:
+  web:
+    build: .
+    image: vegle:local
+    ports:
+      - "${VEGLE_PORT:-8234}:8080"
+    restart: unless-stopped

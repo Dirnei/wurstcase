@@ -24,11 +24,12 @@ terminating reverse proxy in front of the container.
 ### Files
 
 ```
-Dockerfile        multi-stage: build (Node) → runtime (nginx, unprivileged)
-nginx.conf        server block: caching, gzip, headers, 404s
-compose.yaml      service "web": build ., ports 8080:8080
-.dockerignore     node_modules, dist, .git, .vscode, .vitest, openspec, docs, *.log
-README.md         dev and Docker run instructions
+Dockerfile                         multi-stage: build (Node) → runtime (nginx, unprivileged)
+docker/nginx.conf                  server block: caching, gzip, 404s
+docker/security-headers.conf       header snippet included in every location
+compose.yaml                       service "web": build ., host port ${VEGLE_PORT:-8234} → 8080
+.dockerignore                      node_modules, dist, .git, .vscode, .vitest, openspec, docs, *.log
+README.md                          dev and Docker run instructions
 ```
 
 ### Build stage: `node:24-alpine`, test before build
@@ -76,15 +77,15 @@ rejected: serving the real page proves more than a stub.
 
 ### Compose
 
-One service `web`, `build: .`, `ports: "8080:8080"`, `restart: unless-stopped`. No volumes: the
+One service `web`, `build: .`, `ports: "${VEGLE_PORT:-8234}:8080"`, `restart: unless-stopped`. No volumes: the
 container is immutable and the game saves live in the player's browser.
 
 ## Risks / Trade-offs
 
 - [Running tests inside the image build makes builds slower] → Acceptable (seconds today). The
   dependency layer is cached, and it guarantees nothing untested ships.
-- [Port 8080 is already used on a developer's machine] → The host port is a single line in
-  `compose.yaml`; the README shows how to change it.
+- [The host port is already used on a developer's machine] → Default host port 8234 (8080 is
+  commonly taken) and a `VEGLE_PORT` override, documented in the README.
 - [Production proxy expectations unknown] → The container serves plain HTTP on 8080, which fits
   every common proxy (Traefik, Caddy, nginx). Deployment details are settled in `release-v1`.
 - [Security headers lost in a location block due to nginx inheritance rules] → The shared

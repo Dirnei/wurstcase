@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.gitignore
+.vscode
+.vitest
+.claude
+openspec
+docs
+*.log
+Dockerfile
+compose.yaml
+.dockerignore
+README.md
