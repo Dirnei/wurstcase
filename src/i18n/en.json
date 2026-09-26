@@ -9,5 +9,22 @@
   "footer.datenschutz": "Privacy",
   "legal.back": "Back to the game",
   "legal.loading": "Loading …",
-  "legal.unavailable": "The operator details are temporarily unavailable. Please try again later."
+  "legal.unavailable": "The operator details are temporarily unavailable. Please try again later.",
+  "save.title": "Save game",
+  "save.export": "Export",
+  "save.exportHint": "Copy this text to back up your progress or move it to another device.",
+  "save.copy": "Copy",
+  "save.copied": "Copied!",
+  "save.import": "Import",
+  "save.importHint": "Paste an exported save here.",
+  "save.importLoad": "Load save",
+  "save.importConfirm": "Replace your current progress with the imported save? This cannot be undone.",
+  "save.importInvalid": "This text is not a valid save.",
+  "save.importDone": "Save loaded.",
+  "save.close": "Close",
+  "notice.dismiss": "Dismiss notice",
+  "notice.restored-backup": "Your newest save was damaged. The game continues from your previous save.",
+  "notice.unreadable": "Your saved progress could not be read. A new game was started; the damaged data is kept in your browser.",
+  "notice.too-new": "This save comes from a newer version of the game. Please reload the page – nothing is saved until then.",
+  "notice.cannot-save": "Your browser does not allow saving right now. The game keeps running, but your progress is lost when you close it. Export your save to keep it."
 }

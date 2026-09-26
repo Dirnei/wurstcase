@@ -9,5 +9,22 @@
   "footer.datenschutz": "Datenschutz",
   "legal.back": "Zurück zum Spiel",
   "legal.loading": "Wird geladen …",
-  "legal.unavailable": "Die Angaben zum Betreiber sind gerade nicht verfügbar. Bitte versuchen Sie es später erneut."
+  "legal.unavailable": "Die Angaben zum Betreiber sind gerade nicht verfügbar. Bitte versuchen Sie es später erneut.",
+  "save.title": "Spielstand",
+  "save.export": "Exportieren",
+  "save.exportHint": "Kopiere diesen Text, um deinen Spielstand zu sichern oder auf ein anderes Gerät zu übertragen.",
+  "save.copy": "Kopieren",
+  "save.copied": "Kopiert!",
+  "save.import": "Importieren",
+  "save.importHint": "Füge hier einen exportierten Spielstand ein.",
+  "save.importLoad": "Spielstand laden",
+  "save.importConfirm": "Deinen aktuellen Spielstand durch den importierten ersetzen? Das lässt sich nicht rückgängig machen.",
+  "save.importInvalid": "Dieser Text ist kein gültiger Spielstand.",
+  "save.importDone": "Spielstand geladen.",
+  "save.close": "Schließen",
+  "notice.dismiss": "Hinweis schließen",
+  "notice.restored-backup": "Dein neuester Spielstand war beschädigt. Das Spiel läuft mit dem vorherigen Spielstand weiter.",
+  "notice.unreadable": "Dein gespeicherter Spielstand konnte nicht gelesen werden. Es wurde ein neues Spiel gestartet; die beschädigten Daten bleiben im Browser erhalten.",
+  "notice.too-new": "Dieser Spielstand stammt aus einer neueren Version des Spiels. Bitte lade die Seite neu – bis dahin wird nicht gespeichert.",
+  "notice.cannot-save": "Dein Browser erlaubt gerade kein Speichern. Das Spiel läuft weiter, aber dein Fortschritt geht beim Schließen verloren. Exportiere deinen Spielstand, um ihn zu sichern."
 }

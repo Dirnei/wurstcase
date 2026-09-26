@@ -1,6 +1,6 @@
 /** The whole game in one plain, serializable object. Game systems mutate it through tick(). */
 export interface GameState {
-  /** Seconds of game time advanced since the page loaded. */
+  /** Total seconds of game time played in this game, restored from the save across reloads. */
   playTime: number
 }
 
