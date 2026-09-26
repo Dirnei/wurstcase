@@ -35,3 +35,21 @@ If port 8234 is already in use, choose another host port with `VEGLE_PORT`:
 VEGLE_PORT=8480 docker compose up --build -d            # bash
 $env:VEGLE_PORT=8480; docker compose up --build -d      # PowerShell
 ```
+
+### Impressum and privacy details
+
+The legal pages show the operator's details from environment variables. Without them the game
+shows placeholders (Max Mustermann, …) and the container logs a warning at start-up. Put your real
+details in a `.env` file next to `compose.yaml` (it is git-ignored, so they never get committed):
+
+```bash
+LEGAL_NAME=Erika Beispiel
+LEGAL_STREET=Beispielweg 3
+LEGAL_POSTAL_CODE=80331
+LEGAL_CITY=München
+LEGAL_COUNTRY=Deutschland
+LEGAL_EMAIL=kontakt@example.org
+LEGAL_HOSTING_PROVIDER=Beispiel Hosting GmbH, Beispielstraße 5, 10115 Berlin
+```
+
+Then apply them with `docker compose up -d` (no rebuild needed).

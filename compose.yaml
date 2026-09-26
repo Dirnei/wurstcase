@@ -4,4 +4,20 @@ services:
     image: vegle:local
     ports:
       - "${VEGLE_PORT:-8234}:8080"
+    environment:
+      # Operator details for the Impressum and privacy policy. Set real values in a .env file
+      # next to this file (see README); the defaults below are placeholders.
+      LEGAL_NAME: ${LEGAL_NAME:-Max Mustermann}
+      LEGAL_STREET: ${LEGAL_STREET:-Musterstraße 1}
+      LEGAL_POSTAL_CODE: ${LEGAL_POSTAL_CODE:-12345}
+      LEGAL_CITY: ${LEGAL_CITY:-Musterstadt}
+      LEGAL_COUNTRY: ${LEGAL_COUNTRY:-Deutschland}
+      LEGAL_EMAIL: ${LEGAL_EMAIL:-kontakt@example.com}
+      LEGAL_HOSTING_PROVIDER: ${LEGAL_HOSTING_PROVIDER:-Muster Hosting GmbH, Musterweg 2, 12345 Musterstadt}
+    # Rotate logs so old access entries are overwritten, as stated in the privacy policy.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped

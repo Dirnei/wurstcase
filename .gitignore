@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Operator details for docker compose (personal data, never commit)
+.env

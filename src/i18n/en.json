@@ -3,5 +3,11 @@
   "playTime.label": "Play time",
   "language.toggle.label": "Language",
   "language.toggle.de": "DE",
-  "language.toggle.en": "EN"
+  "language.toggle.en": "EN",
+  "footer.label": "Legal",
+  "footer.impressum": "Legal notice",
+  "footer.datenschutz": "Privacy",
+  "legal.back": "Back to the game",
+  "legal.loading": "Loading …",
+  "legal.unavailable": "The operator details are temporarily unavailable. Please try again later."
 }

@@ -3,5 +3,11 @@
   "playTime.label": "Spielzeit",
   "language.toggle.label": "Sprache",
   "language.toggle.de": "DE",
-  "language.toggle.en": "EN"
+  "language.toggle.en": "EN",
+  "footer.label": "Rechtliches",
+  "footer.impressum": "Impressum",
+  "footer.datenschutz": "Datenschutz",
+  "legal.back": "Zurück zum Spiel",
+  "legal.loading": "Wird geladen …",
+  "legal.unavailable": "Die Angaben zum Betreiber sind gerade nicht verfügbar. Bitte versuchen Sie es später erneut."
 }
