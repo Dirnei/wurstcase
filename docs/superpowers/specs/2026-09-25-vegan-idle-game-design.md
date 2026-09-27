@@ -70,7 +70,7 @@ Oat field     ───▶  Oat mill       ─▶ Oat drink ──▶  Hafer-Cap
 - **Products** consume intermediates and go to stock for sale.
 - **Leverkas** is the Act 1 premium product: unlocked mid-act, highest price, the "business takes
   off" moment.
-- Every building's cost rises about 15% per copy owned (idle-game standard; exact factor tuned
+- Every building's cost rises about 10% per copy owned (idle games use 7–15%; exact factor tuned
   in play).
 - **Manual start:** the player clicks "Sojabohnen ernten" (harvest soybeans) and "Tofu pressen"
   (press tofu) until they can afford the first field and press.

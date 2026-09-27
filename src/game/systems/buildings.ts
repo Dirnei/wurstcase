@@ -4,7 +4,7 @@ import type { ResourceId } from '../content/resources'
 import type { GameState } from '../state'
 
 /** Each copy owned makes the next one this much more expensive. */
-export const PRICE_GROWTH = 1.15
+export const PRICE_GROWTH = 1.1
 
 /** Rounded up to whole euros, so money stays a whole number. */
 export function buildingPrice(state: Readonly<GameState>, id: BuildingId): Decimal {

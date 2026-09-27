@@ -1,5 +1,6 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
+import { decodeSave, encodeSave } from '../save'
 import { createInitialState, type GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isResourceShown, isUnlocked } from './buildings'
 
@@ -12,12 +13,24 @@ describe('buildingPrice', () => {
     expect(buildingPrice(createInitialState(), 'soybeanField').toNumber()).toBe(10)
   })
 
-  it('rises by 15% per copy owned, rounded up to whole euros', () => {
+  it('rises by 10% per copy owned, rounded up to whole euros', () => {
     const state = createInitialState()
     state.buildings.soybeanField = 1
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(12)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(11)
     state.buildings.soybeanField = 2
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(14)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(13)
+    state.buildings.soybeanField = 24
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(99)
+  })
+
+  it('prices the buildings of a loaded save at the current rate', () => {
+    const saved = withMoney(100)
+    saved.buildings.soybeanField = 2
+    const result = decodeSave(encodeSave(saved, 0))
+    if (!result.ok) throw new Error('save did not load')
+    expect(result.state.money.toNumber()).toBe(100)
+    expect(result.state.buildings.soybeanField).toBe(2)
+    expect(buildingPrice(result.state, 'soybeanField').toNumber()).toBe(13)
   })
 
   it('stays finite for very many copies', () => {
