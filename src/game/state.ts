@@ -1,5 +1,6 @@
 import Decimal from 'break_eternity.js'
 import { BUILDING_IDS, type BuildingId } from './content/buildings'
+import { BUYER_IDS, type BuyerId } from './content/buyers'
 import { RESOURCES, type ResourceId } from './content/resources'
 import { STARTING_CUSTOMERS } from './content/town'
 
@@ -24,6 +25,8 @@ export interface GameState {
   orderProgress: number
   /** Whether the shop assistant has been hired to sell automatically. */
   assistant: boolean
+  /** Whole units sold to each bulk buyer in this game; later changes react to these. */
+  unitsSold: Record<BuyerId, Decimal>
   /** Seconds left to show a resource as short, held after the last wait so it does not flicker. Not saved. */
   shortage: Partial<Record<ResourceId, number>>
 }
@@ -40,6 +43,7 @@ export function createInitialState(): GameState {
     openOrders: new Decimal(0),
     orderProgress: 0,
     assistant: false,
+    unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, new Decimal(0)])) as Record<BuyerId, Decimal>,
     waiting: {},
     shortage: {},
   }

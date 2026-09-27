@@ -1,5 +1,6 @@
 import Decimal from 'break_eternity.js'
 import { BUILDING_IDS } from './content/buildings'
+import { BUYER_IDS } from './content/buyers'
 import { RESOURCES } from './content/resources'
 import { createInitialState, type GameState } from './state'
 
@@ -11,7 +12,7 @@ import { createInitialState, type GameState } from './state'
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 3
+export const CURRENT_FORMAT = 4
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -24,6 +25,9 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     isRecord(state)
       ? { customers: '10', openOrders: '0', orderProgress: 0, assistant: false, ...state }
       : state,
+  // 3 → 4 (bulk-buyers): nothing sold to MegaMeat or the biogas plant yet.
+  3: (state) =>
+    isRecord(state) ? { unitsSold: { megaMeat: '0', biogas: '0' }, ...state } : state,
 }
 
 export type DecodeResult =
@@ -108,6 +112,7 @@ function writeState(state: GameState): Record<string, unknown> {
     openOrders: state.openOrders.toString(),
     orderProgress: state.orderProgress,
     assistant: state.assistant,
+    unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, state.unitsSold[id].toString()])),
   }
 }
 
@@ -116,7 +121,8 @@ function readState(value: unknown): GameState | null {
     !isRecord(value) ||
     !isRecord(value.stock) ||
     !isRecord(value.buildings) ||
-    !isRecord(value.progress)
+    !isRecord(value.progress) ||
+    !isRecord(value.unitsSold)
   ) {
     return null
   }
@@ -159,6 +165,13 @@ function readState(value: unknown): GameState | null {
       return null
     }
     state.progress[id] = progress
+  }
+  for (const id of BUYER_IDS) {
+    const units = readAmount(value.unitsSold[id])
+    if (!units) {
+      return null
+    }
+    state.unitsSold[id] = units
   }
   return {
     ...state,

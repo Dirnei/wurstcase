@@ -21,6 +21,8 @@ describe('tick', () => {
     expect(state.openOrders.toNumber()).toBe(0)
     expect(state.orderProgress).toBe(0)
     expect(state.assistant).toBe(false)
+    expect(state.unitsSold.megaMeat.toNumber()).toBe(0)
+    expect(state.unitsSold.biogas.toNumber()).toBe(0)
   })
 
   it('advances play time by the given seconds', () => {

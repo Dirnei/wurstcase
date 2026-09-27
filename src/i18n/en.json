@@ -72,5 +72,13 @@
   "sales.assistant.hire": "Hire a shop assistant: {price}",
   "sales.assistant.hint": "Sells open orders automatically.",
   "sales.assistant.active": "Your shop assistant sells automatically.",
-  "sales.overstock": "The storeroom is overflowing. Mrs Miller next door already has Tofu-Wurst for breakfast – she can't eat any more."
+  "sales.overstock": "The storeroom is overflowing. Mrs Miller next door already has Tofu-Wurst for breakfast – she can't eat any more.",
+  "bulk.title": "Bulk buyers",
+  "bulk.hint": "Take your surplus in bulk – for a fraction of what customers pay for vegan food.",
+  "bulk.megaMeat.name": "MegaMeat Corp (animal feed)",
+  "bulk.megaMeat.line": "MegaMeat Corp thanks you for supporting modern livestock farming.",
+  "bulk.biogas.name": "Biogas plant",
+  "bulk.biogas.line": "The biogas plant bubbles contentedly.",
+  "bulk.sell": "{units} {resource} → {price}",
+  "bulk.lot": "{units} per {price}"
 }

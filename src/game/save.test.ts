@@ -118,6 +118,39 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.assistant).toBe(false)
   })
 
+  it('restores the units sold to each bulk buyer', () => {
+    const state = createInitialState()
+    state.unitsSold.megaMeat = new Decimal('4e400')
+    state.unitsSold.biogas = new Decimal(38)
+
+    const restored = decodedState(encodeSave(state, NOW))
+
+    expect(restored.unitsSold.megaMeat.eq(state.unitsSold.megaMeat)).toBe(true)
+    expect(restored.unitsSold.biogas.eq(38)).toBe(true)
+  })
+
+  it('migrates a format 3 save with both bulk counts at 0', () => {
+    const format3 = savedState()
+    delete format3.unitsSold
+    format3.buildings.tofuPress = 3
+    format3.assistant = true
+
+    const restored = decodedState(envelope(3, format3))
+
+    expect(restored.buildings.tofuPress).toBe(3)
+    expect(restored.assistant).toBe(true)
+    expect(restored.unitsSold.megaMeat.eq(0)).toBe(true)
+    expect(restored.unitsSold.biogas.eq(0)).toBe(true)
+  })
+
+  it('ignores unknown bulk buyers', () => {
+    const state = savedState()
+    state.unitsSold.moonBaseCafeteria = '12'
+    expect(decodedState(envelope(CURRENT_FORMAT, state))).not.toHaveProperty(
+      'unitsSold.moonBaseCafeteria',
+    )
+  })
+
   it('does not save which buildings are waiting or short', () => {
     const state = createInitialState()
     state.waiting = { tofuPress: 'soybeans' }
@@ -172,6 +205,10 @@ describe('encodeSave / decodeSave', () => {
     ['fractional building count', (s: Record<string, any>) => (s.buildings.tofuPress = 1.5)],
     ['building count as text', (s: Record<string, any>) => (s.buildings.tofuPress = '3')],
     ['missing building count', (s: Record<string, any>) => delete s.buildings.tofuPress],
+    ['fractional bulk count', (s: Record<string, any>) => (s.unitsSold.megaMeat = '2.5')],
+    ['negative bulk count', (s: Record<string, any>) => (s.unitsSold.biogas = '-1')],
+    ['missing bulk count', (s: Record<string, any>) => delete s.unitsSold.biogas],
+    ['missing bulk counts', (s: Record<string, any>) => delete s.unitsSold],
   ])('rejects %s', (_, change) => {
     const state = savedState()
     change(state)

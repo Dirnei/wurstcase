@@ -1,5 +1,6 @@
 <script lang="ts">
   import { CHAINS } from './game/content/buildings'
+  import BulkBuyersPanel from './ui/BulkBuyersPanel.svelte'
   import ChainPanel from './ui/ChainPanel.svelte'
   import Footer from './ui/Footer.svelte'
   import Header from './ui/Header.svelte'
@@ -30,6 +31,7 @@
       <ChainPanel {chain} />
     {/each}
     <StockPanel />
+    <BulkBuyersPanel />
     <SavePanel />
   {:else}
     <LegalPage page={route} />

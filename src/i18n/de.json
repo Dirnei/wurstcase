@@ -72,5 +72,13 @@
   "sales.assistant.hire": "Aushilfe einstellen: {price}",
   "sales.assistant.hint": "Verkauft offene Bestellungen automatisch.",
   "sales.assistant.active": "Deine Aushilfe verkauft automatisch.",
-  "sales.overstock": "Das Lager quillt über. Frau Müller von nebenan isst schon Tofu-Wurst zum Frühstück – mehr geht nicht."
+  "sales.overstock": "Das Lager quillt über. Frau Müller von nebenan isst schon Tofu-Wurst zum Frühstück – mehr geht nicht.",
+  "bulk.title": "Großabnehmer",
+  "bulk.hint": "Nimmt deine Überschüsse in großen Mengen – für einen Bruchteil dessen, was Kundschaft für vegane Ware zahlt.",
+  "bulk.megaMeat.name": "MegaMeat Corp (Tierfutter)",
+  "bulk.megaMeat.line": "MegaMeat Corp dankt für Ihren Beitrag zur modernen Tierhaltung.",
+  "bulk.biogas.name": "Biogasanlage",
+  "bulk.biogas.line": "Die Biogasanlage blubbert zufrieden.",
+  "bulk.sell": "{units} {resource} → {price}",
+  "bulk.lot": "je {units} für {price}"
 }
