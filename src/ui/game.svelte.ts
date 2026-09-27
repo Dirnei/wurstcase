@@ -18,6 +18,12 @@ export function advance(seconds: number): void {
   version++
 }
 
+/** Runs a player action from src/game/systems on the live state and refreshes the UI. */
+export function act(action: (state: GameState) => void): void {
+  action(state)
+  version++
+}
+
 /** Reads a game value reactively: components using it re-render after every tick. */
 export function readGame<T>(select: (state: Readonly<GameState>) => T): T {
   void version

@@ -1,11 +1,27 @@
+import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { decodeSave, encodeSave, exportSave, importSave } from './save'
-import { createInitialState } from './state'
+import { createInitialState, type GameState } from './state'
 
 const NOW = 1_790_000_000_000
 
+const withPlayTime = (playTime: number) => ({ ...createInitialState(), playTime })
+
 function envelope(format: number, state: unknown, savedAt = NOW): string {
   return JSON.stringify({ format, savedAt, state })
+}
+
+/** The saved form of a new game, as written into the current format. */
+function savedState(): Record<string, any> {
+  return JSON.parse(encodeSave(createInitialState(), NOW)).state
+}
+
+function decodedState(json: string): GameState {
+  const result = decodeSave(json)
+  if (!result.ok) {
+    throw new Error(`decode failed: ${result.reason}`)
+  }
+  return result.state
 }
 
 describe('encodeSave / decodeSave', () => {
@@ -40,12 +56,94 @@ describe('encodeSave / decodeSave', () => {
       },
       2: (state: unknown) => {
         steps.push(2)
-        return { playTime: (state as { seconds: number }).seconds }
+        return { ...savedState(), playTime: (state as { seconds: number }).seconds }
       },
     }
     const result = decodeSave(envelope(1, { time: 42 }), { migrations, currentFormat: 3 })
-    expect(result).toEqual({ ok: true, state: { playTime: 42 }, savedAt: NOW })
+    expect(result).toEqual({ ok: true, state: withPlayTime(42), savedAt: NOW })
     expect(steps).toEqual([1, 2])
+  })
+
+  it('restores money, earnings, stock and buildings exactly', () => {
+    const state = createInitialState()
+    state.money = new Decimal('1.5e320')
+    state.totalEarned = new Decimal('ee400')
+    state.stock.tofu = new Decimal(12)
+    state.stock.leverkas = new Decimal('3e500')
+    state.buildings.tofuPress = 3
+    state.buildings.cafeBar = 1
+    state.progress.leverkasOven = 0.625
+
+    const restored = decodedState(encodeSave(state, NOW))
+
+    expect(restored.money.eq(state.money)).toBe(true)
+    expect(restored.totalEarned.eq(state.totalEarned)).toBe(true)
+    expect(restored.stock.tofu.eq(12)).toBe(true)
+    expect(restored.stock.leverkas.eq(state.stock.leverkas)).toBe(true)
+    expect(restored.buildings).toEqual(state.buildings)
+    expect(restored.progress).toEqual(state.progress)
+  })
+
+  it('does not save which buildings are waiting or short', () => {
+    const state = createInitialState()
+    state.waiting = { tofuPress: 'soybeans' }
+    state.shortage = { soybeans: 2.5 }
+    const json = encodeSave(state, NOW)
+    expect(JSON.parse(json).state).not.toHaveProperty('waiting')
+    expect(JSON.parse(json).state).not.toHaveProperty('shortage')
+    expect(decodedState(json).waiting).toEqual({})
+    expect(decodedState(json).shortage).toEqual({})
+  })
+
+  it('migrates a format 1 save to a new economy that keeps its play time', () => {
+    expect(decodeSave(envelope(1, { playTime: 77 }))).toEqual({
+      ok: true,
+      state: withPlayTime(77),
+      savedAt: NOW,
+    })
+  })
+
+  it.each([
+    ['negative money', { money: '-1' }],
+    ['NaN money', { money: 'NaN' }],
+    ['non-numeric money', { money: 'abc' }],
+    ['empty money', { money: '' }],
+    ['money as a number', { money: 5 }],
+    ['fractional money', { money: '2.5' }],
+    ['fractional earnings', { totalEarned: '0.1' }],
+    ['infinite earnings', { totalEarned: 'Infinity' }],
+    ['missing money', { money: undefined }],
+  ])('rejects %s', (_, override) => {
+    expect(decodeSave(envelope(2, { ...savedState(), ...override }))).toEqual({
+      ok: false,
+      reason: 'invalid',
+    })
+  })
+
+  it.each([
+    ['negative stock', (s: Record<string, any>) => (s.stock.tofu = '-0.5')],
+    ['missing stock entry', (s: Record<string, any>) => delete s.stock.tofu],
+    ['fractional stock', (s: Record<string, any>) => (s.stock.tofu = '1.5')],
+    ['negative progress', (s: Record<string, any>) => (s.progress.tofuPress = -0.1)],
+    ['progress as text', (s: Record<string, any>) => (s.progress.tofuPress = '0.5')],
+    ['missing progress', (s: Record<string, any>) => delete s.progress.tofuPress],
+    ['negative building count', (s: Record<string, any>) => (s.buildings.tofuPress = -1)],
+    ['fractional building count', (s: Record<string, any>) => (s.buildings.tofuPress = 1.5)],
+    ['building count as text', (s: Record<string, any>) => (s.buildings.tofuPress = '3')],
+    ['missing building count', (s: Record<string, any>) => delete s.buildings.tofuPress],
+  ])('rejects %s', (_, change) => {
+    const state = savedState()
+    change(state)
+    expect(decodeSave(envelope(2, state))).toEqual({ ok: false, reason: 'invalid' })
+  })
+
+  it('ignores unknown resources and buildings', () => {
+    const state = savedState()
+    state.stock.unobtainium = '5'
+    state.buildings.moonBase = 2
+    const restored = decodedState(envelope(2, state))
+    expect(restored).not.toHaveProperty('stock.unobtainium')
+    expect(restored).not.toHaveProperty('buildings.moonBase')
   })
 
   it('rejects an older format with a missing migration step', () => {
@@ -58,20 +156,20 @@ describe('encodeSave / decodeSave', () => {
 
 describe('exportSave / importSave', () => {
   it('produces a single prefixed line that imports back to the same save', () => {
-    const json = encodeSave({ playTime: 90 }, NOW)
+    const json = encodeSave(withPlayTime(90), NOW)
     const text = exportSave(json)
     expect(text).toMatch(/^WURSTCASE1:[A-Za-z0-9+/=]+$/)
-    expect(importSave(text)).toEqual({ ok: true, state: { playTime: 90 }, savedAt: NOW })
+    expect(importSave(text)).toEqual({ ok: true, state: withPlayTime(90), savedAt: NOW })
   })
 
   it('tolerates surrounding whitespace from copy and paste', () => {
-    const text = exportSave(encodeSave({ playTime: 5 }, NOW))
-    expect(importSave(`  ${text}\n`)).toEqual({ ok: true, state: { playTime: 5 }, savedAt: NOW })
+    const text = exportSave(encodeSave(withPlayTime(5), NOW))
+    expect(importSave(`  ${text}\n`)).toEqual({ ok: true, state: withPlayTime(5), savedAt: NOW })
   })
 
   it.each([
     ['empty text', ''],
-    ['missing prefix', btoa(encodeSave({ playTime: 1 }, NOW))],
+    ['missing prefix', btoa(encodeSave(withPlayTime(1), NOW))],
     ['broken base64', 'WURSTCASE1:%%%'],
     ['valid base64 but not a save', `WURSTCASE1:${btoa('hello')}`],
   ])('rejects %s', (_, text) => {

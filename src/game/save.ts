@@ -1,4 +1,7 @@
-import type { GameState } from './state'
+import Decimal from 'break_eternity.js'
+import { BUILDING_IDS } from './content/buildings'
+import { RESOURCES } from './content/resources'
+import { createInitialState, type GameState } from './state'
 
 /*
  * Save format. When a later change adds a field to GameState:
@@ -8,12 +11,15 @@ import type { GameState } from './state'
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 1
+export const CURRENT_FORMAT = 2
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
 
-export const MIGRATIONS: Readonly<Record<number, Migration>> = {}
+export const MIGRATIONS: Readonly<Record<number, Migration>> = {
+  // 1 → 2 (production-chain): a new economy with no money, stock or buildings.
+  1: (state) => (isRecord(state) ? { ...writeState(createInitialState()), ...state } : state),
+}
 
 export type DecodeResult =
   | { ok: true; state: GameState; savedAt: number }
@@ -84,19 +90,67 @@ export function importSave(text: string, options?: DecodeOptions): DecodeResult 
   }
 }
 
+// `waiting` is left out: production recomputes it on the next tick.
 function writeState(state: GameState): Record<string, unknown> {
-  return { playTime: state.playTime }
+  return {
+    playTime: state.playTime,
+    money: state.money.toString(),
+    totalEarned: state.totalEarned.toString(),
+    stock: Object.fromEntries(RESOURCES.map((id) => [id, state.stock[id].toString()])),
+    buildings: { ...state.buildings },
+    progress: { ...state.progress },
+  }
 }
 
 function readState(value: unknown): GameState | null {
-  if (!isRecord(value)) {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.stock) ||
+    !isRecord(value.buildings) ||
+    !isRecord(value.progress)
+  ) {
     return null
   }
   const { playTime } = value
-  if (!isFiniteNumber(playTime) || playTime < 0) {
+  const money = readAmount(value.money)
+  const totalEarned = readAmount(value.totalEarned)
+  if (!isFiniteNumber(playTime) || playTime < 0 || !money || !totalEarned) {
     return null
   }
-  return { playTime }
+
+  // Only known ids are read, so keys of removed content are ignored instead of breaking the save.
+  const state = createInitialState()
+  for (const id of RESOURCES) {
+    const amount = readAmount(value.stock[id])
+    if (!amount) {
+      return null
+    }
+    state.stock[id] = amount
+  }
+  for (const id of BUILDING_IDS) {
+    const count = value.buildings[id]
+    if (!Number.isSafeInteger(count) || (count as number) < 0) {
+      return null
+    }
+    state.buildings[id] = count as number
+    const progress = value.progress[id]
+    if (!isFiniteNumber(progress) || progress < 0) {
+      return null
+    }
+    state.progress[id] = progress
+  }
+  return { ...state, playTime, money, totalEarned }
+}
+
+/** A saved amount: a non-negative, finite, whole Decimal written as a string. */
+function readAmount(value: unknown): Decimal | null {
+  // break_eternity parses unknown text such as "abc" as 0, so check the characters first.
+  if (typeof value !== 'string' || !/^[0-9.eE+-]+$/.test(value)) {
+    return null
+  }
+  const amount = new Decimal(value)
+  const valid = !amount.isNan() && amount.isFinite() && amount.gte(0) && amount.floor().eq(amount)
+  return valid ? amount : null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

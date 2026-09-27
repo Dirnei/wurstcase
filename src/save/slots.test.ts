@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { encodeSave } from '../game/save'
+import { createInitialState } from '../game/state'
 import { createSaveSlots, type StorageLike } from './slots'
 
 const T = 1_790_000_000_000
@@ -13,7 +14,7 @@ function memoryStorage(initial: Record<string, string> = {}) {
   return { storage, data }
 }
 
-const save = (playTime: number, savedAt = T) => encodeSave({ playTime }, savedAt)
+const save = (playTime: number, savedAt = T) => encodeSave({ ...createInitialState(), playTime }, savedAt)
 const tooNew = JSON.stringify({ format: 99, savedAt: T, state: {} })
 
 describe('createSaveSlots', () => {
@@ -42,7 +43,7 @@ describe('createSaveSlots', () => {
     })
     expect(createSaveSlots(() => storage).load()).toEqual({
       status: 'loaded',
-      state: { playTime: 20 },
+      state: { ...createInitialState(), playTime: 20 },
       savedAt: T,
       restoredFromBackup: false,
     })

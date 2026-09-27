@@ -8,8 +8,14 @@ function expectRelativelyEqual(actual: number, expected: number): void {
 }
 
 describe('tick', () => {
-  it('starts with zero play time', () => {
-    expect(createInitialState().playTime).toBe(0)
+  it('starts a new game with no play time, money, stock or buildings', () => {
+    const state = createInitialState()
+    expect(state.playTime).toBe(0)
+    expect(state.money.eq(0)).toBe(true)
+    expect(state.totalEarned.eq(0)).toBe(true)
+    expect(Object.values(state.stock).every((amount) => amount.eq(0))).toBe(true)
+    expect(Object.values(state.buildings).every((count) => count === 0)).toBe(true)
+    expect(state.waiting).toEqual({})
   })
 
   it('advances play time by the given seconds', () => {
