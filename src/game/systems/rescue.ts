@@ -3,6 +3,7 @@ import { getSpecies, NAME_POOL_SIZE, PRICE_GROWTH_ANIMALS, type SpeciesId } from
 import { getShelter, LEBENSHOF_UNLOCK_AT, SHELTERS, type ShelterId } from '../content/shelters'
 import type { GameState, Resident } from '../state'
 import { PRICE_GROWTH } from './buildings'
+import { animalPriceFactor, spaceBonus } from './upgrades'
 
 /** Why a rescue is possible or not; money is reported before space when both are short. */
 export type RescueCheck = 'ok' | 'locked' | 'money' | 'space'
@@ -28,6 +29,7 @@ export function countOf(state: Readonly<GameState>, species: SpeciesId): number 
 export function animalPrice(state: Readonly<GameState>, species: SpeciesId): Decimal {
   return new Decimal(getSpecies(species).basePrice)
     .mul(Decimal.pow(PRICE_GROWTH_ANIMALS, countOf(state, species)))
+    .mul(animalPriceFactor(state))
     .ceil()
 }
 
@@ -39,7 +41,10 @@ export function shelterPrice(state: Readonly<GameState>, shelter: ShelterId): De
 }
 
 export function totalSpace(state: Readonly<GameState>): number {
-  return SHELTERS.reduce((sum, shelter) => sum + state.shelters[shelter.id] * shelter.space, 0)
+  return SHELTERS.reduce(
+    (sum, shelter) => sum + state.shelters[shelter.id] * (shelter.space + spaceBonus(state, shelter.id)),
+    0,
+  )
 }
 
 export function usedSpace(state: Readonly<GameState>): number {

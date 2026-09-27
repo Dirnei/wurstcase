@@ -6,6 +6,7 @@ import { BUYER_IDS, type BuyerId } from './content/buyers'
 import type { MegaMeatEventId } from './content/megaMeatEvents'
 import { RESOURCES, type ProductId, type ResourceId } from './content/resources'
 import { SHELTER_IDS, type ShelterId } from './content/shelters'
+import type { UpgradeId } from './content/upgrades'
 import type { Bucket } from './systems/rollingWindow'
 import { STARTING_CUSTOMERS } from './content/town'
 
@@ -66,6 +67,8 @@ export interface GameState {
     runs: Record<AktionId, number>
   }
   megaMeat: MegaMeatState
+  /** Upgrades owned in this game, in the order they were bought. */
+  upgrades: UpgradeId[]
   /** Net stock change from passing time, newest bucket last; each bucket covers up to 1 s. Not saved. */
   trend: Bucket<ResourceId>[]
   /** Units sold to customers, newest bucket last; each bucket covers up to 1 s. Not saved. */
@@ -97,6 +100,7 @@ export function createInitialState(): GameState {
       runs: Object.fromEntries(AKTION_IDS.map((id) => [id, 0])) as Record<AktionId, number>,
     },
     megaMeat: { active: null, nextIn: null, nextIndex: 0, started: 0 },
+    upgrades: [],
     waiting: {},
     shortage: {},
     trend: [],

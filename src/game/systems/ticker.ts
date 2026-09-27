@@ -4,6 +4,7 @@ import { canRun, isAktionOffered } from './aktionen'
 import { isUnlocked } from './buildings'
 import { isLebenshofUnlocked } from './rescue'
 import { isAssistantOffered } from './sales'
+import { offeredUpgrades } from './upgrades'
 
 /** What the ticker remembers between headlines; kept by the UI, never saved. */
 export interface TickerMemory {
@@ -36,6 +37,9 @@ function clauseHolds(state: Readonly<GameState>, clause: HintClause): boolean {
   }
   if ('aktionNeverRun' in clause) {
     return isAktionOffered(state, clause.aktionNeverRun) && state.aktionen.runs[clause.aktionNeverRun] === 0
+  }
+  if ('upgradeOffered' in clause) {
+    return state.upgrades.length === 0 && offeredUpgrades(state).length > 0
   }
   return canRun(state, 'factCheck') === 'ok'
 }

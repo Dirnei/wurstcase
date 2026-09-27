@@ -180,3 +180,13 @@ describe('shortage', () => {
     expect(state.shortage).toEqual({})
   })
 })
+
+describe('upgrade effects on production', () => {
+  it('doubles soybean fields with better seeds', () => {
+    const state = createInitialState()
+    state.buildings.soybeanField = 5
+    state.upgrades = ['betterSeeds']
+    produce(state, 1)
+    expect(state.stock.soybeans.toNumber()).toBe(10)
+  })
+})

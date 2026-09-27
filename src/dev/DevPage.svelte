@@ -6,6 +6,7 @@
   import { PRODUCTS } from '../game/content/resources'
   import { SHELTERS } from '../game/content/shelters'
   import { POPULATION } from '../game/content/town'
+  import { getUpgrade, type UnlockClause } from '../game/content/upgrades'
   import { PRICE_GROWTH } from '../game/systems/buildings'
   import { animalCurve, bulkTable, costCurve, demandCeiling, MAX_COPIES, paybackCurves } from '../game/balance/curves'
   import { pacingTable } from '../game/balance/milestones'
@@ -46,6 +47,23 @@
 
   const times = $derived(result ? result.samples.map((s) => s.time / 60) : [])
   const pacing = $derived(result ? pacingTable(result.log) : [])
+  const upgradeRows = $derived(
+    result
+      ? result.offers.map((offer) => ({
+          ...offer,
+          upgrade: getUpgrade(offer.id),
+          bought: result!.log.find((p) => p.kind === 'upgrade' && p.id === offer.id)?.time ?? null,
+        }))
+      : [],
+  )
+
+  function conditionText(clause: UnlockClause): string {
+    if ('earned' in clause) return `${euro(clause.earned)} earned`
+    if ('owned' in clause) return `${clause.atLeast} × ${buildingName(clause.owned)}`
+    if ('shelters' in clause) return `${clause.atLeast} × ${clause.shelters}`
+    if ('residents' in clause) return `${clause.atLeast} × ${clause.residents === 'any' ? 'residents' : clause.residents}`
+    return `${clause.aktionRuns} run ${clause.atLeast} ×`
+  }
   const minuteLabel = (m: number) => `${+m.toFixed(1)}m`
 
   // ── Content-derived curves ──
@@ -137,6 +155,24 @@
         </tbody>
       </table>
 
+      <h3>Upgrades in this run</h3>
+      <p class="muted">Payback is price ÷ the extra income per second at the moment the upgrade went on offer; – for upgrades that do not change income.</p>
+      <table>
+        <thead><tr><th>Upgrade</th><th>Conditions</th><th>Price</th><th>On offer</th><th>Payback</th><th>Bought</th></tr></thead>
+        <tbody>
+          {#each upgradeRows as row (row.id)}
+            <tr>
+              <td>{name(`upgrade.${row.id}.name`)}</td>
+              <td>{row.upgrade.when.map(conditionText).join(', ')}</td>
+              <td class="num">{euro(row.upgrade.price)}</td>
+              <td class="num">{clock(row.time)}</td>
+              <td class="num">{row.gain && row.gain > 0 ? `${Math.round(row.upgrade.price / row.gain)} s` : '–'}</td>
+              <td class="num">{row.bought === null ? '–' : clock(row.bought)}</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+
       <details>
         <summary>Purchase log ({result.log.length})</summary>
         <div class="scroll">
@@ -151,6 +187,8 @@
                       ? buildingName(purchase.id)
                       : purchase.kind === 'assistant'
                         ? 'Shop assistant'
+                        : purchase.kind === 'upgrade'
+                        ? `Upgrade: ${name(`upgrade.${purchase.id}.name`)}`
                         : `${purchase.kind === 'shelter' ? 'Shelter' : 'Animal'}: ${purchase.id}`}
                   </td>
                   <td class="num">{euro(purchase.price)}</td>

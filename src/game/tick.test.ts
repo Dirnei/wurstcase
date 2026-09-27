@@ -44,6 +44,7 @@ describe('tick', () => {
     expect(state.aktionen.cooldown).toEqual({ flyer: 0, openFarmDay: 0, viralReel: 0, factCheck: 0 })
     expect(state.aktionen.runs).toEqual({ flyer: 0, openFarmDay: 0, viralReel: 0, factCheck: 0 })
     expect(state.megaMeat).toEqual({ active: null, nextIn: null, nextIndex: 0, started: 0 })
+    expect(state.upgrades).toEqual([])
   })
 
   it('advances play time by the given seconds', () => {

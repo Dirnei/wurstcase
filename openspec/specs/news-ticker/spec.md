@@ -56,6 +56,7 @@ another one applies. The Act 1 hints and their conditions:
 | Wheat is in fashion | the wheat field is unlocked but none is owned |
 | Flyers could win the market | the flyers are unlocked and have never been run |
 | A fact check would help | a counter-event is active and the fact check can be run |
+| Upgrades are on offer | an upgrade is on offer and none is owned |
 
 #### Scenario: First hint
 - **WHEN** a new game starts
@@ -68,3 +69,7 @@ another one applies. The Act 1 hints and their conditions:
 #### Scenario: No hints apply
 - **WHEN** no hint's condition holds
 - **THEN** every headline is satirical
+
+#### Scenario: Upgrade hint
+- **WHEN** "strong hands" is on offer and no upgrade is owned
+- **THEN** the upgrades hint can appear, and it stops once the first upgrade is bought

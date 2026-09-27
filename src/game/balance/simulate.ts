@@ -1,6 +1,9 @@
+import { UPGRADES, type UpgradeId } from '../content/upgrades'
 import { createInitialState, type GameState } from '../state'
+import { isUpgradeOffered } from '../systems/upgrades'
 import { tick } from '../tick'
 import { createPlayer, playerStep, type Purchase } from './player'
+import { steadyIncome } from './steady'
 
 export interface SimulationSettings {
   minutes: number
@@ -17,9 +20,18 @@ export interface Sample {
   customers: number
 }
 
+/** When an upgrade first went on offer in the run, and what it would have added to income then. */
+export interface UpgradeOffer {
+  id: UpgradeId
+  time: number
+  /** Extra income per second at that moment; null for upgrades that do not change income. */
+  gain: number | null
+}
+
 export interface SimulationResult {
   samples: Sample[]
   log: Purchase[]
+  offers: UpgradeOffer[]
   final: GameState
 }
 
@@ -36,6 +48,7 @@ export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): Simul
   const player = createPlayer(settings.clicksPerSecond)
   const log: Purchase[] = []
   const samples: Sample[] = []
+  const offers: UpgradeOffer[] = []
   const earnedBySecond: number[] = [0]
   const seconds = Math.round(settings.minutes * 60)
 
@@ -46,6 +59,7 @@ export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): Simul
       )
       tick(state, STEP_SECONDS)
     }
+    recordOffers(state, offers)
     const totalEarned = state.totalEarned.toNumber()
     earnedBySecond.push(totalEarned)
     const from = Math.max(0, second - INCOME_WINDOW_SECONDS)
@@ -57,5 +71,23 @@ export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): Simul
       customers: state.customers.toNumber(),
     })
   }
-  return { samples, log, final: state }
+  return { samples, log, offers, final: state }
+}
+
+const INCOME_EFFECTS = new Set(['rate', 'price', 'orders'])
+
+function recordOffers(state: GameState, offers: UpgradeOffer[]): void {
+  for (const upgrade of UPGRADES) {
+    // An upgrade the player bought within the same second still counts as offered then.
+    const owned = state.upgrades.includes(upgrade.id)
+    if (offers.some((offer) => offer.id === upgrade.id) || (!owned && !isUpgradeOffered(state, upgrade.id))) {
+      continue
+    }
+    const customers = state.customers.toNumber()
+    const without = state.upgrades.filter((id) => id !== upgrade.id)
+    const gain = INCOME_EFFECTS.has(upgrade.effect.kind)
+      ? steadyIncome(state.buildings, customers, [...without, upgrade.id]) - steadyIncome(state.buildings, customers, without)
+      : null
+    offers.push({ id: upgrade.id, time: state.playTime, gain })
+  }
 }

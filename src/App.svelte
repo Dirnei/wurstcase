@@ -4,6 +4,7 @@
   import { CHAINS } from './game/content/buildings'
   import { isAktionenUnlocked } from './game/systems/aktionen'
   import { isLebenshofUnlocked } from './game/systems/rescue'
+  import { isUpgradesUnlocked } from './game/systems/upgrades'
   import AktionenPanel from './ui/AktionenPanel.svelte'
   import BulkBuyersPanel from './ui/BulkBuyersPanel.svelte'
   import ChainPanel from './ui/ChainPanel.svelte'
@@ -19,12 +20,14 @@
   import SalesPanel from './ui/SalesPanel.svelte'
   import SavePanel from './ui/SavePanel.svelte'
   import StockPanel from './ui/StockPanel.svelte'
+  import UpgradesPanel from './ui/UpgradesPanel.svelte'
   import { readGame } from './ui/game.svelte'
   import { currentRoute } from './ui/route.svelte'
 
   const route = $derived(currentRoute())
   const lebenshof = $derived(readGame(isLebenshofUnlocked))
   const aktionen = $derived(readGame(isAktionenUnlocked))
+  const upgrades = $derived(readGame(isUpgradesUnlocked))
   // Asked only when #dev is opened; the page and its chart library load only if it is on.
   const devPage = $derived(route === 'dev' ? loadDevPage() : null)
 
@@ -65,6 +68,9 @@
   {#each CHAINS as chain (chain)}
     <ChainPanel {chain} />
   {/each}
+  {#if upgrades}
+    <UpgradesPanel />
+  {/if}
   {#if lebenshof}
     <LebenshofPanel />
   {/if}

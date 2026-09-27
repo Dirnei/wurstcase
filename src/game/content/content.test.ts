@@ -8,9 +8,10 @@ import { BUYERS, getBuyer } from './buyers'
 import { HINTS, SATIRE } from './headlines'
 import { MANUAL_ACTIONS } from './manual'
 import { MEGAMEAT_EVENT_IDS, MEGAMEAT_EVENTS } from './megaMeatEvents'
+import { UPGRADE_IDS, UPGRADES } from './upgrades'
 import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
 import { veganValue } from '../balance/value'
-import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES } from './resources'
+import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES, type ProductId } from './resources'
 import { LEBENSHOF_UNLOCK_AT, SHELTER_IDS, SHELTERS } from './shelters'
 
 describe('content', () => {
@@ -188,12 +189,42 @@ describe('content', () => {
         `event.${id}.effect`,
       ]),
       ...AKTION_IDS.map((id) => `aktion.${id}.name`),
+      ...UPGRADE_IDS.flatMap((id) => [`upgrade.${id}.name`, `upgrade.${id}.line`]),
+      ...UPGRADES.map((u) => `upgrade.effect.${u.effect.kind}`),
     ]
     for (const dictionary of [de, en] as Record<string, string>[]) {
       for (const key of keys) {
         expect(dictionary[key], key).toBeTruthy()
       }
     }
+  })
+
+  it('has valid upgrades', () => {
+    expect(new Set(UPGRADE_IDS).size).toBe(UPGRADE_IDS.length)
+    expect(UPGRADES).toHaveLength(17)
+    for (const upgrade of UPGRADES) {
+      expect(Number.isInteger(upgrade.price) && upgrade.price > 0, upgrade.id).toBe(true)
+      expect(upgrade.when.length, upgrade.id).toBeGreaterThan(0)
+      for (const clause of upgrade.when) {
+        if ('owned' in clause) expect(BUILDING_IDS, upgrade.id).toContain(clause.owned)
+        if ('shelters' in clause) expect(SHELTER_IDS, upgrade.id).toContain(clause.shelters)
+        if ('residents' in clause && clause.residents !== 'any') expect(SPECIES_IDS, upgrade.id).toContain(clause.residents)
+        if ('aktionRuns' in clause) expect(AKTION_IDS, upgrade.id).toContain(clause.aktionRuns)
+      }
+      const effect = upgrade.effect
+      if ('factor' in effect) expect(effect.factor, upgrade.id).toBeGreaterThan(0)
+      if (effect.kind === 'manual') expect(Number.isInteger(effect.factor), upgrade.id).toBe(true)
+      if ('add' in effect) expect(Number.isInteger(effect.add) && effect.add > 0, upgrade.id).toBe(true)
+      if (effect.kind === 'rate') for (const id of effect.buildings) expect(BUILDING_IDS, upgrade.id).toContain(id)
+    }
+  })
+
+  it('keeps the product order when every price upgrade is owned', () => {
+    const upgraded = (product: ProductId) =>
+      PRODUCT_PRICES[product] +
+      UPGRADES.reduce((sum, u) => sum + (u.effect.kind === 'price' && u.effect.product === product ? u.effect.add : 0), 0)
+    const order = [...PRODUCTS].sort((a, b) => upgraded(b) - upgraded(a))
+    expect(order).toEqual(PRODUCTS_BY_PRICE)
   })
 
   it('lists species by price', () => {

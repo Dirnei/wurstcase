@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { CURRENT_FORMAT, decodeSave, encodeSave, exportSave, importSave } from './save'
 import { createInitialState, type GameState } from './state'
+import { isUpgradeOffered } from './systems/upgrades'
 
 const NOW = 1_790_000_000_000
 
@@ -205,6 +206,33 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.awareness.toNumber()).toBe(0)
     expect(restored.aktionen.runs.flyer).toBe(0)
     expect(restored.megaMeat).toEqual({ active: null, nextIn: null, nextIndex: 0, started: 0 })
+  })
+
+  it('restores owned upgrades in order', () => {
+    const state = createInitialState()
+    state.upgrades = ['betterSeeds', 'strongHands', 'leverkasRecipe']
+    expect(decodedState(encodeSave(state, NOW)).upgrades).toEqual(['betterSeeds', 'strongHands', 'leverkasRecipe'])
+  })
+
+  it('migrates a format 6 save with no upgrades owned', () => {
+    const format6 = savedState()
+    delete format6.upgrades
+    format6.buildings.soybeanField = 6
+    const restored = decodedState(envelope(6, format6))
+    expect(restored.upgrades).toEqual([])
+    expect(isUpgradeOffered(restored, 'betterSeeds')).toBe(true)
+  })
+
+  it('drops unknown and repeated upgrades', () => {
+    const state = savedState()
+    state.upgrades = ['strongHands', 'goldenSpatula', 'strongHands', 'mustard']
+    expect(decodedState(envelope(CURRENT_FORMAT, state)).upgrades).toEqual(['strongHands', 'mustard'])
+  })
+
+  it('rejects upgrades that are not a list', () => {
+    const state = savedState()
+    state.upgrades = { strongHands: true }
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
   })
 
   it('ignores unknown Aktionen', () => {

@@ -1,9 +1,9 @@
 import type Decimal from 'break_eternity.js'
-import { PRODUCT_PRICES } from '../content/products'
 import { PRODUCTS, type ProductId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import type { GameState } from '../state'
 import { add, advance, sum } from './rollingWindow'
+import { ordersFactor, productPrice } from './upgrades'
 
 /** Game time over which sales to customers are averaged. */
 export const SALES_WINDOW_SECONDS = 60
@@ -20,7 +20,7 @@ export function advanceSalesStats(state: GameState, seconds: number): void {
 
 /** Orders all customers place per minute. */
 export function demandPerMinute(state: Readonly<GameState>): Decimal {
-  return state.customers.mul(ORDERS_PER_CUSTOMER * 60)
+  return state.customers.mul(ORDERS_PER_CUSTOMER * ordersFactor(state) * 60)
 }
 
 /**
@@ -31,7 +31,7 @@ export function soldPerMinute(state: Readonly<GameState>, product: ProductId): n
   return (sum(state.sales, product, SALES_WINDOW_SECONDS) * 60) / SALES_WINDOW_SECONDS
 }
 
-/** Euros from customer sales in the last minute; prices are fixed, so it follows from units sold. */
+/** Euros from customer sales in the last minute, from units sold at the current (upgraded) prices. */
 export function incomePerMinute(state: Readonly<GameState>): number {
-  return PRODUCTS.reduce((total, product) => total + soldPerMinute(state, product) * PRODUCT_PRICES[product], 0)
+  return PRODUCTS.reduce((total, product) => total + soldPerMinute(state, product) * productPrice(state, product), 0)
 }

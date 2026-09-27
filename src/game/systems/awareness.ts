@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js'
 import { getSpecies } from '../content/animals'
 import { CONVERSION_PER_AWARENESS, POPULATION } from '../content/town'
 import type { GameState } from '../state'
+import { awarenessFactor, conversionFactor } from './upgrades'
 import { activeFactors } from './villain'
 
 /** Float steps such as 20 × 0.1 can land just below a whole point; this much short still counts. */
@@ -9,7 +10,10 @@ const POINT_EPSILON = 1e-9
 
 /** Residents' awareness per second before counter-events. */
 export function baseAwarenessRate(state: Readonly<GameState>): number {
-  return state.residents.reduce((sum, resident) => sum + getSpecies(resident.species).awareness, 0)
+  return state.residents.reduce(
+    (sum, resident) => sum + getSpecies(resident.species).awareness * awarenessFactor(state, resident.species),
+    0,
+  )
 }
 
 /** Awareness per second from all residents, lowered while a counter-event halves it. */
@@ -33,7 +37,7 @@ export function gatherAwareness(state: GameState, seconds: number): void {
 /** Townspeople converted per second; slows as fewer townspeople are left to convince. */
 export function conversionRate(state: Readonly<GameState>): number {
   const share = Math.max(0, 1 - state.customers.toNumber() / POPULATION)
-  return CONVERSION_PER_AWARENESS * awarenessRate(state) * activeFactors(state).conversion * share
+  return CONVERSION_PER_AWARENESS * conversionFactor(state) * awarenessRate(state) * activeFactors(state).conversion * share
 }
 
 /**

@@ -36,6 +36,8 @@ export type HintClause =
   /** The Aktion is offered and has never been run. */
   | { aktionNeverRun: AktionId }
   | { canFactCheck: true }
+  /** An upgrade is on offer and none has been bought yet. */
+  | { upgradeOffered: true }
 
 /** A tutorial hint (text key headline.hint.<id>); earlier hints win when several apply. */
 export interface HintDef {
@@ -51,4 +53,5 @@ export const HINTS: readonly HintDef[] = [
   { id: 'wheat', when: [{ unlocked: 'wheatField' }, { owned: 'wheatField', is: 'none' }] },
   { id: 'flyer', when: [{ aktionNeverRun: 'flyer' }] },
   { id: 'factCheck', when: [{ canFactCheck: true }] },
+  { id: 'upgrades', when: [{ upgradeOffered: true }] },
 ]

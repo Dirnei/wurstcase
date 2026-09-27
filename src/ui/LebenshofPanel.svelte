@@ -15,6 +15,7 @@
     totalSpace,
     usedSpace,
   } from '../game/systems/rescue'
+  import { awarenessFactor, spaceBonus } from '../game/systems/upgrades'
   import type { TranslationKey } from '../i18n/translate'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
@@ -30,6 +31,7 @@
       SHELTERS.filter((shelter) => isShelterUnlocked(state, shelter.id)).map((shelter) => ({
         ...shelter,
         count: state.shelters[shelter.id],
+        space: shelter.space + spaceBonus(state, shelter.id),
         price: shelterPrice(state, shelter.id),
         buildable: canBuildShelter(state, shelter.id),
       })),
@@ -42,6 +44,7 @@
         ...species,
         price: animalPrice(state, species.id),
         check: canRescue(state, species.id),
+        awareness: species.awareness * awarenessFactor(state, species.id),
       })),
     ),
   )

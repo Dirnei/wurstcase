@@ -127,3 +127,21 @@ describe('convert', () => {
     expect(state.conversionProgress).toBe(0)
   })
 })
+
+describe('upgrade effects on awareness', () => {
+  it('doubles chicken awareness with the hen photo shoot', () => {
+    const state = withLebenshof({ chicken: 3 })
+    state.upgrades = ['henPhotoShoot']
+    expect(awarenessRate(state)).toBe(6)
+  })
+
+  it('converts half as fast again with the local newspaper', () => {
+    const plain = atRate(100, 10_000)
+    convert(plain, 10)
+    const upgraded = atRate(100, 10_000)
+    upgraded.upgrades = ['localNewspaper']
+    convert(upgraded, 10)
+    expect(plain.customers.toNumber()).toBe(10_010)
+    expect(upgraded.customers.toNumber()).toBe(10_015)
+  })
+})

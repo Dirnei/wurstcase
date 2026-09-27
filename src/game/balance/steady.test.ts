@@ -39,3 +39,18 @@ describe('steadyIncome', () => {
     expect(steadyIncome(both, 10)).toBeCloseTo(0.25 * 25 + 0.25 * 3, 10)
   })
 })
+
+describe('steadyIncome with upgrades', () => {
+  it('applies rate and price upgrades', () => {
+    const soy = owned({ soybeanField: 1, tofuPress: 1, tofuWurstKitchen: 1 })
+    // Better seeds lift the field to 2 soybeans/s, so the press runs at its full 0.5 tofu/s.
+    expect(steadyIncome(soy, 100, ['betterSeeds'])).toBeCloseTo(1.5, 10)
+    const wheat = owned({ wheatField: 1, seitanKitchen: 1, leverkasOven: 1 })
+    expect(steadyIncome(wheat, 100, ['leverkasRecipe'])).toBeCloseTo(0.25 * 35, 10)
+  })
+
+  it('raises the demand limit with the loyalty card', () => {
+    const soy = owned({ soybeanField: 3, tofuPress: 2, tofuWurstKitchen: 2 })
+    expect(steadyIncome(soy, 10, ['loyaltyCard'])).toBeCloseTo(0.75 * 3, 10)
+  })
+})

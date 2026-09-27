@@ -173,3 +173,23 @@ describe('isOverstocked', () => {
     expect(isOverstocked(stateWith((s) => (s.stock.soybeans = new Decimal(1000))))).toBe(false)
   })
 })
+
+describe('upgrade effects on sales', () => {
+  it('sells Leverkas at the upgraded price, most expensive first', () => {
+    const state = createInitialState()
+    state.upgrades = ['leverkasRecipe']
+    state.stock.leverkas = new Decimal(2)
+    state.stock.tofuWurst = new Decimal(5)
+    state.openOrders = new Decimal(2)
+    sell(state)
+    expect(state.money.toNumber()).toBe(70)
+    expect(state.stock.tofuWurst.toNumber()).toBe(5)
+  })
+
+  it('builds orders faster with the loyalty card', () => {
+    const state = createInitialState()
+    state.upgrades = ['loyaltyCard']
+    takeOrders(state, 10)
+    expect(state.openOrders.toNumber()).toBe(7)
+  })
+})

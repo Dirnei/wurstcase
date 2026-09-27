@@ -2,6 +2,7 @@ import { getSpecies, SPECIES, type SpeciesId } from '../content/animals'
 import { BUILDINGS, CHAINS, type BuildingId, type ChainId } from '../content/buildings'
 import { MANUAL_ACTIONS } from '../content/manual'
 import { SHELTERS, type ShelterId } from '../content/shelters'
+import { getUpgrade, type UpgradeEffect, type UpgradeId } from '../content/upgrades'
 import { ASSISTANT } from '../content/town'
 import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
@@ -19,18 +20,22 @@ import {
   usedSpace,
 } from '../systems/rescue'
 import { canHireAssistant, canSell, hireAssistant, sell } from '../systems/sales'
+import { awarenessFactor, buyUpgrade, canBuyUpgrade, offeredUpgrades, spaceBonus } from '../systems/upgrades'
 import { steadyIncome } from './steady'
 import { manualPass } from './value'
 
 export interface Purchase {
   /** Game time in seconds. */
   time: number
-  kind: 'building' | 'assistant' | 'shelter' | 'animal'
+  kind: 'building' | 'assistant' | 'shelter' | 'animal' | 'upgrade'
   id: string
   price: number
 }
 
-type Target = { kind: 'buildings'; pieces: BuildingId[] } | { kind: 'rescue'; species: SpeciesId }
+type Target =
+  | { kind: 'buildings'; pieces: BuildingId[] }
+  | { kind: 'upgrade'; id: UpgradeId }
+  | { kind: 'rescue'; species: SpeciesId }
 
 export interface Player {
   clicksPerSecond: number
@@ -43,6 +48,12 @@ const MIN_GAIN = 1e-9
 
 /** Names are irrelevant to balancing; always taking the first free one keeps runs deterministic. */
 const NO_RANDOM = () => 0
+
+/** Upgrades that change income, and so are scored like buildings. */
+const INCOME_EFFECTS: readonly UpgradeEffect['kind'][] = ['rate', 'price', 'orders']
+
+/** Other upgrades are bought when they cost at most this many seconds of income. */
+const CHEAP_UPGRADE_SECONDS = 300
 
 export function createPlayer(clicksPerSecond: number): Player {
   return { clicksPerSecond, clickCarry: 0, target: null }
@@ -57,6 +68,9 @@ export function playerStep(player: Player, state: GameState, seconds: number, lo
   if (canHireAssistant(state)) {
     hireAssistant(state)
     log({ time: state.playTime, kind: 'assistant', id: 'assistant', price: ASSISTANT.price })
+  }
+  if (!player.target) {
+    buyCheapUpgrades(state, log)
   }
   player.target ??= chooseTarget(state)
   if (player.target) {
@@ -104,9 +118,28 @@ function clickChain(state: GameState, chain: ChainId): void {
   }
 }
 
+/** Income per second the player can count on: the steady model, or the average so far while clicking. */
+function incomeEstimate(state: Readonly<GameState>): number {
+  const average = state.playTime > 0 ? state.totalEarned.toNumber() / state.playTime : 0
+  return Math.max(steadyIncome(state.buildings, state.customers.toNumber(), state.upgrades), average)
+}
+
+/** Buys upgrades without an income effect once they cost no more than a few minutes of income. */
+function buyCheapUpgrades(state: GameState, log: (p: Purchase) => void): void {
+  for (const upgrade of offeredUpgrades(state)) {
+    if (INCOME_EFFECTS.includes(upgrade.effect.kind)) {
+      continue
+    }
+    if (upgrade.price <= incomeEstimate(state) * CHEAP_UPGRADE_SECONDS && canBuyUpgrade(state, upgrade.id)) {
+      buyUpgrade(state, upgrade.id)
+      log({ time: state.playTime, kind: 'upgrade', id: upgrade.id, price: upgrade.price })
+    }
+  }
+}
+
 function chooseTarget(state: Readonly<GameState>): Target | null {
   const customers = state.customers.toNumber()
-  const before = steadyIncome(state.buildings, customers)
+  const before = steadyIncome(state.buildings, customers, state.upgrades)
   const unlocked = BUILDINGS.filter((building) => isUnlocked(state, building.id)).map((b) => b.id)
   const candidates: BuildingId[][] = unlocked.map((id) => [id])
   for (const chain of CHAINS) {
@@ -125,11 +158,25 @@ function chooseTarget(state: Readonly<GameState>): Target | null {
       after[id] += 1
       price += buildingPrice(state, id).toNumber()
     }
-    const gain = steadyIncome(after, customers) - before
+    const gain = steadyIncome(after, customers, state.upgrades) - before
     if (gain > MIN_GAIN && price / gain < bestScore) {
       best = pieces
       bestScore = price / gain
     }
+  }
+  let bestUpgrade: UpgradeId | null = null
+  for (const upgrade of offeredUpgrades(state)) {
+    if (!INCOME_EFFECTS.includes(upgrade.effect.kind)) {
+      continue
+    }
+    const gain = steadyIncome(state.buildings, customers, [...state.upgrades, upgrade.id]) - before
+    if (gain > MIN_GAIN && upgrade.price / gain < bestScore) {
+      bestUpgrade = upgrade.id
+      bestScore = upgrade.price / gain
+    }
+  }
+  if (bestUpgrade) {
+    return { kind: 'upgrade', id: bestUpgrade }
   }
   if (best) {
     return { kind: 'buildings', pieces: [...best] }
@@ -146,7 +193,7 @@ function bestSpecies(state: Readonly<GameState>): SpeciesId | null {
     if (!isSpeciesOffered(state, species.id)) {
       continue
     }
-    const value = species.awareness / animalPrice(state, species.id).toNumber()
+    const value = (species.awareness * awarenessFactor(state, species.id)) / animalPrice(state, species.id).toNumber()
     if (value > bestValue) {
       best = species.id
       bestValue = value
@@ -163,7 +210,7 @@ function bestShelter(state: Readonly<GameState>): ShelterId | null {
     if (!isShelterUnlocked(state, shelter.id)) {
       continue
     }
-    const value = shelterPrice(state, shelter.id).toNumber() / shelter.space
+    const value = shelterPrice(state, shelter.id).toNumber() / (shelter.space + spaceBonus(state, shelter.id))
     if (value < bestValue) {
       best = shelter.id
       bestValue = value
@@ -189,6 +236,15 @@ function buyTowards(player: Player, state: GameState, log: (p: Purchase) => void
       target.pieces.splice(target.pieces.indexOf(next), 1)
     }
     if (target.pieces.length === 0) {
+      player.target = null
+    }
+    return
+  }
+
+  if (target.kind === 'upgrade') {
+    if (canBuyUpgrade(state, target.id)) {
+      buyUpgrade(state, target.id)
+      log({ time: state.playTime, kind: 'upgrade', id: target.id, price: getUpgrade(target.id).price })
       player.target = null
     }
     return

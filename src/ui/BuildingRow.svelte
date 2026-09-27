@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getBuilding, type BuildingId } from '../game/content/buildings'
   import { buildingPrice, buyBuilding, canBuy } from '../game/systems/buildings'
+  import { rateFactor } from '../game/systems/upgrades'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
   import { t } from './i18n.svelte'
@@ -12,10 +13,11 @@
 
   const building = $derived(getBuilding(id))
   const owned = $derived(readGame((state) => state.buildings[id]))
+  const rate = $derived(building.rate * readGame((state) => rateFactor(state, id)))
   const price = $derived(euros(readGame((state) => buildingPrice(state, id))))
   const affordable = $derived(readGame((state) => canBuy(state, id)))
   const filled = $derived(
-    owned * building.rate > STEADY_UNITS_PER_SECOND
+    owned * rate > STEADY_UNITS_PER_SECOND
       ? 1
       : readGame((state) => Math.min(state.progress[id], 1)),
   )
@@ -27,7 +29,7 @@
     <span class="muted">{t('building.owned', { count: owned })}</span>
     <span class="muted">
       {t('building.perSecond', {
-        amount: amount(owned * building.rate),
+        amount: amount(owned * rate),
         resource: t(`resource.${building.output}`),
       })}
     </span>

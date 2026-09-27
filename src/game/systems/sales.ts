@@ -1,5 +1,4 @@
 import Decimal from 'break_eternity.js'
-import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from '../content/products'
 import { PRODUCTS } from '../content/resources'
 import {
   ASSISTANT,
@@ -9,10 +8,11 @@ import {
 } from '../content/town'
 import type { GameState } from '../state'
 import { recordSale } from './salesStats'
+import { ordersFactor, productPrice, productsByPrice } from './upgrades'
 
 /** Orders per second from all customers. */
 export function orderRate(state: Readonly<GameState>): Decimal {
-  return state.customers.mul(ORDERS_PER_CUSTOMER)
+  return state.customers.mul(ORDERS_PER_CUSTOMER * ordersFactor(state))
 }
 
 /** The most open orders that can pile up. */
@@ -44,12 +44,12 @@ export function takeOrders(state: GameState, seconds: number): void {
 
 /** Fills open orders from stock, most expensive product first. */
 function fillOrders(state: GameState): void {
-  for (const product of PRODUCTS_BY_PRICE) {
+  for (const product of productsByPrice(state)) {
     const sold = Decimal.min(state.stock[product], state.openOrders)
     if (sold.lte(0)) {
       continue
     }
-    const earned = sold.mul(PRODUCT_PRICES[product])
+    const earned = sold.mul(productPrice(state, product))
     state.stock[product] = state.stock[product].sub(sold)
     state.openOrders = state.openOrders.sub(sold)
     state.money = state.money.add(earned)
@@ -62,10 +62,10 @@ function fillOrders(state: GameState): void {
 export function saleValue(state: Readonly<GameState>): Decimal {
   let orders = state.openOrders
   let value = new Decimal(0)
-  for (const product of PRODUCTS_BY_PRICE) {
+  for (const product of productsByPrice(state)) {
     const sold = Decimal.min(state.stock[product], orders)
     orders = orders.sub(sold)
-    value = value.add(sold.mul(PRODUCT_PRICES[product]))
+    value = value.add(sold.mul(productPrice(state, product)))
   }
   return value
 }

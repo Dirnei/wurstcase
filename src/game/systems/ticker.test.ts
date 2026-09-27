@@ -125,6 +125,16 @@ describe('hintApplies', () => {
     expect(hintApplies(state, hint('flyer'))).toBe(false)
   })
 
+  it('checks for an upgrade on offer before the first purchase', () => {
+    const state = createInitialState()
+    expect(hintApplies(state, hint('upgrades'))).toBe(false)
+    state.totalEarned = new Decimal(30)
+    expect(hintApplies(state, hint('upgrades'))).toBe(true)
+    state.upgrades = ['strongHands']
+    state.totalEarned = new Decimal(600)
+    expect(hintApplies(state, hint('upgrades'))).toBe(false)
+  })
+
   it('checks whether a fact check can run', () => {
     const state = createInitialState()
     state.awareness = new Decimal(1_000)

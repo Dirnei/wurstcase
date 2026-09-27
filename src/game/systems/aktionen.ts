@@ -1,6 +1,7 @@
 import { AKTION_IDS, AKTIONEN, getAktion, type AktionId } from '../content/aktionen'
 import { POPULATION } from '../content/town'
 import type { GameState } from '../state'
+import { aktionCostFactor } from './upgrades'
 import { activeFactors, endEvent, onFirstAktion } from './villain'
 
 /** Why an Aktion can run or not. */
@@ -20,9 +21,9 @@ export function isAktionenUnlocked(state: Readonly<GameState>): boolean {
   return AKTIONEN.some((aktion) => isAktionOffered(state, aktion.id))
 }
 
-/** Awareness cost right now, raised while MegaMeat has booked the billboards. */
+/** Awareness cost right now: raised while MegaMeat has booked the billboards, lowered by upgrades. */
 export function aktionCost(state: Readonly<GameState>, id: AktionId): number {
-  return Math.ceil(getAktion(id).cost * activeFactors(state).aktionCost)
+  return Math.ceil(getAktion(id).cost * activeFactors(state).aktionCost * aktionCostFactor(state))
 }
 
 /** Customers a campaign would convert now: fewer as the town fills up, never beyond it. */

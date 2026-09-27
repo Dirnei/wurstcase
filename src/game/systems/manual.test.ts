@@ -97,3 +97,31 @@ function clicks(state: GameState, id: ManualActionId, times: number) {
     expect(performManual(state, id), id).toBe(true)
   }
 }
+
+describe('upgrade effects on manual actions', () => {
+  it('presses two tofu per click with strong hands', () => {
+    const state = createInitialState()
+    state.upgrades = ['strongHands']
+    state.stock.soybeans = new Decimal(6)
+    expect(performManual(state, 'pressTofu')).toBe(true)
+    expect(state.stock.soybeans.toNumber()).toBe(0)
+    expect(state.stock.tofu.toNumber()).toBe(2)
+  })
+
+  it('makes as many whole units as the stock covers', () => {
+    const state = createInitialState()
+    state.upgrades = ['strongHands']
+    state.stock.soybeans = new Decimal(4)
+    expect(canPerform(state, 'pressTofu')).toBe(true)
+    performManual(state, 'pressTofu')
+    expect(state.stock.soybeans.toNumber()).toBe(1)
+    expect(state.stock.tofu.toNumber()).toBe(1)
+  })
+
+  it('harvests two soybeans per click with strong hands', () => {
+    const state = createInitialState()
+    state.upgrades = ['strongHands']
+    performManual(state, 'harvestSoybeans')
+    expect(state.stock.soybeans.toNumber()).toBe(2)
+  })
+})

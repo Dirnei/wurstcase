@@ -129,3 +129,13 @@ describe('runAktion', () => {
     expect(runAktion(state, 'flyer')).toBe(false)
   })
 })
+
+describe('upgrade effects on Aktionen', () => {
+  it('makes Aktionen cheaper with the Instagram account, also under billboards', () => {
+    const state = withPool(1_000)
+    state.upgrades = ['instagram']
+    expect(aktionCost(state, 'flyer')).toBe(75)
+    state.megaMeat = { active: { event: 'billboards', remaining: 90 }, nextIn: null, nextIndex: 0, started: 3 }
+    expect(aktionCost(state, 'flyer')).toBe(150)
+  })
+})

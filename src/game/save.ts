@@ -6,6 +6,7 @@ import { BUYER_IDS } from './content/buyers'
 import { EVENT_PAUSE, isMegaMeatEventId, MEGAMEAT_EVENTS } from './content/megaMeatEvents'
 import { RESOURCES } from './content/resources'
 import { SHELTER_IDS } from './content/shelters'
+import { isUpgradeId, type UpgradeId } from './content/upgrades'
 import { createInitialState, type GameState, type MegaMeatState, type Resident } from './state'
 
 /*
@@ -16,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 6
+export const CURRENT_FORMAT = 7
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -48,6 +49,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
           ...state,
         }
       : state,
+  // 6 → 7 (upgrades): no upgrade owned.
+  6: (state) => (isRecord(state) ? { upgrades: [], ...state } : state),
 }
 
 export type DecodeResult =
@@ -140,6 +143,7 @@ function writeState(state: GameState): Record<string, unknown> {
     awarenessProgress: state.awarenessProgress,
     aktionen: { cooldown: { ...state.aktionen.cooldown }, runs: { ...state.aktionen.runs } },
     megaMeat: { ...state.megaMeat, active: state.megaMeat.active && { ...state.megaMeat.active } },
+    upgrades: [...state.upgrades],
   }
 }
 
@@ -154,7 +158,8 @@ function readState(value: unknown): GameState | null {
     !Array.isArray(value.residents) ||
     !isRecord(value.aktionen) ||
     !isRecord(value.aktionen.cooldown) ||
-    !isRecord(value.aktionen.runs)
+    !isRecord(value.aktionen.runs) ||
+    !Array.isArray(value.upgrades)
   ) {
     return null
   }
@@ -230,6 +235,8 @@ function readState(value: unknown): GameState | null {
     state.aktionen.cooldown[id] = cooldown
     state.aktionen.runs[id] = runs as number
   }
+  // Unknown ids (content removed) and repeats are dropped; the purchase order is kept.
+  state.upgrades = [...new Set(value.upgrades.filter(isUpgradeId))] as UpgradeId[]
   for (const entry of value.residents) {
     const resident = readResident(entry)
     if (resident === null) {

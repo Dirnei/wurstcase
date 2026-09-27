@@ -49,6 +49,23 @@ describe('simulate', () => {
     expect(run.final.customers.toNumber()).toBeGreaterThan(10)
   })
 
+  it('buys better seeds once the fifth soybean field makes them pay', () => {
+    const { log } = simulate({ minutes: 60, clicksPerSecond: 2 })
+    const seeds = log.findIndex((p) => p.kind === 'upgrade' && p.id === 'betterSeeds')
+    const fifthField = log.filter((p) => p.id === 'soybeanField')[4]
+    expect(seeds).toBeGreaterThan(log.indexOf(fifthField))
+    expect(log.some((p) => p.kind === 'upgrade' && p.id === 'strongHands')).toBe(true)
+  })
+
+  it('records when each upgrade went on offer and what it would add', () => {
+    const { offers } = simulate({ minutes: 20, clicksPerSecond: 2 })
+    const hands = offers.find((offer) => offer.id === 'strongHands')!
+    expect(hands.time).toBeGreaterThan(0)
+    expect(hands.gain).toBeNull()
+    const seeds = offers.find((offer) => offer.id === 'betterSeeds')
+    if (seeds) expect(seeds.gain).not.toBeNull()
+  })
+
   it('runs a 60-minute game in under 2 seconds', () => {
     const start = performance.now()
     simulate({ minutes: 60, clicksPerSecond: 2 })

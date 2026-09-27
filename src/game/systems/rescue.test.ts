@@ -193,3 +193,18 @@ describe('names', () => {
     expect(pickName(state, 'cow', () => 0.5)).toBe(6)
   })
 })
+
+describe('upgrade effects on the Lebenshof', () => {
+  it('adds space to every stable with more straw', () => {
+    const state = createInitialState()
+    state.shelters.stable = 2
+    state.upgrades = ['moreStraw']
+    expect(totalSpace(state)).toBe(12)
+  })
+
+  it('makes MegaMeat cheaper with the tough negotiator', () => {
+    const state = createInitialState()
+    state.upgrades = ['negotiator']
+    expect(animalPrice(state, 'chicken').toNumber()).toBe(40)
+  })
+})
