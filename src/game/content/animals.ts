@@ -2,7 +2,6 @@ export type SpeciesId = 'chicken' | 'pig' | 'cow'
 
 export interface SpeciesDef {
   id: SpeciesId
-  emoji: string
   /** Price in euros of the first animal of this species bought from MegaMeat. */
   basePrice: number
   /** Total euros earned in this game at which MegaMeat offers the species. */
@@ -21,9 +20,9 @@ export const NAME_POOL_SIZE = 12
 
 /** Species in order of price. */
 export const SPECIES: readonly SpeciesDef[] = [
-  { id: 'chicken', emoji: '🐔', basePrice: 50, unlockAt: 100, space: 1, awareness: 1 },
-  { id: 'pig', emoji: '🐷', basePrice: 600, unlockAt: 1500, space: 4, awareness: 5 },
-  { id: 'cow', emoji: '🐮', basePrice: 4000, unlockAt: 5000, space: 10, awareness: 20 },
+  { id: 'chicken', basePrice: 50, unlockAt: 100, space: 1, awareness: 1 },
+  { id: 'pig', basePrice: 600, unlockAt: 1500, space: 4, awareness: 5 },
+  { id: 'cow', basePrice: 4000, unlockAt: 5000, space: 10, awareness: 20 },
 ]
 
 export const SPECIES_IDS: readonly SpeciesId[] = SPECIES.map((species) => species.id)

@@ -28,7 +28,7 @@
 
 <section class="panel">
   <h2>{t('aktionen.title')}</h2>
-  <p class="pool">{t('aktionen.pool', { amount: pool })}</p>
+  <p class="pool"><ArtSlot kind="stat" id="awareness" size="sm" />{t('aktionen.pool', { amount: pool })}</p>
 
 
   <ul>
@@ -47,6 +47,7 @@
         </small>
         <button type="button" class="game-button primary" disabled={offer.check !== 'ok'} onclick={() => run(offer.id)}>
           {t('aktionen.run', { name: t(`aktion.${offer.id}.name`), cost: amount(offer.cost) })}
+          <ArtSlot kind="stat" id="awareness" size="sm" /><span class="visually-hidden">{t('topbar.awareness')}</span>
         </button>
       </li>
     {/each}
@@ -59,7 +60,17 @@
   }
 
   .pool {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-variant-numeric: tabular-nums;
+  }
+
+  li button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
 
   ul {

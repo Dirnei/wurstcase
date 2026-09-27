@@ -3,6 +3,7 @@
   import { buyUpgrade, canBuyUpgrade, offeredUpgrades } from '../game/systems/upgrades'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
+  import type { ArtKind } from './art'
   import ArtSlot from './ArtSlot.svelte'
   import { currentLang, t } from './i18n.svelte'
 
@@ -15,6 +16,22 @@
 
   // Factors such as ×0.75 need two decimals, which the game's amount format would cut off.
   const factor = (value: number) => new Intl.NumberFormat(currentLang(), { maximumFractionDigits: 2 }).format(value)
+
+  // The first thing an effect names, drawn next to the effect type.
+  function target(effect: UpgradeEffect): { kind: ArtKind; id: string } | null {
+    switch (effect.kind) {
+      case 'rate':
+        return { kind: 'building', id: effect.buildings[0] }
+      case 'price':
+        return { kind: 'resource', id: effect.product }
+      case 'awareness':
+        return { kind: 'species', id: effect.species }
+      case 'space':
+        return { kind: 'shelter', id: effect.shelter }
+      default:
+        return null
+    }
+  }
 
   function effectText(effect: UpgradeEffect): string {
     switch (effect.kind) {
@@ -44,7 +61,13 @@
   <ul class="offers">
     {#each offers as offer (offer.id)}
       <li class="card">
-        <ArtSlot kind="effect" id={offer.effect.kind} size="lg" />
+        <span class="art">
+          <ArtSlot kind="effect" id={offer.effect.kind} size="lg" />
+          {#if target(offer.effect)}
+            {@const item = target(offer.effect)!}
+            <span class="target"><ArtSlot kind={item.kind} id={item.id} size="md" /></span>
+          {/if}
+        </span>
         <div class="about">
           <h3>{t(`upgrade.${offer.id}.name`)}</h3>
           <span class="effect">{effectText(offer.effect)}</span>
@@ -101,6 +124,21 @@
 
   .offers button {
     grid-column: 1 / -1;
+  }
+
+  .art {
+    position: relative;
+    width: 48px;
+    height: 48px;
+  }
+
+  .target {
+    position: absolute;
+    right: -10px;
+    bottom: -10px;
+    padding: 1px;
+    border-radius: 50%;
+    background: var(--paper);
   }
 
   h3 {

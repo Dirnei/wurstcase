@@ -1,0 +1,234 @@
+/* Shared by every illustration in src/ui/art: ink outlines, and fills from the --art-* tokens. */
+
+.art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--art-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Small sizes: silhouette and main fills only, with a heavier line so it stays crisp. */
+[data-size='sm'] .art {
+  stroke-width: 3;
+}
+
+[data-size='sm'] .art .detail {
+  display: none;
+}
+
+[data-size='md'] .art {
+  stroke-width: 2.4;
+}
+
+.art .thin {
+  stroke-width: 1.2;
+}
+
+.art .no-stroke {
+  stroke: none;
+}
+
+.art .f-ink {
+  fill: var(--art-ink);
+}
+
+.art .f-paper {
+  fill: var(--art-paper);
+}
+
+.art .f-soil {
+  fill: var(--art-soil);
+}
+
+.art .f-soil-dark {
+  fill: var(--art-soil-dark);
+}
+
+.art .f-leaf {
+  fill: var(--art-leaf);
+}
+
+.art .f-leaf-dark {
+  fill: var(--art-leaf-dark);
+}
+
+.art .f-grain {
+  fill: var(--art-grain);
+}
+
+.art .f-oat {
+  fill: var(--art-oat);
+}
+
+.art .f-tofu {
+  fill: var(--art-tofu);
+}
+
+.art .f-tofu-shade {
+  fill: var(--art-tofu-shade);
+}
+
+.art .f-brick {
+  fill: var(--art-brick);
+}
+
+.art .f-roof {
+  fill: var(--art-roof);
+}
+
+.art .f-metal {
+  fill: var(--art-metal);
+}
+
+.art .f-metal-dark {
+  fill: var(--art-metal-dark);
+}
+
+.art .f-cream {
+  fill: var(--art-cream);
+}
+
+.art .f-coffee {
+  fill: var(--art-coffee);
+}
+
+.art .f-sausage {
+  fill: var(--art-sausage);
+}
+
+.art .f-meatloaf {
+  fill: var(--art-meatloaf);
+}
+
+.art .f-pink {
+  fill: var(--art-pink);
+}
+
+.art .f-gold {
+  fill: var(--art-gold);
+}
+
+.art .f-sky {
+  fill: var(--art-sky);
+}
+
+.art .f-water {
+  fill: var(--art-water);
+}
+
+.art .f-purple {
+  fill: var(--art-purple);
+}
+
+.art .f-glow {
+  fill: var(--art-glow);
+}
+
+.art .f-slate {
+  fill: var(--art-slate);
+}
+
+.art .f-sky-top {
+  fill: var(--art-sky-top);
+}
+
+.art .f-sky-bottom {
+  fill: var(--art-sky-bottom);
+}
+
+.art .f-hill-1 {
+  fill: var(--art-hill-1);
+}
+
+.art .f-hill-2 {
+  fill: var(--art-hill-2);
+}
+
+.art .f-hill-3 {
+  fill: var(--art-hill-3);
+}
+
+.art .f-window {
+  fill: var(--art-window);
+}
+
+.art .f-sun {
+  fill: var(--art-sun);
+}
+
+.art .f-moon {
+  fill: var(--art-moon);
+}
+
+.art .f-cloud {
+  fill: var(--art-cloud);
+}
+
+.art .f-field-1 {
+  fill: var(--art-field-1);
+}
+
+.art .f-field-2 {
+  fill: var(--art-field-2);
+}
+
+.art .s-soil-dark {
+  stroke: var(--art-soil-dark);
+}
+
+.art .s-leaf-dark {
+  stroke: var(--art-leaf-dark);
+}
+
+.art .s-ink {
+  stroke: var(--art-ink);
+}
+
+.art .s-brick {
+  stroke: var(--art-brick);
+}
+
+.art .s-tofu-shade {
+  stroke: var(--art-tofu-shade);
+}
+
+.art .s-coffee {
+  stroke: var(--art-coffee);
+}
+
+.art .s-paper {
+  stroke: var(--art-paper);
+}
+
+.art .s-window {
+  stroke: var(--art-window);
+}
+
+.art .s-glow {
+  stroke: var(--art-glow);
+}
+
+.art .s-water {
+  stroke: var(--art-water);
+}
+
+.art .s-gold {
+  stroke: var(--art-gold);
+}
+
+.art .s-leaf {
+  stroke: var(--art-leaf);
+}
+
+.art .s-metal-dark {
+  stroke: var(--art-metal-dark);
+}
+
+.art .s-cream {
+  stroke: var(--art-cream);
+}

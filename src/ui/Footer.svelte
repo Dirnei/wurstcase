@@ -18,7 +18,9 @@
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 4px 16px;
-    padding: 0 4px;
+    padding: 2px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--paper);
     font-size: 0.8rem;
   }
 

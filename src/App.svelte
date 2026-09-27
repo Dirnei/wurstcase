@@ -2,6 +2,7 @@
   import type { Component } from 'svelte'
   import { devToolsEnabled } from './dev/enabled'
   import AktionenPanel from './ui/AktionenPanel.svelte'
+  import Landscape from './ui/art/Landscape.svelte'
   import Alerts from './ui/Alerts.svelte'
   import Footer from './ui/Footer.svelte'
   import LebenshofPanel from './ui/LebenshofPanel.svelte'
@@ -57,6 +58,7 @@
 {/if}
 
 {#snippet game()}
+  <Landscape />
   <div class="shell">
     <TopBar />
     <NewsTicker />

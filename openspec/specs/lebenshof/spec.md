@@ -118,12 +118,13 @@ same place in the other language's pool.
 - **THEN** each resident is shown with the English name from the same place in the pool
 
 ### Requirement: Resident list
-The Lebenshof panel SHALL list every resident with its species emoji and name, grouped by species
-and in rescue order within each species. Each group SHALL show how many animals it has.
+The Lebenshof tab SHALL list every resident with its species illustration and name, grouped by
+species and in rescue order within each species. Each group SHALL show how many animals it has.
 
 #### Scenario: Mixed residents
 - **WHEN** the player has rescued 3 chickens and then 1 pig
-- **THEN** the list shows a chicken group of 3 names in rescue order and a pig group of 1 name
+- **THEN** the list shows a chicken group of 3 names in rescue order and a pig group of 1 name,
+  each with its species illustration
 
 ### Requirement: Animals are never lost
 No player action and no passage of game time SHALL remove a resident or change its species or

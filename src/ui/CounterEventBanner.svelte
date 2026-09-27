@@ -10,7 +10,7 @@
 
 {#if event}
   <div class="banner" role="status">
-    <ArtSlot kind="buyer" id="megaMeat" size="md" />
+    <ArtSlot kind="misc" id="megaMeatMark" size="md" />
     <div class="text">
       <strong>{t(`event.${event.event}.name`)}</strong>
       <span>{t(`event.${event.event}.description`)}</span>

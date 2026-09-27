@@ -14,6 +14,7 @@
   import { chainBalance, manualPass } from '../game/balance/value'
   import { translate } from '../i18n/translate'
   import { backToGame } from '../ui/route.svelte'
+  import ArtSheet from './ArtSheet.svelte'
   import Chart from './Chart.svelte'
 
   const name = (key: string) => translate('en', key as Parameters<typeof translate>[1])
@@ -301,7 +302,7 @@
       yLabel="€ per 📣/s"
       logY
       series={animals.map(({ species, curve }) => ({
-        label: `${species.emoji} ${species.id}`,
+        label: species.id,
         values: curve.map((point) => point.nextPrice / species.awareness),
       }))}
     />
@@ -330,6 +331,7 @@
       </tbody>
     </table>
   </section>
+  <ArtSheet />
 </div>
 
 <style>

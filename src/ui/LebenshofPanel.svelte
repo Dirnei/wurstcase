@@ -20,6 +20,7 @@
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
   import ArtSlot from './ArtSlot.svelte'
+  import FarmScene from './FarmScene.svelte'
   import { t } from './i18n.svelte'
 
   const used = $derived(readGame(usedSpace))
@@ -77,10 +78,12 @@
   <div class="numbers">
     <span>{t('lebenshof.space', { used: amount(used), total: amount(total) })}</span>
     <span class:reduced>
-      {t('lebenshof.awareness', { amount: amount(awareness) })}
+      <ArtSlot kind="stat" id="awareness" size="sm" />{t('lebenshof.awareness', { amount: amount(awareness) })}
       {#if reduced}{t('lebenshof.reduced')}{/if}
     </span>
   </div>
+
+  <FarmScene />
 
   <h3>{t('lebenshof.shelters')}</h3>
   <ul class="offers">
@@ -103,6 +106,7 @@
         <ArtSlot kind="species" id={offer.id} size="lg" />
         <small>
           {t('lebenshof.animalInfo', { space: amount(offer.space), awareness: amount(offer.awareness) })}
+          <ArtSlot kind="stat" id="awareness" size="sm" /><span class="visually-hidden">{t('topbar.awareness')}</span>
           {#if offer.check === 'money'}
             <br />{t('lebenshof.lackMoney')}
           {:else if offer.check === 'space'}
@@ -123,7 +127,7 @@
     <ul class="groups">
       {#each groups as group (group.id)}
         <li>
-          <span class="count">{group.emoji} {amount(group.labels.length)}</span>
+          <span class="count"><ArtSlot kind="species" id={group.id} size="md" />{amount(group.labels.length)}</span>
           <span class="names">{group.labels.join(', ')}</span>
         </li>
       {/each}
@@ -179,6 +183,13 @@
   .groups li {
     display: flex;
     gap: 12px;
+  }
+
+  .numbers > span,
+  .count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .reduced {

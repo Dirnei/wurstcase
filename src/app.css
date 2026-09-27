@@ -20,6 +20,44 @@
   --tabbar-height: 70px;
   --font-ui: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
+  /* Illustration colours, day. Dusk swaps them below. */
+  --art-ink: #5a4632;
+  --art-paper: #fbf5e6;
+  --art-soil: #b98a5e;
+  --art-soil-dark: #8d6644;
+  --art-leaf: #8fae5d;
+  --art-leaf-dark: #6b8a42;
+  --art-grain: #e0bf6a;
+  --art-oat: #d8c79a;
+  --art-tofu: #f6ecd0;
+  --art-tofu-shade: #e2cf9c;
+  --art-brick: #c1715a;
+  --art-roof: #8d6644;
+  --art-metal: #a3abb0;
+  --art-metal-dark: #737d84;
+  --art-cream: #fbf6ea;
+  --art-coffee: #a0715a;
+  --art-sausage: #b0673f;
+  --art-meatloaf: #d99a86;
+  --art-pink: #eeb2ab;
+  --art-gold: #e6b94a;
+  --art-sky: #bcd7e3;
+  --art-water: #9cc0d4;
+  --art-purple: #bea6d0;
+  --art-glow: #eea24f;
+  --art-slate: #6d7079;
+  --art-sky-top: #cfe3ec;
+  --art-sky-bottom: #f3e6c8;
+  --art-hill-1: #c9cf94;
+  --art-hill-2: #a7b56e;
+  --art-hill-3: #8fa45a;
+  --art-window: #f6ecd0;
+  --art-sun: #f1c77a;
+  --art-moon: #f1c77a;
+  --art-cloud: #fbf5e6;
+  --art-field-1: #d8c07a;
+  --art-field-2: #b9c98a;
+
   /* Older names, still used by some panels. */
   --bg: var(--paper-2);
   --surface: var(--paper);
@@ -48,7 +86,124 @@
     --danger: #f0a08c;
     --focus: #8cc2ff;
     --shadow: #15120e;
+
+    /* Illustration colours, dusk. */
+    --art-ink: #efe4cc;
+    --art-paper: #2e2820;
+    --art-soil: #8f6a48;
+    --art-soil-dark: #6d4f34;
+    --art-leaf: #6f8c48;
+    --art-leaf-dark: #56703a;
+    --art-grain: #b89a52;
+    --art-oat: #ab9e7c;
+    --art-tofu: #d6c9ad;
+    --art-tofu-shade: #b5a47d;
+    --art-brick: #9c5a47;
+    --art-roof: #6d4f34;
+    --art-metal: #7c858b;
+    --art-metal-dark: #5d666d;
+    --art-cream: #d6cebb;
+    --art-coffee: #7f5a48;
+    --art-sausage: #8f5434;
+    --art-meatloaf: #b07a69;
+    --art-pink: #c08a84;
+    --art-gold: #c49a3a;
+    --art-sky: #5c7389;
+    --art-water: #5f8198;
+    --art-purple: #8e7aa3;
+    --art-glow: #f3b25e;
+    --art-slate: #4d5058;
+    --art-sky-top: #2b3552;
+    --art-sky-bottom: #6b5a6e;
+    --art-hill-1: #4f5a3c;
+    --art-hill-2: #3e4a30;
+    --art-hill-3: #323d27;
+    --art-window: #f3c96b;
+    --art-sun: #f1c77a;
+    --art-moon: #ebe6d2;
+    --art-cloud: #5b5670;
+    --art-field-1: #6f6440;
+    --art-field-2: #56603f;
   }
+}
+
+/* The art sheet on #dev shows both schemes side by side. */
+.art-day {
+  --art-ink: #5a4632;
+  --art-paper: #fbf5e6;
+  --art-soil: #b98a5e;
+  --art-soil-dark: #8d6644;
+  --art-leaf: #8fae5d;
+  --art-leaf-dark: #6b8a42;
+  --art-grain: #e0bf6a;
+  --art-oat: #d8c79a;
+  --art-tofu: #f6ecd0;
+  --art-tofu-shade: #e2cf9c;
+  --art-brick: #c1715a;
+  --art-roof: #8d6644;
+  --art-metal: #a3abb0;
+  --art-metal-dark: #737d84;
+  --art-cream: #fbf6ea;
+  --art-coffee: #a0715a;
+  --art-sausage: #b0673f;
+  --art-meatloaf: #d99a86;
+  --art-pink: #eeb2ab;
+  --art-gold: #e6b94a;
+  --art-sky: #bcd7e3;
+  --art-water: #9cc0d4;
+  --art-purple: #bea6d0;
+  --art-glow: #eea24f;
+  --art-slate: #6d7079;
+  --art-sky-top: #cfe3ec;
+  --art-sky-bottom: #f3e6c8;
+  --art-hill-1: #c9cf94;
+  --art-hill-2: #a7b56e;
+  --art-hill-3: #8fa45a;
+  --art-window: #f6ecd0;
+  --art-sun: #f1c77a;
+  --art-moon: #f1c77a;
+  --art-cloud: #fbf5e6;
+  --art-field-1: #d8c07a;
+  --art-field-2: #b9c98a;
+}
+
+.art-dusk {
+  --art-ink: #efe4cc;
+  --art-paper: #2e2820;
+  --art-soil: #8f6a48;
+  --art-soil-dark: #6d4f34;
+  --art-leaf: #6f8c48;
+  --art-leaf-dark: #56703a;
+  --art-grain: #b89a52;
+  --art-oat: #ab9e7c;
+  --art-tofu: #d6c9ad;
+  --art-tofu-shade: #b5a47d;
+  --art-brick: #9c5a47;
+  --art-roof: #6d4f34;
+  --art-metal: #7c858b;
+  --art-metal-dark: #5d666d;
+  --art-cream: #d6cebb;
+  --art-coffee: #7f5a48;
+  --art-sausage: #8f5434;
+  --art-meatloaf: #b07a69;
+  --art-pink: #c08a84;
+  --art-gold: #c49a3a;
+  --art-sky: #5c7389;
+  --art-water: #5f8198;
+  --art-purple: #8e7aa3;
+  --art-glow: #f3b25e;
+  --art-slate: #4d5058;
+  --art-sky-top: #2b3552;
+  --art-sky-bottom: #6b5a6e;
+  --art-hill-1: #4f5a3c;
+  --art-hill-2: #3e4a30;
+  --art-hill-3: #323d27;
+  --art-window: #f3c96b;
+  --art-sun: #f1c77a;
+  --art-moon: #ebe6d2;
+  --art-cloud: #5b5670;
+  --art-field-1: #6f6440;
+  --art-field-2: #56603f;
 }
 
 *,

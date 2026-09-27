@@ -2,6 +2,7 @@
   import { HEADLINE_SECONDS } from '../game/content/headlines'
   import { createTickerMemory, nextHeadline } from '../game/systems/ticker'
   import type { TranslationKey } from '../i18n/translate'
+  import ArtSlot from './ArtSlot.svelte'
   import { readGame } from './game.svelte'
   import { t } from './i18n.svelte'
 
@@ -48,7 +49,7 @@
 </script>
 
 <p class="ticker" aria-live="polite" aria-label={t('ticker.label')}>
-  <span class="label" aria-hidden="true">📰</span>
+  <ArtSlot kind="misc" id="newspaper" size="md" />
   {#key shown}
     <span class="headline" class:breaking={key.startsWith('headline.event.')}>{t(key as TranslationKey)}</span>
   {/key}
@@ -58,7 +59,7 @@
   .ticker {
     display: flex;
     gap: 8px;
-    align-items: baseline;
+    align-items: center;
     margin: 0;
     padding: 6px 12px;
     min-height: 2.5em;
