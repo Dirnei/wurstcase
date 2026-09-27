@@ -6,6 +6,7 @@
   import type { ArtKind } from './art'
   import ArtSlot from './ArtSlot.svelte'
   import { currentLang, t } from './i18n.svelte'
+  import { pop } from './motion/pop'
 
   const offers = $derived(
     readGame((state) =>
@@ -51,8 +52,13 @@
     }
   }
 
+  // A bought upgrade leaves the offers at once, so the owned section is what pops.
+  let pops = $state(0)
+
   function buy(id: UpgradeId) {
-    act((state) => buyUpgrade(state, id))
+    let bought = false
+    act((state) => (bought = buyUpgrade(state, id)))
+    if (bought) pops++
   }
 </script>
 
@@ -86,7 +92,7 @@
     {/each}
   </ul>
   {#if owned.length > 0}
-    <details>
+    <details use:pop={pops}>
       <summary>{t('upgrades.owned', { count: owned.length })}</summary>
       <ul class="owned">
         {#each owned as upgrade (upgrade.id)}

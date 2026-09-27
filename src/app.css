@@ -18,6 +18,14 @@
   --outline: 1.6px;
   --font-heading: 'Fraunces Variable', Georgia, serif;
   --tabbar-height: 70px;
+
+  /* Motion: one rhythm for every effect. Reduced motion sets the durations to zero below. */
+  --motion-fast: 150ms;
+  --motion-enter: 200ms;
+  --motion-pop: 280ms;
+  --motion-float: 900ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1);
   --font-ui: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Illustration colours, day. Dusk swaps them below. */
@@ -307,5 +315,45 @@ a {
 @media (max-width: 767px) {
   .game-button {
     min-height: 44px;
+  }
+}
+
+/* A short bounce on whatever was just bought; restarted by the pop action. */
+.popping {
+  animation: pop var(--motion-pop) var(--ease-pop);
+}
+
+@keyframes pop {
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+/* Colour only; runs just with reduced motion, standing in for the floating sale amount. */
+@keyframes flash {
+  from {
+    background: var(--art-gold);
+    border-radius: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-enter: 0ms;
+    --motion-pop: 0ms;
+    --motion-float: 0ms;
+  }
+
+  .flashing {
+    animation: flash 600ms ease-out;
+  }
+
+  .popping,
+  .part-cloud,
+  .part-eye,
+  .part-body,
+  .figure .art {
+    animation: none !important;
   }
 }

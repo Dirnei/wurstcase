@@ -8,6 +8,8 @@
   import ArtSlot from './ArtSlot.svelte'
   import { readGame } from './game.svelte'
   import { currentLang, setLanguage, t } from './i18n.svelte'
+  import { flash } from './motion/pop'
+  import { saleCount } from './motion/saleFlash.svelte'
   import { currentTab } from './route.svelte'
 
   const money = $derived(euros(readGame((state) => state.money)))
@@ -27,7 +29,8 @@
   <dl class="stats">
     <div class="stat money">
       <dt><ArtSlot kind="stat" id="money" size="sm" /><span>{t('money.label')}</span></dt>
-      <dd>{money}</dd>
+      <!-- With reduced motion the sale amount does not float; the money flashes instead (see app.css). -->
+      <dd use:flash={saleCount()}>{money}</dd>
     </div>
     <div class="stat">
       <dt><ArtSlot kind="stat" id="income" size="sm" /><span>{t('topbar.income')}</span></dt>

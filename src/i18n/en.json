@@ -278,5 +278,6 @@
   "farm.cow.one": "{count} cow",
   "farm.cow.other": "{count} cows",
   "farm.more": "+{count}",
-  "farm.label": "The Lebenshof: {residents}"
+  "farm.label": "The Lebenshof: {residents}",
+  "sale.earned": "+{amount}"
 }

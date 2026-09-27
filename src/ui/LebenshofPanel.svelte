@@ -22,6 +22,7 @@
   import ArtSlot from './ArtSlot.svelte'
   import FarmScene from './FarmScene.svelte'
   import { t } from './i18n.svelte'
+  import { pop } from './motion/pop'
 
   const used = $derived(readGame(usedSpace))
   const total = $derived(readGame(totalSpace))
@@ -64,12 +65,19 @@
     }),
   )
 
+  // Pop counts per entry; they only go up when the purchase went through.
+  let pops = $state<Record<string, number>>({})
+
   function build(id: ShelterId) {
-    act((state) => buildShelter(state, id))
+    let built = false
+    act((state) => (built = buildShelter(state, id)))
+    if (built) pops[id] = (pops[id] ?? 0) + 1
   }
 
   function buy(id: SpeciesId) {
-    act((state) => rescue(state, id))
+    let rescued = false
+    act((state) => (rescued = rescue(state, id)))
+    if (rescued) pops[id] = (pops[id] ?? 0) + 1
   }
 </script>
 
@@ -88,7 +96,7 @@
   <h3>{t('lebenshof.shelters')}</h3>
   <ul class="offers">
     {#each shelters as shelter (shelter.id)}
-      <li class="card">
+      <li class="card" use:pop={pops[shelter.id] ?? 0}>
         <ArtSlot kind="shelter" id={shelter.id} size="lg" />
         <small>{t('lebenshof.shelterInfo', { space: amount(shelter.space), count: amount(shelter.count) })}</small>
         <button type="button" class="game-button primary" disabled={!shelter.buildable} onclick={() => build(shelter.id)}>
@@ -102,7 +110,7 @@
   <p class="line">{t('lebenshof.megaMeatLine')}</p>
   <ul class="offers">
     {#each offers as offer (offer.id)}
-      <li class="card">
+      <li class="card" use:pop={pops[offer.id] ?? 0}>
         <ArtSlot kind="species" id={offer.id} size="lg" />
         <small>
           {t('lebenshof.animalInfo', { space: amount(offer.space), awareness: amount(offer.awareness) })}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Component } from 'svelte'
+  import { fade } from 'svelte/transition'
   import { devToolsEnabled } from './dev/enabled'
   import AktionenPanel from './ui/AktionenPanel.svelte'
   import Landscape from './ui/art/Landscape.svelte'
@@ -15,10 +16,13 @@
   import TabNav from './ui/TabNav.svelte'
   import TopBar from './ui/TopBar.svelte'
   import UpgradesPanel from './ui/UpgradesPanel.svelte'
+  import { prefersReducedMotion } from './ui/motion/reducedMotion.svelte'
   import { currentRoute, currentTab, syncTabAddress } from './ui/route.svelte'
 
   const route = $derived(currentRoute())
   const tab = $derived(currentTab())
+  // The new tab fades in; the old one leaves at once, so the two never show together.
+  const fadeIn = $derived({ duration: prefersReducedMotion() ? 0 : 200 })
   // Asked only when #dev is opened; the page and its chart library load only if it is on.
   const devPage = $derived(route === 'dev' ? loadDevPage() : null)
 
@@ -67,19 +71,23 @@
       <div class="tabs">
         <TabNav />
         <main class="tab-content" id="main">
-          {#if tab === 'produktion'}
-            <ProductionTab />
-          {:else if tab === 'verkauf'}
-            <SalesTab />
-          {:else if tab === 'upgrades'}
-            <UpgradesPanel />
-          {:else if tab === 'lebenshof'}
-            <LebenshofPanel />
-          {:else if tab === 'aktionen'}
-            <AktionenPanel />
-          {:else}
-            <SettingsTab />
-          {/if}
+          {#key tab}
+            <div class="tab-body" in:fade={fadeIn}>
+              {#if tab === 'produktion'}
+                <ProductionTab />
+              {:else if tab === 'verkauf'}
+                <SalesTab />
+              {:else if tab === 'upgrades'}
+                <UpgradesPanel />
+              {:else if tab === 'lebenshof'}
+                <LebenshofPanel />
+              {:else if tab === 'aktionen'}
+                <AktionenPanel />
+              {:else}
+                <SettingsTab />
+              {/if}
+            </div>
+          {/key}
         </main>
       </div>
       <ResourceRail />
@@ -143,6 +151,12 @@
     border-radius: 0 var(--radius) var(--radius) var(--radius);
     background: var(--paper);
     box-shadow: 0 2px 0 var(--shadow);
+  }
+
+  .tab-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   /* Panels inside a tab are sections of its sheet, not sheets of their own. */

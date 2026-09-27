@@ -8,6 +8,7 @@
   import ArtSlot from './ArtSlot.svelte'
   import { act, readGame } from './game.svelte'
   import { t } from './i18n.svelte'
+  import { pop } from './motion/pop'
 
   let { id }: { id: BuildingId } = $props()
 
@@ -22,12 +23,20 @@
   const price = $derived(euros(readGame((state) => buildingPrice(state, id))))
   const affordable = $derived(readGame((state) => canBuy(state, id)))
   const performable = $derived(readGame((state) => canPerform(state, manual.id)))
+  let pops = $state(0)
+
+  function buy() {
+    let bought = false
+    act((state) => (bought = buyBuilding(state, id)))
+    if (bought) pops++
+  }
+
   const filled = $derived(
     owned * rate > STEADY_UNITS_PER_SECOND ? 1 : readGame((state) => Math.min(state.progress[id], 1)),
   )
 </script>
 
-<article class="building card" class:locked={!unlocked}>
+<article class="building card" class:locked={!unlocked} use:pop={pops}>
   <ArtSlot kind="building" {id} size="lg" />
   <div class="head">
     <h3>{t(`building.${id}`)}</h3>
@@ -68,7 +77,7 @@
         type="button"
         class="game-button primary buy"
         disabled={!affordable}
-        onclick={() => act((state) => buyBuilding(state, id))}
+        onclick={buy}
       >
         {t('building.buy', { price })}
       </button>

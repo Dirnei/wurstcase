@@ -11,6 +11,16 @@
   const FIGURE_WIDTH: Record<SpeciesId, number> = { chicken: 6, pig: 8, cow: 10 }
   const SHELTER_WIDTH = 9
 
+  // Each animal's own blink and hop rhythm, fixed by its rescue index so no two move in step.
+  function rhythm(index: number) {
+    return {
+      blink: `${3 + ((index * 0.73) % 2.5)}s`,
+      blinkDelay: `-${(index * 1.37) % 5}s`,
+      hop: `${7 + ((index * 1.91) % 4)}s`,
+      hopDelay: `-${(index * 2.3) % 9}s`,
+    }
+  }
+
   const residents = $derived(readGame((state) => state.residents.map((resident) => resident.species)))
   const scene = $derived(farmFigures(residents.length))
   const shelters = $derived(
@@ -43,12 +53,16 @@
     {#each scene.drawOrder as index (index)}
       {@const species = residents[index]}
       {@const Art = SPECIES_ART[species]}
+      {@const beat = rhythm(index)}
       <span
         class="item figure"
         style:left="{FARM_SLOTS[index].x}%"
         style:top="{FARM_SLOTS[index].y}%"
         style:width="{FIGURE_WIDTH[species]}%"
-        style:--i={index}
+        style:--blink={beat.blink}
+        style:--blink-delay={beat.blinkDelay}
+        style:--hop={beat.hop}
+        style:--hop-delay={beat.hopDelay}
       >
         <Art />
       </span>
@@ -86,6 +100,42 @@
     position: absolute;
     aspect-ratio: 1;
     transform: translate(-50%, -100%);
+  }
+
+  /* The whole animal hops, eyes included, and always lands back on its place. */
+  .figure :global(.art) {
+    animation: hop var(--hop) var(--hop-delay) ease-in-out infinite;
+  }
+
+  .figure :global(.part-eye) {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: blink var(--blink) var(--blink-delay) linear infinite;
+  }
+
+  @keyframes hop {
+    0%,
+    88%,
+    100% {
+      transform: translateY(0);
+    }
+    92% {
+      transform: translateY(-12%);
+    }
+    96% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes blink {
+    0%,
+    94%,
+    100% {
+      transform: scaleY(1);
+    }
+    97% {
+      transform: scaleY(0.1);
+    }
   }
 
   .more {

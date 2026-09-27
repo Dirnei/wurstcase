@@ -92,6 +92,35 @@
     pointer-events: none;
   }
 
+  /* Clouds drift across the whole sky at their own pace; negative delays start them mid-way. */
+  .part-cloud {
+    animation: drift linear infinite;
+  }
+
+  .cloud-1 {
+    animation-duration: 70s;
+    animation-delay: -20s;
+  }
+
+  .cloud-2 {
+    animation-duration: 95s;
+    animation-delay: -61s;
+  }
+
+  .cloud-3 {
+    animation-duration: 118s;
+    animation-delay: -97s;
+  }
+
+  @keyframes drift {
+    from {
+      transform: translateX(-1500px);
+    }
+    to {
+      transform: translateX(1700px);
+    }
+  }
+
   .contained {
     position: absolute;
     z-index: 0;

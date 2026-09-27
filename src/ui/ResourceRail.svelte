@@ -6,8 +6,12 @@
   import { stockTrend, type Trend } from '../game/systems/trend'
   import { amount, euros } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
+  import FloatingAmount from './FloatingAmount.svelte'
   import { act, readGame } from './game.svelte'
   import { t } from './i18n.svelte'
+  import { expire, FLOAT_MS, push, type Float } from './motion/floats'
+  import { prefersReducedMotion } from './motion/reducedMotion.svelte'
+  import { noteSale } from './motion/saleFlash.svelte'
 
   const MARKS: Record<Trend, string> = { rising: '▲', falling: '▼', steady: '▬' }
 
@@ -34,6 +38,23 @@
   const sellable = $derived(readGame(canSell))
   const value = $derived(euros(readGame(saleValue)))
   const overstocked = $derived(readGame(isOverstocked))
+
+  let floats = $state<Float[]>([])
+
+  // The sale's value is the money difference around the action; no tick runs in between.
+  function onSell() {
+    let earned = 0
+    act((state) => {
+      const before = state.money
+      sell(state)
+      earned = state.money.sub(before).toNumber()
+    })
+    if (earned <= 0) return
+    noteSale()
+    if (prefersReducedMotion()) return
+    floats = push(floats, t('sale.earned', { amount: euros(earned) }), performance.now())
+    setTimeout(() => (floats = expire(floats, performance.now())), FLOAT_MS + 50)
+  }
 
   function onKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && stockOpen) {
@@ -86,9 +107,12 @@
     {#if assistant}
       <p class="assistant">{t('sales.assistant.active')}</p>
     {:else}
-      <button type="button" class="game-button primary sell" disabled={!sellable} onclick={() => act(sell)}>
-        {sellable ? t('sales.sellFor', { amount: value }) : t('sales.sell')}
-      </button>
+      <span class="sell-wrap">
+        <button type="button" class="game-button primary sell" disabled={!sellable} onclick={onSell}>
+          {sellable ? t('sales.sellFor', { amount: value }) : t('sales.sell')}
+        </button>
+        <FloatingAmount {floats} />
+      </span>
     {/if}
     <!-- Always rendered, so the rail keeps its height when the warning comes and goes. -->
     <p class="overstock" role="status">{overstocked ? t('rail.overstock') : ''}</p>
@@ -196,6 +220,11 @@
     display: none;
   }
 
+  .sell-wrap {
+    position: relative;
+    display: grid;
+  }
+
   .sell {
     min-height: 44px;
     font-size: 1rem;
@@ -278,7 +307,7 @@
       text-align: center;
     }
 
-    .sell,
+    .sell-wrap,
     .assistant {
       grid-column: 3;
       grid-row: 1;
