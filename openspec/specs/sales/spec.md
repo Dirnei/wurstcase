@@ -105,10 +105,12 @@ The sales panel SHALL show, per minute and in the selected language's number for
 - **Sold:** for each product shown in the stock panel, the units sold to customers per minute.
 - **Income:** the euros earned from customer sales per minute.
 
-Sold and income SHALL be averaged over the last 60 seconds of game time. Sales by hand and by the
-shop assistant SHALL count; bulk sales SHALL NOT. A product that is shown but sold nothing in the
-window SHALL show 0. The figures SHALL NOT be saved: after loading a game or starting a new one,
-sold and income SHALL show 0 until sales happen.
+Sold and income SHALL be averaged over the last 60 seconds of game time. While less than 60
+seconds of game time have passed since loading a game or starting a new one, they SHALL be
+averaged over the game time that has passed, counted as at least 10 seconds. Sales by hand and by
+the shop assistant SHALL count; bulk sales SHALL NOT. A product that is shown but sold nothing in
+the window SHALL show 0. The figures SHALL NOT be saved: after loading a game or starting a new
+one, sold and income SHALL show 0 until sales happen.
 
 #### Scenario: Demand from customers
 - **WHEN** there are 10 customers
@@ -122,6 +124,16 @@ sold and income SHALL show 0 until sales happen.
 #### Scenario: Steady selling
 - **WHEN** the assistant sells 1 Leverkas every 4 seconds for 60 seconds of game time
 - **THEN** Leverkas shows 15 sold per minute and income shows €375 per minute
+
+#### Scenario: Steady selling right after loading
+- **WHEN** a game is loaded and the assistant sells 1 Leverkas every 2 seconds for the first 20
+  seconds of game time
+- **THEN** Leverkas shows 30 sold per minute and income shows €750 per minute
+
+#### Scenario: Single sale right after loading
+- **WHEN** a game is loaded and the player sells 3 Tofu-Wurst by hand within the first second of
+  game time
+- **THEN** Tofu-Wurst shows 18 sold per minute and income €54 per minute, not 180 per minute
 
 #### Scenario: Hand sales count
 - **WHEN** the player sells 3 Tofu-Wurst by hand and 60 seconds of game time pass without other

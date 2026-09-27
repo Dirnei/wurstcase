@@ -58,3 +58,9 @@ export function sum<K extends string>(buckets: readonly Bucket<K>[], key: K, win
   }
   return total
 }
+
+/** Game time the buckets hold, at most the window: less than the window right after loading. */
+export function covered<K extends string>(buckets: readonly Bucket<K>[], windowSeconds: number): number {
+  const seconds = buckets.reduce((total, bucket) => total + bucket.seconds, 0)
+  return Math.min(seconds, windowSeconds)
+}

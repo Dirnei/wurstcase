@@ -36,14 +36,34 @@ describe('salesStats', () => {
     expect(incomePerMinute(state)).toBe(375)
   })
 
+  it('shows the real rate of steady sales right after loading', () => {
+    const state = createInitialState()
+    for (let i = 0; i < 10; i++) {
+      wait(state, 2)
+      recordSale(state, 'leverkas', 1)
+    }
+    expect(soldPerMinute(state, 'leverkas')).toBeCloseTo(30, 6)
+    expect(incomePerMinute(state)).toBeCloseTo(750, 6)
+  })
+
+  it('averages a sale right after loading over at least 10 seconds', () => {
+    const state = createInitialState()
+    state.stock.tofuWurst = new Decimal(3)
+    state.openOrders = new Decimal(3)
+    wait(state, 0.5)
+    sell(state)
+    expect(soldPerMinute(state, 'tofuWurst')).toBe(18)
+    expect(incomePerMinute(state)).toBe(54)
+  })
+
   it('counts a sale by hand until it drops out of the window', () => {
     const state = createInitialState()
     state.stock.tofuWurst = new Decimal(3)
     state.openOrders = new Decimal(3)
     sell(state)
     wait(state, 59.9)
-    expect(soldPerMinute(state, 'tofuWurst')).toBe(3)
-    expect(incomePerMinute(state)).toBe(9)
+    expect(soldPerMinute(state, 'tofuWurst')).toBeCloseTo(3, 1)
+    expect(incomePerMinute(state)).toBeCloseTo(9, 1)
     wait(state, 1.1)
     expect(soldPerMinute(state, 'tofuWurst')).toBe(0)
     expect(incomePerMinute(state)).toBe(0)

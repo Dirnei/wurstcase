@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { add, advance, sum, type Bucket } from './rollingWindow'
+import { add, advance, covered, sum, type Bucket } from './rollingWindow'
 
 type Key = 'a' | 'b'
 const WINDOW = 60
@@ -62,5 +62,28 @@ describe('rollingWindow', () => {
       add(buckets, 'b', 1)
     }
     expect(buckets.length).toBeLessThanOrEqual(WINDOW + 1)
+  })
+
+  it('covers no time when empty', () => {
+    expect(covered<Key>([], WINDOW)).toBe(0)
+  })
+
+  it('covers the game time passed while under the window', () => {
+    const buckets: Bucket<Key>[] = []
+    for (let i = 0; i < 125; i++) {
+      advance(buckets, 0.1, WINDOW)
+    }
+    expect(covered(buckets, WINDOW)).toBeCloseTo(12.5, 6)
+  })
+
+  it('covers at most the window', () => {
+    const small: Bucket<Key>[] = []
+    for (let i = 0; i < 1000; i++) {
+      advance(small, 0.1, WINDOW)
+    }
+    expect(covered(small, WINDOW)).toBeCloseTo(WINDOW, 6)
+    const long: Bucket<Key>[] = []
+    advance(long, 120, WINDOW)
+    expect(covered(long, WINDOW)).toBe(WINDOW)
   })
 })

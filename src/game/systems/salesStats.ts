@@ -2,11 +2,14 @@ import type Decimal from 'break_eternity.js'
 import { PRODUCTS, type ProductId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import type { GameState } from '../state'
-import { add, advance, sum } from './rollingWindow'
+import { add, advance, covered, sum } from './rollingWindow'
 import { ordersFactor, productPrice } from './upgrades'
 
 /** Game time over which sales to customers are averaged. */
 export const SALES_WINDOW_SECONDS = 60
+
+/** Right after loading, sales count as spread over at least this much game time. */
+export const MIN_SALES_SECONDS = 10
 
 /** Counts units sold to customers; called from the one place that fills their orders. */
 export function recordSale(state: GameState, product: ProductId, units: Decimal | number): void {
@@ -24,11 +27,13 @@ export function demandPerMinute(state: Readonly<GameState>): Decimal {
 }
 
 /**
- * Units of a product sold to customers in the last minute. Always divided by the full window, so
- * a sale right after loading does not look like a huge rate.
+ * Units of a product sold to customers per minute, averaged over the game time the window covers,
+ * so the figure is close to right soon after loading. That time counts as at least
+ * MIN_SALES_SECONDS, so a single sale right after loading does not look like a huge rate.
  */
 export function soldPerMinute(state: Readonly<GameState>, product: ProductId): number {
-  return (sum(state.sales, product, SALES_WINDOW_SECONDS) * 60) / SALES_WINDOW_SECONDS
+  const seconds = Math.max(covered(state.sales, SALES_WINDOW_SECONDS), MIN_SALES_SECONDS)
+  return (sum(state.sales, product, SALES_WINDOW_SECONDS) * 60) / seconds
 }
 
 /** Euros from customer sales in the last minute, from units sold at the current (upgraded) prices. */
