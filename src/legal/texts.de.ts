@@ -44,6 +44,7 @@ export const de: LegalTexts = {
         heading: 'Cookies und Tracking',
         paragraphs: [
           'Diese Website setzt keine Cookies. Es werden keine Analyse-, Tracking- oder Werbedienste eingesetzt, und es werden keine Inhalte von Drittanbietern wie Schriftarten, Videos oder Skripte geladen. Alle Dateien werden direkt von diesem Server ausgeliefert.',
+          'Im Fußbereich befindet sich ein Link zu meiner Seite bei Ko-fi (ko-fi.com). Beim Anzeigen des Spiels werden keine Daten an Ko-fi übertragen. Erst wenn Sie dem Link folgen, verlassen Sie diese Website, und es gilt die Datenschutzerklärung von Ko-fi.',
         ],
       },
       {

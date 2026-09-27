@@ -46,6 +46,11 @@ describe('Datenschutzerklärung', () => {
     )
   })
 
+  it.each([de, en])('explains the Ko-fi link in the cookies section', (texts) => {
+    const cookies = texts.datenschutz.sections.find((s) => s.id === 'cookies')
+    expect(cookies?.paragraphs.join(' ')).toMatch(/Ko-fi \(ko-fi\.com\)/)
+  })
+
   it('names the browser storage key for the language choice', () => {
     const storage = de.datenschutz.sections.find((s) => s.heading === 'Speicherung im Browser')
     expect(storage?.paragraphs.join(' ')).toContain('vegle.language')
