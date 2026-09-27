@@ -14,27 +14,33 @@
 
 <style>
   footer {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 8px 20px;
-    font-size: 0.875rem;
+    gap: 4px 16px;
+    padding: 0 4px;
+    font-size: 0.8rem;
   }
 
   nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 20px;
+    gap: 4px 16px;
   }
 
   a {
-    color: var(--text-muted);
+    color: var(--ink-muted);
   }
 
   a:hover {
-    color: var(--accent);
+    color: var(--leaf-text);
+  }
+
+  @media (max-width: 767px) {
+    a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
   }
 </style>

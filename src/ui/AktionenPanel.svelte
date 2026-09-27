@@ -3,10 +3,10 @@
   import { aktionCost, aktionEstimate, canRun, isAktionOffered, runAktion } from '../game/systems/aktionen'
   import { amount } from './amounts'
   import { act, readGame } from './game.svelte'
+  import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
 
   const pool = $derived(amount(readGame((state) => state.awareness)))
-  const event = $derived(readGame((state) => state.megaMeat.active && { ...state.megaMeat.active }))
 
   const offers = $derived(
     readGame((state) =>
@@ -30,32 +30,24 @@
   <h2>{t('aktionen.title')}</h2>
   <p class="pool">{t('aktionen.pool', { amount: pool })}</p>
 
-  {#if event}
-    <div class="banner" role="status">
-      <strong>{t(`event.${event.event}.name`)}</strong>
-      <span>{t(`event.${event.event}.description`)}</span>
-      <span class="effect">
-        {t(`event.${event.event}.effect`)} · {t('aktionen.eventLeft', { seconds: Math.ceil(event.remaining) })}
-      </span>
-    </div>
-  {/if}
 
   <ul>
     {#each offers as offer (offer.id)}
-      <li>
-        <button type="button" class="game-button" disabled={offer.check !== 'ok'} onclick={() => run(offer.id)}>
-          {t('aktionen.run', { name: t(`aktion.${offer.id}.name`), cost: amount(offer.cost) })}
-        </button>
+      <li class="card">
+        <ArtSlot kind="aktion" id={offer.id} size="lg" />
         <small>
           {offer.endsEvent ? t('aktionen.endsEvent') : t('aktionen.customers', { count: amount(offer.estimate) })}
           {#if offer.check === 'cooldown'}
-            · {t('aktionen.cooldown', { seconds: offer.cooldown })}
+            <br />{t('aktionen.cooldown', { seconds: offer.cooldown })}
           {:else if offer.check === 'noEvent'}
-            · {t('aktionen.noEvent')}
+            <br />{t('aktionen.noEvent')}
           {:else if offer.check === 'awareness'}
-            · {t('aktionen.lackAwareness')}
+            <br />{t('aktionen.lackAwareness')}
           {/if}
         </small>
+        <button type="button" class="game-button primary" disabled={offer.check !== 'ok'} onclick={() => run(offer.id)}>
+          {t('aktionen.run', { name: t(`aktion.${offer.id}.name`), cost: amount(offer.cost) })}
+        </button>
       </li>
     {/each}
   </ul>
@@ -70,40 +62,25 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .banner {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px 12px;
-    border: 1px solid var(--danger);
-    border-radius: 8px;
-    color: var(--danger);
-    font-size: 0.9rem;
-  }
-
-  .banner span {
-    color: var(--text);
-  }
-
-  .banner .effect {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-
   ul {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   li {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 48px 1fr;
     align-items: center;
-    gap: 4px 8px;
+    gap: 6px 10px;
+    padding: 10px;
+  }
+
+  li button {
+    grid-column: 1 / -1;
   }
 
   small {

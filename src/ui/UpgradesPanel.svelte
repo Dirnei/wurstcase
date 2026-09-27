@@ -3,6 +3,7 @@
   import { buyUpgrade, canBuyUpgrade, offeredUpgrades } from '../game/systems/upgrades'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
+  import ArtSlot from './ArtSlot.svelte'
   import { currentLang, t } from './i18n.svelte'
 
   const offers = $derived(
@@ -40,16 +41,24 @@
 
 <section class="panel">
   <h2>{t('upgrades.title')}</h2>
-  <ul>
+  <ul class="offers">
     {#each offers as offer (offer.id)}
-      <li>
-        <button type="button" class="game-button" disabled={!offer.affordable} onclick={() => buy(offer.id)}>
-          {t('upgrades.buy', { name: t(`upgrade.${offer.id}.name`), price: euros(offer.price) })}
-        </button>
+      <li class="card">
+        <ArtSlot kind="effect" id={offer.effect.kind} size="lg" />
         <div class="about">
+          <h3>{t(`upgrade.${offer.id}.name`)}</h3>
           <span class="effect">{effectText(offer.effect)}</span>
           <span class="line">{t(`upgrade.${offer.id}.line`)}</span>
         </div>
+        <button
+          type="button"
+          class="game-button primary"
+          aria-label={t('upgrades.buy', { name: t(`upgrade.${offer.id}.name`), price: euros(offer.price) })}
+          disabled={!offer.affordable}
+          onclick={() => buy(offer.id)}
+        >
+          {t('building.buy', { price: euros(offer.price) })}
+        </button>
       </li>
     {/each}
   </ul>
@@ -78,11 +87,27 @@
     list-style: none;
   }
 
-  li {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 12px;
+  .offers {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .offers li {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 6px 10px;
+    padding: 10px;
+  }
+
+  .offers button {
+    grid-column: 1 / -1;
+  }
+
+  h3 {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    font-weight: 800;
   }
 
   .about {
@@ -93,11 +118,7 @@
 
   .line {
     font-style: italic;
-    color: var(--text-muted);
-  }
-
-  button {
-    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
   }
 
   details {
@@ -106,7 +127,7 @@
 
   summary {
     cursor: pointer;
-    color: var(--text-muted);
+    color: var(--ink-muted);
   }
 
   .owned {
@@ -115,10 +136,12 @@
   }
 
   .owned li {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .owned .effect {
-    color: var(--text-muted);
+    color: var(--ink-muted);
   }
 </style>

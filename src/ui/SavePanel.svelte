@@ -47,12 +47,12 @@
   }
 </script>
 
-<section>
+<section class="panel">
   <div class="row">
     <h2>{t('save.title')}</h2>
     <div class="actions">
-      <button type="button" onclick={openExport}>{t('save.export')}</button>
-      <button type="button" onclick={openImport}>{t('save.import')}</button>
+      <button type="button" class="game-button" onclick={openExport}>{t('save.export')}</button>
+      <button type="button" class="game-button" onclick={openImport}>{t('save.import')}</button>
     </div>
   </div>
 
@@ -60,8 +60,8 @@
     <label for="save-export">{t('save.exportHint')}</label>
     <textarea id="save-export" readonly rows="3" bind:this={exportField} value={exportText}></textarea>
     <div class="actions">
-      <button type="button" onclick={copy}>{copied ? t('save.copied') : t('save.copy')}</button>
-      <button type="button" onclick={() => (mode = 'closed')}>{t('save.close')}</button>
+      <button type="button" class="game-button" onclick={copy}>{copied ? t('save.copied') : t('save.copy')}</button>
+      <button type="button" class="game-button" onclick={() => (mode = 'closed')}>{t('save.close')}</button>
     </div>
   {:else if mode === 'import'}
     <label for="save-import">{t('save.importHint')}</label>
@@ -72,23 +72,13 @@
       <p role="status">{t('save.importDone')}</p>
     {/if}
     <div class="actions">
-      <button type="button" onclick={load} disabled={importText.trim() === ''}>{t('save.importLoad')}</button>
-      <button type="button" onclick={() => (mode = 'closed')}>{t('save.close')}</button>
+      <button type="button" class="game-button" onclick={load} disabled={importText.trim() === ''}>{t('save.importLoad')}</button>
+      <button type="button" class="game-button" onclick={() => (mode = 'closed')}>{t('save.close')}</button>
     </div>
   {/if}
 </section>
 
 <style>
-  section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-  }
-
   .row {
     display: flex;
     flex-wrap: wrap;
@@ -97,32 +87,10 @@
     gap: 8px;
   }
 
-  h2 {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--text-muted);
-    font-weight: 400;
-  }
-
   .actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-  }
-
-  button {
-    padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--text);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: default;
   }
 
   label {
@@ -133,10 +101,10 @@
   textarea {
     width: 100%;
     padding: 8px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--text);
+    border: 1.4px solid var(--ink);
+    border-radius: var(--radius-sm);
+    background: var(--paper-2);
+    color: var(--ink);
     font-family: ui-monospace, monospace;
     font-size: 0.8rem;
     resize: vertical;

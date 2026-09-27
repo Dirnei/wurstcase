@@ -16,6 +16,13 @@ export function isAktionOffered(state: Readonly<GameState>, id: AktionId): boole
   )
 }
 
+/** Earnings at which the first Aktion unlocks, from Aktionen that depend on earnings alone. */
+export function firstAktionAt(): number {
+  return Math.min(
+    ...AKTIONEN.filter((aktion) => !aktion.requiresSpecies && !aktion.endsEvent).map((aktion) => aktion.unlockAt),
+  )
+}
+
 /** The panel shows once any Aktion is offered; offers only ever grow, so it stays. */
 export function isAktionenUnlocked(state: Readonly<GameState>): boolean {
   return AKTIONEN.some((aktion) => isAktionOffered(state, aktion.id))

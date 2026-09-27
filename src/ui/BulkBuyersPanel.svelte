@@ -5,6 +5,7 @@
   import { isResourceShown } from '../game/systems/buildings'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
+  import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
 
   const buyers = $derived(
@@ -34,9 +35,14 @@
   <p class="muted">{t('bulk.hint')}</p>
   <div class="buyers">
     {#each buyers as buyer (buyer.id)}
-      <div class="buyer">
-        <h3>{t(`bulk.${buyer.id}.name`)}</h3>
-        <p class="line">{t(`bulk.${buyer.id}.line`)}</p>
+      <div class="buyer card">
+        <div class="who">
+          <ArtSlot kind="buyer" id={buyer.id} size="lg" />
+          <div>
+            <h3>{t(`bulk.${buyer.id}.name`)}</h3>
+            <p class="line">{t(`bulk.${buyer.id}.line`)}</p>
+          </div>
+        </div>
         <ul>
           {#each buyer.offers as offer (offer.resource)}
             <li>
@@ -46,6 +52,7 @@
                 disabled={!offer.sellable}
                 onclick={() => sell(buyer.id, offer.resource)}
               >
+                <ArtSlot kind="resource" id={offer.resource} size="sm" />
                 {offer.sellable
                   ? t('bulk.sell', {
                       units: amount(offer.units),
@@ -83,6 +90,13 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    padding: 10px;
+  }
+
+  .who {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
   }
 
   h3 {
@@ -117,6 +131,9 @@
   }
 
   button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-variant-numeric: tabular-nums;
   }
 </style>

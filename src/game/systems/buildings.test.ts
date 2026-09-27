@@ -2,7 +2,7 @@ import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { decodeSave, encodeSave } from '../save'
 import { createInitialState, type GameState } from '../state'
-import { buildingPrice, buyBuilding, canBuy, isResourceShown, isUnlocked } from './buildings'
+import { buildingPrice, buyBuilding, canBuy, isResourceShown, isUnlocked, nextLockedBuildings } from './buildings'
 
 function withMoney(money: number, earned = money): GameState {
   return { ...createInitialState(), money: new Decimal(money), totalEarned: new Decimal(earned) }
@@ -109,5 +109,23 @@ describe('isResourceShown', () => {
     const state = createInitialState()
     state.stock.leverkas = new Decimal(1)
     expect(isResourceShown(state, 'leverkas')).toBe(true)
+  })
+})
+
+describe('nextLockedBuildings', () => {
+  it('is the wheat field and seitan kitchen in a new game', () => {
+    expect(nextLockedBuildings(createInitialState())).toEqual(['wheatField', 'seitanKitchen'])
+  })
+
+  it('is the Leverkas oven once the wheat chain is unlocked', () => {
+    expect(nextLockedBuildings(withMoney(0, 200))).toEqual(['leverkasOven'])
+  })
+
+  it('is the whole oat chain, in production order, once the oven is unlocked', () => {
+    expect(nextLockedBuildings(withMoney(0, 1_500))).toEqual(['oatField', 'oatMill', 'cafeBar'])
+  })
+
+  it('is empty once everything is unlocked', () => {
+    expect(nextLockedBuildings(withMoney(0, 1e9))).toEqual([])
   })
 })

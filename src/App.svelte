@@ -1,101 +1,195 @@
 <script lang="ts">
   import type { Component } from 'svelte'
   import { devToolsEnabled } from './dev/enabled'
-  import { CHAINS } from './game/content/buildings'
-  import { isAktionenUnlocked } from './game/systems/aktionen'
-  import { isLebenshofUnlocked } from './game/systems/rescue'
-  import { isUpgradesUnlocked } from './game/systems/upgrades'
   import AktionenPanel from './ui/AktionenPanel.svelte'
-  import BulkBuyersPanel from './ui/BulkBuyersPanel.svelte'
-  import ChainPanel from './ui/ChainPanel.svelte'
+  import Alerts from './ui/Alerts.svelte'
   import Footer from './ui/Footer.svelte'
-  import Header from './ui/Header.svelte'
   import LebenshofPanel from './ui/LebenshofPanel.svelte'
   import LegalPage from './ui/LegalPage.svelte'
-  import ManualActions from './ui/ManualActions.svelte'
-  import Money from './ui/Money.svelte'
   import NewsTicker from './ui/NewsTicker.svelte'
-  import Notices from './ui/Notices.svelte'
-  import PlayTime from './ui/PlayTime.svelte'
-  import SalesPanel from './ui/SalesPanel.svelte'
-  import SavePanel from './ui/SavePanel.svelte'
-  import StockPanel from './ui/StockPanel.svelte'
+  import ProductionTab from './ui/ProductionTab.svelte'
+  import ResourceRail from './ui/ResourceRail.svelte'
+  import SalesTab from './ui/SalesTab.svelte'
+  import SettingsTab from './ui/SettingsTab.svelte'
+  import TabNav from './ui/TabNav.svelte'
+  import TopBar from './ui/TopBar.svelte'
   import UpgradesPanel from './ui/UpgradesPanel.svelte'
-  import { readGame } from './ui/game.svelte'
-  import { currentRoute } from './ui/route.svelte'
+  import { currentRoute, currentTab, syncTabAddress } from './ui/route.svelte'
 
   const route = $derived(currentRoute())
-  const lebenshof = $derived(readGame(isLebenshofUnlocked))
-  const aktionen = $derived(readGame(isAktionenUnlocked))
-  const upgrades = $derived(readGame(isUpgradesUnlocked))
+  const tab = $derived(currentTab())
   // Asked only when #dev is opened; the page and its chart library load only if it is on.
   const devPage = $derived(route === 'dev' ? loadDevPage() : null)
 
   async function loadDevPage(): Promise<Component | null> {
     return (await devToolsEnabled()) ? (await import('./dev/DevPage.svelte')).default : null
   }
+
+  $effect(() => {
+    if (route === 'game') {
+      syncTabAddress()
+    }
+  })
 </script>
 
-<main>
-  <Header />
-  <Notices />
-  {#if route === 'game'}
+{#if route === 'game'}
+  {@render game()}
+{:else if route === 'dev'}
+  {#await devPage}
     {@render game()}
-  {:else if route === 'dev'}
-    {#await devPage}
-      {@render game()}
-    {:then DevPage}
-      {#if DevPage}
+  {:then DevPage}
+    {#if DevPage}
+      <div class="page">
+        <TopBar />
         <DevPage />
-      {:else}
-        {@render game()}
-      {/if}
-    {/await}
-  {:else}
-    <LegalPage page={route} />
-  {/if}
-  <Footer />
-</main>
+        <Footer />
+      </div>
+    {:else}
+      {@render game()}
+    {/if}
+  {/await}
+{:else}
+  <div class="page">
+    <TopBar />
+    <main><LegalPage page={route} /></main>
+    <Footer />
+  </div>
+{/if}
 
 {#snippet game()}
-  <NewsTicker />
-  <div class="status">
-    <Money />
-    <PlayTime />
+  <div class="shell">
+    <TopBar />
+    <NewsTicker />
+    <Alerts />
+    <div class="workspace">
+      <div class="tabs">
+        <TabNav />
+        <main class="tab-content" id="main">
+          {#if tab === 'produktion'}
+            <ProductionTab />
+          {:else if tab === 'verkauf'}
+            <SalesTab />
+          {:else if tab === 'upgrades'}
+            <UpgradesPanel />
+          {:else if tab === 'lebenshof'}
+            <LebenshofPanel />
+          {:else if tab === 'aktionen'}
+            <AktionenPanel />
+          {:else}
+            <SettingsTab />
+          {/if}
+        </main>
+      </div>
+      <ResourceRail />
+    </div>
+    <Footer />
   </div>
-  <SalesPanel />
-  <ManualActions />
-  {#each CHAINS as chain (chain)}
-    <ChainPanel {chain} />
-  {/each}
-  {#if upgrades}
-    <UpgradesPanel />
-  {/if}
-  {#if lebenshof}
-    <LebenshofPanel />
-  {/if}
-  {#if aktionen}
-    <AktionenPanel />
-  {/if}
-  <StockPanel />
-  <BulkBuyersPanel />
-  <SavePanel />
 {/snippet}
 
 <style>
-  main {
+  .page {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: 100vh;
+    min-height: 100dvh;
     max-width: 960px;
     margin: 0 auto;
-    padding: 16px;
+    padding: 12px 16px;
   }
 
-  .status {
+  .page :global(footer) {
+    margin-top: auto;
+  }
+
+  /* Desktop: the whole game fits the viewport; only the tab's content scrolls. */
+  .shell {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    gap: 8px;
+    height: 100dvh;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 12px 16px 8px;
+  }
+
+  .shell > :global(.alerts:empty) {
+    display: none;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .tabs {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .tab-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px 10px;
+    border: var(--outline) solid var(--ink);
+    border-radius: 0 var(--radius) var(--radius) var(--radius);
+    background: var(--paper);
+    box-shadow: 0 2px 0 var(--shadow);
+  }
+
+  /* Panels inside a tab are sections of its sheet, not sheets of their own. */
+  .tab-content :global(.panel) {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  .tab-content :global(.panel + .panel) {
+    padding-top: 12px;
+    border-top: 1.4px dashed var(--line);
+    border-radius: 0;
+  }
+
+  @media (max-width: 1023px) {
+    .workspace {
+      grid-template-columns: minmax(0, 1fr) 130px;
+      gap: 10px;
+    }
+  }
+
+  /* Short windows and phones: the page scrolls normally instead. */
+  @media (max-height: 599px), (max-width: 767px) {
+    .shell {
+      height: auto;
+      min-height: 100dvh;
+      grid-template-rows: auto;
+    }
+
+    .tab-content {
+      overflow: visible;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .shell {
+      gap: 8px;
+      padding: 8px 8px calc(var(--tabbar-height) + 90px + env(safe-area-inset-bottom));
+    }
+
+    .workspace {
+      display: block;
+    }
+
+    .tab-content {
+      border-radius: var(--radius);
+      padding: 10px;
+    }
   }
 </style>

@@ -6,6 +6,7 @@ import {
   aktionEstimate,
   canRun,
   coolDown,
+  firstAktionAt,
   isAktionenUnlocked,
   isAktionOffered,
   runAktion,
@@ -137,5 +138,16 @@ describe('upgrade effects on Aktionen', () => {
     expect(aktionCost(state, 'flyer')).toBe(75)
     state.megaMeat = { active: { event: 'billboards', remaining: 90 }, nextIn: null, nextIndex: 0, started: 3 }
     expect(aktionCost(state, 'flyer')).toBe(150)
+  })
+})
+
+describe('firstAktionAt', () => {
+  it('is the flyer threshold, ignoring the fact check and the viral video', () => {
+    expect(firstAktionAt()).toBe(1_000)
+  })
+
+  it('matches the moment the Aktionen unlock in a game without counter-events', () => {
+    expect(isAktionenUnlocked(withPool(0, 10, firstAktionAt() - 1))).toBe(false)
+    expect(isAktionenUnlocked(withPool(0, 10, firstAktionAt()))).toBe(true)
   })
 })

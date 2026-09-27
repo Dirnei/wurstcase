@@ -1,28 +1,53 @@
 :root {
-  --bg: #f7f6f0;
-  --surface: #ffffff;
-  --text: #1f2a1c;
-  --text-muted: #5b6656;
-  --border: #d9dccf;
-  --accent: #3f7d2a;
-  --on-accent: #ffffff;
-  --danger: #b3261e;
+  /* Storybook paper and ink. */
+  --page: #efe2c4;
+  --paper: #fbf5e6;
+  --paper-2: #f3e8cf;
+  --ink: #4a3a28;
+  --ink-muted: #6e5c45;
+  --line: #d9c7a1;
+  --leaf: #5d7a2c;
+  --leaf-text: #4f6a22;
+  --on-leaf: #ffffff;
+  --danger: #a8412b;
+  --focus: #2f6fb0;
+  --shadow: #d9c7a1;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --outline: 1.6px;
+  --font-heading: 'Fraunces Variable', Georgia, serif;
+  --tabbar-height: 70px;
+  --font-ui: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Older names, still used by some panels. */
+  --bg: var(--paper-2);
+  --surface: var(--paper);
+  --text: var(--ink);
+  --text-muted: var(--ink-muted);
+  --border: var(--line);
+  --accent: var(--leaf);
+  --on-accent: var(--on-leaf);
 
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-ui);
   line-height: 1.5;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #161a14;
-    --surface: #1f251c;
-    --text: #e8ecdf;
-    --text-muted: #a3ad99;
-    --border: #343d2f;
-    --accent: #8cc56f;
-    --on-accent: #10160d;
-    --danger: #f2b8b5;
+    --page: #1f1b16;
+    --paper: #2e2820;
+    --paper-2: #3a3228;
+    --ink: #efe4cc;
+    --ink-muted: #c7b89a;
+    --line: #5a4d3c;
+    --leaf: #9cc265;
+    --leaf-text: #a9cc78;
+    --on-leaf: #1f2414;
+    --danger: #f0a08c;
+    --focus: #8cc2ff;
+    --shadow: #15120e;
   }
 }
 
@@ -34,40 +59,98 @@
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--page);
+  color: var(--ink);
 }
 
-/* Shared by the game panels. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-variation-settings: 'SOFT' 100;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--leaf-text);
+}
+
+/* Shared by the game panels: a sheet of paper with an ink outline. */
 .panel {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 0 2px 0 var(--shadow);
 }
 
 .panel h2 {
   margin: 0;
-  font-size: 1rem;
-  color: var(--text-muted);
-  font-weight: 400;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* A smaller sheet inside a panel or tab. */
+.card {
+  border: 1.4px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
 }
 
 .game-button {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1.4px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
   font: inherit;
+  font-weight: 600;
   text-align: left;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
+  touch-action: manipulation;
+}
+
+.game-button:hover:not(:disabled) {
+  background: var(--paper-2);
+}
+
+.game-button.primary {
+  background: var(--leaf);
+  color: var(--on-leaf);
+  text-align: center;
+}
+
+.game-button.primary:hover:not(:disabled) {
+  background: var(--leaf);
+  filter: brightness(1.08);
 }
 
 .game-button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .game-button {
+    min-height: 44px;
+  }
 }

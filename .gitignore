@@ -27,3 +27,6 @@ dist-ssr
 
 # Operator details for docker compose (personal data, never commit)
 .env
+
+**/__pycache__/*
+.superpowers/

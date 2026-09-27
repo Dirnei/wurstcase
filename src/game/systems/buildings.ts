@@ -31,6 +31,13 @@ export function buyBuilding(state: GameState, id: BuildingId): boolean {
   return true
 }
 
+/** The locked buildings that unlock next: all that share the lowest threshold, in production order. */
+export function nextLockedBuildings(state: Readonly<GameState>): BuildingId[] {
+  const locked = BUILDINGS.filter((building) => !isUnlocked(state, building.id))
+  const next = Math.min(...locked.map((building) => building.unlockAt))
+  return locked.filter((building) => building.unlockAt === next).map((building) => building.id)
+}
+
 /** A resource is shown once the player has some, or an unlocked building makes it. */
 export function isResourceShown(state: Readonly<GameState>, resource: ResourceId): boolean {
   return (

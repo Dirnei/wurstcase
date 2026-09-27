@@ -9,6 +9,7 @@ import {
   buyUpgrade,
   canBuyUpgrade,
   conversionFactor,
+  firstUpgradeAt,
   isUpgradeOffered,
   manualFactor,
   offeredUpgrades,
@@ -121,5 +122,16 @@ describe('effect lookups', () => {
     expect(awarenessFactor(owning('henPhotoShoot'), 'pig')).toBe(1)
     expect(conversionFactor(owning('localNewspaper'))).toBe(1.5)
     expect(manualFactor(owning('strongHands'))).toBe(2)
+  })
+})
+
+describe('firstUpgradeAt', () => {
+  it('is the lowest earnings at which an upgrade comes on offer', () => {
+    expect(firstUpgradeAt()).toBe(30)
+  })
+
+  it('matches the moment the first upgrade is offered', () => {
+    expect(offeredUpgrades(withMoney(0, firstUpgradeAt() - 1))).toEqual([])
+    expect(offeredUpgrades(withMoney(0, firstUpgradeAt())).length).toBeGreaterThan(0)
   })
 })

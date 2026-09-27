@@ -19,6 +19,7 @@
   import type { TranslationKey } from '../i18n/translate'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
+  import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
 
   const used = $derived(readGame(usedSpace))
@@ -84,11 +85,12 @@
   <h3>{t('lebenshof.shelters')}</h3>
   <ul class="offers">
     {#each shelters as shelter (shelter.id)}
-      <li>
-        <button type="button" class="game-button" disabled={!shelter.buildable} onclick={() => build(shelter.id)}>
+      <li class="card">
+        <ArtSlot kind="shelter" id={shelter.id} size="lg" />
+        <small>{t('lebenshof.shelterInfo', { space: amount(shelter.space), count: amount(shelter.count) })}</small>
+        <button type="button" class="game-button primary" disabled={!shelter.buildable} onclick={() => build(shelter.id)}>
           {t('lebenshof.build', { shelter: t(`shelter.${shelter.id}`), price: euros(shelter.price) })}
         </button>
-        <small>{t('lebenshof.shelterInfo', { space: amount(shelter.space), count: amount(shelter.count) })}</small>
       </li>
     {/each}
   </ul>
@@ -97,19 +99,19 @@
   <p class="line">{t('lebenshof.megaMeatLine')}</p>
   <ul class="offers">
     {#each offers as offer (offer.id)}
-      <li>
-        <button type="button" class="game-button" disabled={offer.check !== 'ok'} onclick={() => buy(offer.id)}>
-          {offer.emoji}
-          {t('lebenshof.rescue', { animal: t(`animal.${offer.id}`), price: euros(offer.price) })}
-        </button>
+      <li class="card">
+        <ArtSlot kind="species" id={offer.id} size="lg" />
         <small>
           {t('lebenshof.animalInfo', { space: amount(offer.space), awareness: amount(offer.awareness) })}
           {#if offer.check === 'money'}
-            · {t('lebenshof.lackMoney')}
+            <br />{t('lebenshof.lackMoney')}
           {:else if offer.check === 'space'}
-            · {t('lebenshof.lackSpace')}
+            <br />{t('lebenshof.lackSpace')}
           {/if}
         </small>
+        <button type="button" class="game-button primary" disabled={offer.check !== 'ok'} onclick={() => buy(offer.id)}>
+          {t('lebenshof.rescue', { animal: t(`animal.${offer.id}`), price: euros(offer.price) })}
+        </button>
       </li>
     {/each}
   </ul>
@@ -156,11 +158,22 @@
     list-style: none;
   }
 
+  .offers {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+  }
+
   .offers li {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 48px 1fr;
     align-items: center;
-    gap: 4px 8px;
+    gap: 6px 10px;
+    padding: 10px;
+  }
+
+  .offers button {
+    grid-column: 1 / -1;
   }
 
   .groups li {

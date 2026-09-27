@@ -50,6 +50,15 @@ export function isUpgradesUnlocked(state: Readonly<GameState>): boolean {
   return state.upgrades.length > 0 || offeredUpgrades(state).length > 0
 }
 
+/** Earnings at which the first upgrade comes on offer, from upgrades that depend on earnings alone. */
+export function firstUpgradeAt(): number {
+  const thresholds = UPGRADES.flatMap((upgrade) => {
+    const earned = upgrade.when.flatMap((clause) => ('earned' in clause ? [clause.earned] : []))
+    return earned.length === upgrade.when.length ? [Math.max(...earned)] : []
+  })
+  return Math.min(...thresholds)
+}
+
 export function canBuyUpgrade(state: Readonly<GameState>, id: UpgradeId): boolean {
   return isUpgradeOffered(state, id) && state.money.gte(getUpgrade(id).price)
 }

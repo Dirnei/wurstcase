@@ -1,3 +1,6 @@
+// Bundled so the fonts come from the game's own origin, never from a font CDN.
+import '@fontsource-variable/fraunces/soft.css'
+import '@fontsource-variable/nunito/wght.css'
 import { mount } from 'svelte'
 import App from './App.svelte'
 import './app.css'

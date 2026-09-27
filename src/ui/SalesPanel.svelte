@@ -4,24 +4,20 @@
   import { isResourceShown } from '../game/systems/buildings'
   import {
     canHireAssistant,
-    canSell,
     hireAssistant,
     isAssistantOffered,
     isOverstocked,
     orderCap,
-    saleValue,
-    sell,
   } from '../game/systems/sales'
   import { demandPerMinute, incomePerMinute, soldPerMinute } from '../game/systems/salesStats'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
+  import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
 
   const customers = $derived(amount(readGame((state) => state.customers)))
   const openOrders = $derived(amount(readGame((state) => state.openOrders)))
   const cap = $derived(amount(readGame(orderCap)))
-  const sellable = $derived(readGame(canSell))
-  const value = $derived(euros(readGame(saleValue)))
   const assistant = $derived(readGame((state) => state.assistant))
   const offered = $derived(readGame(isAssistantOffered))
   const affordable = $derived(readGame(canHireAssistant))
@@ -51,7 +47,9 @@
     <h3>{t('sales.soldTitle')}</h3>
     <dl>
       {#each sold as item (item.product)}
-        <dt class:idle={item.perMinute === 0}>{t(`resource.${item.product}`)}</dt>
+        <dt class:idle={item.perMinute === 0}>
+          <ArtSlot kind="resource" id={item.product} size="sm" />{t(`resource.${item.product}`)}
+        </dt>
         <dd class:idle={item.perMinute === 0}>{t('sales.soldPerMinute', { amount: amount(item.perMinute) })}</dd>
       {/each}
     </dl>
@@ -60,24 +58,19 @@
   <div class="actions">
     {#if assistant}
       <p class="muted">{t('sales.assistant.active')}</p>
-    {:else}
-      <button type="button" class="game-button" disabled={!sellable} onclick={() => act(sell)}>
-        {sellable ? t('sales.sellFor', { amount: value }) : t('sales.sell')}
+    {:else if offered}
+      <button
+        type="button"
+        class="game-button"
+        title={t('sales.assistant.hint')}
+        disabled={!affordable}
+        onclick={() => act(hireAssistant)}
+      >
+        {t('sales.assistant.hire', { price: euros(ASSISTANT.price) })}
       </button>
-      {#if offered}
-        <button
-          type="button"
-          class="game-button"
-          title={t('sales.assistant.hint')}
-          disabled={!affordable}
-          onclick={() => act(hireAssistant)}
-        >
-          {t('sales.assistant.hire', { price: euros(ASSISTANT.price) })}
-        </button>
-      {/if}
+      <span class="muted">{t('sales.assistant.hint')}</span>
     {/if}
   </div>
-
   <!-- Always rendered, so the panel keeps its height when the message comes and goes. -->
   <p class="overstock">{overstocked ? t('sales.overstock') : ''}</p>
   {#if overstocked}
@@ -116,6 +109,12 @@
     gap: 0 16px;
     margin: 0;
     font-size: 0.9rem;
+  }
+
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   dd {
