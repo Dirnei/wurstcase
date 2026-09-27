@@ -60,6 +60,20 @@ describe('content', () => {
     })
   })
 
+  it('has one manual action per building that does the same step', () => {
+    for (const building of BUILDINGS) {
+      const actions = MANUAL_ACTIONS.filter((action) => action.building === building.id)
+      expect(actions, building.id).toHaveLength(1)
+      const [action] = actions
+      expect(action.chain, action.id).toBe(building.chain)
+      expect(action.output, action.id).toEqual({ resource: building.output, amount: 1 })
+      expect(action.input, action.id).toEqual(
+        building.input && { resource: building.input.resource, amount: building.input.ratio },
+      )
+    }
+    expect(MANUAL_ACTIONS).toHaveLength(BUILDINGS.length)
+  })
+
   it('makes the soy chain available from the start', () => {
     for (const building of BUILDINGS.filter((b) => b.chain === 'soy')) {
       expect(building.unlockAt, building.id).toBe(0)

@@ -1,11 +1,17 @@
 import { MANUAL_ACTIONS, type ManualActionDef, type ManualActionId } from '../content/manual'
 import type { GameState } from '../state'
+import { isUnlocked } from './buildings'
 
 const BY_ID = new Map<ManualActionId, ManualActionDef>(MANUAL_ACTIONS.map((action) => [action.id, action]))
 
+/** A manual action unlocks with the building that does the same step. */
+export function isManualUnlocked(state: Readonly<GameState>, id: ManualActionId): boolean {
+  return isUnlocked(state, BY_ID.get(id)!.building)
+}
+
 export function canPerform(state: Readonly<GameState>, id: ManualActionId): boolean {
   const { input } = BY_ID.get(id)!
-  return !input || state.stock[input.resource].gte(input.amount)
+  return isManualUnlocked(state, id) && (!input || state.stock[input.resource].gte(input.amount))
 }
 
 export function performManual(state: GameState, id: ManualActionId): boolean {

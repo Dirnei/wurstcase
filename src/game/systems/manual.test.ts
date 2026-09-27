@@ -1,7 +1,9 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
-import { createInitialState } from '../state'
-import { canPerform, performManual } from './manual'
+import { getBuilding } from '../content/buildings'
+import { createInitialState, type GameState } from '../state'
+import { MANUAL_ACTIONS, type ManualActionId } from '../content/manual'
+import { canPerform, isManualUnlocked, performManual } from './manual'
 
 describe('manual actions', () => {
   it('harvests one soybean per click', () => {
@@ -40,4 +42,58 @@ describe('manual actions', () => {
   it('can always harvest', () => {
     expect(canPerform(createInitialState(), 'harvestSoybeans')).toBe(true)
   })
+
+  it('unlocks only the soy actions in a new game', () => {
+    const state = createInitialState()
+    const unlocked = MANUAL_ACTIONS.filter((action) => isManualUnlocked(state, action.id))
+    expect(unlocked.map((action) => action.chain)).toEqual(['soy', 'soy', 'soy'])
+  })
+
+  it('unlocks each step with its building', () => {
+    const state = earned(getBuilding('wheatField').unlockAt)
+    expect(isManualUnlocked(state, 'harvestWheat')).toBe(true)
+    expect(isManualUnlocked(state, 'makeSeitan')).toBe(true)
+    expect(isManualUnlocked(state, 'bakeLeverkas')).toBe(false)
+  })
+
+  it('changes nothing when locked, even with enough input', () => {
+    const state = createInitialState()
+    state.stock.seitan = new Decimal(2)
+    expect(canPerform(state, 'bakeLeverkas')).toBe(false)
+    expect(performManual(state, 'bakeLeverkas')).toBe(false)
+    expect(performManual(state, 'harvestOats')).toBe(false)
+    expect(state.stock.seitan.toNumber()).toBe(2)
+    expect(state.stock.leverkas.toNumber()).toBe(0)
+    expect(state.stock.oats.toNumber()).toBe(0)
+  })
+
+  it('makes a Leverkas by hand from 4 wheat', () => {
+    const state = earned(getBuilding('leverkasOven').unlockAt)
+    clicks(state, 'harvestWheat', 4)
+    clicks(state, 'makeSeitan', 2)
+    clicks(state, 'bakeLeverkas', 1)
+    expect(state.stock.wheat.toNumber()).toBe(0)
+    expect(state.stock.seitan.toNumber()).toBe(0)
+    expect(state.stock.leverkas.toNumber()).toBe(1)
+  })
+
+  it('makes a Hafer-Cappuccino by hand from 2 oats', () => {
+    const state = earned(getBuilding('cafeBar').unlockAt)
+    clicks(state, 'harvestOats', 2)
+    clicks(state, 'makeOatDrink', 1)
+    clicks(state, 'makeHaferCappuccino', 1)
+    expect(state.stock.oats.toNumber()).toBe(0)
+    expect(state.stock.oatDrink.toNumber()).toBe(0)
+    expect(state.stock.haferCappuccino.toNumber()).toBe(1)
+  })
 })
+
+function earned(amount: number) {
+  return { ...createInitialState(), totalEarned: new Decimal(amount) }
+}
+
+function clicks(state: GameState, id: ManualActionId, times: number) {
+  for (let i = 0; i < times; i++) {
+    expect(performManual(state, id), id).toBe(true)
+  }
+}
