@@ -1,5 +1,5 @@
 import type { BuildingDef } from './buildings'
-import type { ProductId } from './resources'
+import { PRODUCTS, type ProductId } from './resources'
 
 /** Euros earned per unit sold. Leverkas is the Act 1 premium product. */
 export const PRODUCT_PRICES: Readonly<Record<ProductId, number>> = {
@@ -7,6 +7,11 @@ export const PRODUCT_PRICES: Readonly<Record<ProductId, number>> = {
   haferCappuccino: 12,
   leverkas: 25,
 }
+
+/** Products in the order they are sold: highest price first. */
+export const PRODUCTS_BY_PRICE: readonly ProductId[] = [...PRODUCTS].sort(
+  (a, b) => PRODUCT_PRICES[b] - PRODUCT_PRICES[a],
+)
 
 export const KITCHENS: readonly BuildingDef[] = [
   {

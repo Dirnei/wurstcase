@@ -23,8 +23,9 @@ steps of about one tenth of a second, and the display SHALL refresh after every 
 Advancing the game SHALL depend only on the current game state and the amount of time advanced.
 Advancing by a total duration in one step or in several smaller steps SHALL give the same result,
 within a relative tolerance of 10^-9 for floating-point rounding, with one exception: because
-buildings produce whole units, the count of each resource MAY differ by at most one unit per
-building type, for a unit that completes at the boundary of the period.
+buildings produce and customers order in whole units, amounts MAY differ by what completes at the
+boundary of the period. That is at most one unit per building type for each resource, and at most
+one order for open orders, with the money and stock of a sale made from that order.
 
 #### Scenario: Split steps
 - **WHEN** one game state is advanced by 1 second, and an identical state is advanced 10 times by
@@ -36,6 +37,12 @@ building type, for a unit that completes at the boundary of the period.
   by 60 seconds once, and an identical state 600 times by 0.1 seconds
 - **THEN** play time is equal within the tolerance, and each resource differs by at most one unit
   per building type in the chain
+
+#### Scenario: Split steps with automatic selling
+- **WHEN** a game state with a Tofu-Wurst chain and the shop assistant is advanced by 60 seconds
+  once, and an identical state 600 times by 0.1 seconds
+- **THEN** open orders differ by at most one, and money differs by at most the price of one
+  Tofu-Wurst
 
 ### Requirement: Catch-up after a hidden tab
 When the tab was hidden or the browser paused the page, the game SHALL credit the missed time when

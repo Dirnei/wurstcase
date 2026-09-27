@@ -1,6 +1,6 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
-import { decodeSave, encodeSave, exportSave, importSave } from './save'
+import { CURRENT_FORMAT, decodeSave, encodeSave, exportSave, importSave } from './save'
 import { createInitialState, type GameState } from './state'
 
 const NOW = 1_790_000_000_000
@@ -84,6 +84,40 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.progress).toEqual(state.progress)
   })
 
+  it('restores customers, open orders, order progress and the assistant', () => {
+    const state = createInitialState()
+    state.customers = new Decimal('2e30')
+    state.openOrders = new Decimal(12)
+    state.orderProgress = 0.35
+    state.assistant = true
+
+    const restored = decodedState(encodeSave(state, NOW))
+
+    expect(restored.customers.eq(state.customers)).toBe(true)
+    expect(restored.openOrders.eq(12)).toBe(true)
+    expect(restored.orderProgress).toBe(0.35)
+    expect(restored.assistant).toBe(true)
+  })
+
+  it('migrates a format 2 save to 10 customers, no orders and no assistant', () => {
+    const format2 = savedState()
+    delete format2.customers
+    delete format2.openOrders
+    delete format2.orderProgress
+    delete format2.assistant
+    format2.buildings.tofuPress = 3
+    format2.money = '42'
+
+    const restored = decodedState(envelope(2, format2))
+
+    expect(restored.buildings.tofuPress).toBe(3)
+    expect(restored.money.eq(42)).toBe(true)
+    expect(restored.customers.eq(10)).toBe(true)
+    expect(restored.openOrders.eq(0)).toBe(true)
+    expect(restored.orderProgress).toBe(0)
+    expect(restored.assistant).toBe(false)
+  })
+
   it('does not save which buildings are waiting or short', () => {
     const state = createInitialState()
     state.waiting = { tofuPress: 'soybeans' }
@@ -113,8 +147,15 @@ describe('encodeSave / decodeSave', () => {
     ['fractional earnings', { totalEarned: '0.1' }],
     ['infinite earnings', { totalEarned: 'Infinity' }],
     ['missing money', { money: undefined }],
+    ['fractional customers', { customers: '2.5' }],
+    ['negative customers', { customers: '-1' }],
+    ['fractional open orders', { openOrders: '0.5' }],
+    ['negative order progress', { orderProgress: -1 }],
+    ['order progress as text', { orderProgress: '0.5' }],
+    ['assistant as text', { assistant: 'yes' }],
+    ['missing assistant', { assistant: undefined }],
   ])('rejects %s', (_, override) => {
-    expect(decodeSave(envelope(2, { ...savedState(), ...override }))).toEqual({
+    expect(decodeSave(envelope(CURRENT_FORMAT, { ...savedState(), ...override }))).toEqual({
       ok: false,
       reason: 'invalid',
     })
@@ -134,14 +175,14 @@ describe('encodeSave / decodeSave', () => {
   ])('rejects %s', (_, change) => {
     const state = savedState()
     change(state)
-    expect(decodeSave(envelope(2, state))).toEqual({ ok: false, reason: 'invalid' })
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
   })
 
   it('ignores unknown resources and buildings', () => {
     const state = savedState()
     state.stock.unobtainium = '5'
     state.buildings.moonBase = 2
-    const restored = decodedState(envelope(2, state))
+    const restored = decodedState(envelope(CURRENT_FORMAT, state))
     expect(restored).not.toHaveProperty('stock.unobtainium')
     expect(restored).not.toHaveProperty('buildings.moonBase')
   })

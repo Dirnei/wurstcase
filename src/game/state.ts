@@ -1,6 +1,7 @@
 import Decimal from 'break_eternity.js'
 import { BUILDING_IDS, type BuildingId } from './content/buildings'
 import { RESOURCES, type ResourceId } from './content/resources'
+import { STARTING_CUSTOMERS } from './content/town'
 
 /** The whole game in one plain, serializable object. Game systems mutate it through tick(). */
 export interface GameState {
@@ -15,6 +16,14 @@ export interface GameState {
   progress: Record<BuildingId, number>
   /** Buildings that ran short of input in the last tick, and the input they lack. Not saved. */
   waiting: Partial<Record<BuildingId, ResourceId>>
+  /** Whole number of customers; a Decimal because awareness grows it towards town sizes and beyond. */
+  customers: Decimal
+  /** Whole number of orders waiting to be filled. */
+  openOrders: Decimal
+  /** Fraction towards the next order. */
+  orderProgress: number
+  /** Whether the shop assistant has been hired to sell automatically. */
+  assistant: boolean
   /** Seconds left to show a resource as short, held after the last wait so it does not flicker. Not saved. */
   shortage: Partial<Record<ResourceId, number>>
 }
@@ -27,6 +36,10 @@ export function createInitialState(): GameState {
     stock: Object.fromEntries(RESOURCES.map((id) => [id, new Decimal(0)])) as Record<ResourceId, Decimal>,
     buildings: Object.fromEntries(BUILDING_IDS.map((id) => [id, 0])) as Record<BuildingId, number>,
     progress: Object.fromEntries(BUILDING_IDS.map((id) => [id, 0])) as Record<BuildingId, number>,
+    customers: new Decimal(STARTING_CUSTOMERS),
+    openOrders: new Decimal(0),
+    orderProgress: 0,
+    assistant: false,
     waiting: {},
     shortage: {},
   }

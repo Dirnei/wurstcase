@@ -4,7 +4,6 @@
   import { amount } from './amounts'
   import { readGame } from './game.svelte'
   import { t } from './i18n.svelte'
-  import SellButton from './SellButton.svelte'
 
   const groups = $derived(
     readGame((state) =>
@@ -40,7 +39,6 @@
       </div>
     {/each}
   </div>
-  <SellButton />
 </section>
 
 <style>

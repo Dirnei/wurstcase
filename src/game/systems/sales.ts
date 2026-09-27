@@ -1,20 +1,103 @@
 import Decimal from 'break_eternity.js'
-import { PRODUCT_PRICES } from '../content/products'
+import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from '../content/products'
 import { PRODUCTS } from '../content/resources'
+import {
+  ASSISTANT,
+  ORDER_CAP_SECONDS,
+  ORDERS_PER_CUSTOMER,
+  OVERSTOCK_SECONDS,
+} from '../content/town'
 import type { GameState } from '../state'
 
-// Temporary: sells everything at base price until sales-and-customers adds demand.
-
-export function canSellAll(state: Readonly<GameState>): boolean {
-  return PRODUCTS.some((product) => state.stock[product].gt(0))
+/** Orders per second from all customers. */
+export function orderRate(state: Readonly<GameState>): Decimal {
+  return state.customers.mul(ORDERS_PER_CUSTOMER)
 }
 
-export function sellAll(state: GameState): void {
-  let earned = new Decimal(0)
-  for (const product of PRODUCTS) {
-    earned = earned.add(state.stock[product].mul(PRODUCT_PRICES[product]))
-    state.stock[product] = new Decimal(0)
+/** The most open orders that can pile up. */
+export function orderCap(state: Readonly<GameState>): Decimal {
+  return orderRate(state).mul(ORDER_CAP_SECONDS).floor()
+}
+
+/**
+ * Customers place whole orders over time. With the assistant, orders are sold before the cap
+ * applies, so one long tick sells as much as many short ones.
+ */
+export function takeOrders(state: GameState, seconds: number): void {
+  const gained = orderRate(state).mul(seconds).add(state.orderProgress)
+  const whole = gained.floor()
+  state.orderProgress = gained.sub(whole).toNumber()
+  state.openOrders = state.openOrders.add(whole)
+
+  if (state.assistant) {
+    fillOrders(state)
   }
-  state.money = state.money.add(earned)
-  state.totalEarned = state.totalEarned.add(earned)
+
+  const cap = orderCap(state)
+  if (state.openOrders.gte(cap)) {
+    // Demand beyond the cap is lost, and nothing is banked towards the next order.
+    state.openOrders = cap
+    state.orderProgress = 0
+  }
+}
+
+/** Fills open orders from stock, most expensive product first. */
+function fillOrders(state: GameState): void {
+  for (const product of PRODUCTS_BY_PRICE) {
+    const sold = Decimal.min(state.stock[product], state.openOrders)
+    if (sold.lte(0)) {
+      continue
+    }
+    const earned = sold.mul(PRODUCT_PRICES[product])
+    state.stock[product] = state.stock[product].sub(sold)
+    state.openOrders = state.openOrders.sub(sold)
+    state.money = state.money.add(earned)
+    state.totalEarned = state.totalEarned.add(earned)
+  }
+}
+
+/** What a sale by hand would earn right now. */
+export function saleValue(state: Readonly<GameState>): Decimal {
+  let orders = state.openOrders
+  let value = new Decimal(0)
+  for (const product of PRODUCTS_BY_PRICE) {
+    const sold = Decimal.min(state.stock[product], orders)
+    orders = orders.sub(sold)
+    value = value.add(sold.mul(PRODUCT_PRICES[product]))
+  }
+  return value
+}
+
+export function canSell(state: Readonly<GameState>): boolean {
+  return state.openOrders.gt(0) && PRODUCTS.some((product) => state.stock[product].gt(0))
+}
+
+/** A sale by hand. */
+export function sell(state: GameState): void {
+  if (canSell(state)) {
+    fillOrders(state)
+  }
+}
+
+export function isAssistantOffered(state: Readonly<GameState>): boolean {
+  return !state.assistant && state.totalEarned.gte(ASSISTANT.unlockAt)
+}
+
+export function canHireAssistant(state: Readonly<GameState>): boolean {
+  return isAssistantOffered(state) && state.money.gte(ASSISTANT.price)
+}
+
+export function hireAssistant(state: GameState): boolean {
+  if (!canHireAssistant(state)) {
+    return false
+  }
+  state.money = state.money.sub(ASSISTANT.price)
+  state.assistant = true
+  return true
+}
+
+/** More products in stock than customers order in two minutes. */
+export function isOverstocked(state: Readonly<GameState>): boolean {
+  const inStock = PRODUCTS.reduce((sum, product) => sum.add(state.stock[product]), new Decimal(0))
+  return inStock.gt(orderRate(state).mul(OVERSTOCK_SECONDS))
 }

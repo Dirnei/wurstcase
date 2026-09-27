@@ -1,11 +1,6 @@
-# sales Specification
+# Spec Delta
 
-## Purpose
-
-Turns the products the player makes into money, which pays for buildings and later for rescuing
-animals.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Customers
 The game SHALL track the number of customers as a whole number. A new game SHALL start with 10
@@ -96,3 +91,10 @@ and no assistant, and keep everything else.
 #### Scenario: Older save
 - **WHEN** a save from before this change with 3 tofu presses is loaded
 - **THEN** the game continues with 3 tofu presses, 10 customers, no open orders and no assistant
+
+## REMOVED Requirements
+
+### Requirement: Sell everything
+**Reason**: It was a stopgap until demand existed; it sold unlimited stock and ignored customers.
+**Migration**: Sell with the new sell button, which fills open orders, or hire the shop assistant
+to sell automatically.

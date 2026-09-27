@@ -8,6 +8,7 @@
   import Money from './ui/Money.svelte'
   import Notices from './ui/Notices.svelte'
   import PlayTime from './ui/PlayTime.svelte'
+  import SalesPanel from './ui/SalesPanel.svelte'
   import SavePanel from './ui/SavePanel.svelte'
   import StockPanel from './ui/StockPanel.svelte'
   import { currentRoute } from './ui/route.svelte'
@@ -23,6 +24,7 @@
       <Money />
       <PlayTime />
     </div>
+    <SalesPanel />
     <ManualActions />
     {#each CHAINS as chain (chain)}
       <ChainPanel {chain} />

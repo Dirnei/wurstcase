@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BUILDINGS, BUILDING_IDS, CHAINS } from './buildings'
 import { MANUAL_ACTIONS } from './manual'
-import { PRODUCT_PRICES } from './products'
+import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
 import { PRODUCTS, RESOURCES } from './resources'
 
 describe('content', () => {
@@ -25,6 +25,11 @@ describe('content', () => {
       expect(PRODUCT_PRICES[product], product).toBeGreaterThan(0)
     }
     expect(PRODUCT_PRICES.leverkas).toBe(Math.max(...Object.values(PRODUCT_PRICES)))
+  })
+
+  it('sells products highest price first', () => {
+    expect(PRODUCTS_BY_PRICE).toEqual(['leverkas', 'haferCappuccino', 'tofuWurst'])
+    expect([...PRODUCTS_BY_PRICE].sort()).toEqual([...PRODUCTS].sort())
   })
 
   it('has unique building ids in known chains', () => {

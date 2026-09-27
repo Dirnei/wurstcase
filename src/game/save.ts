@@ -11,7 +11,7 @@ import { createInitialState, type GameState } from './state'
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 2
+export const CURRENT_FORMAT = 3
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -19,6 +19,11 @@ export type Migration = (state: unknown) => unknown
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   // 1 → 2 (production-chain): a new economy with no money, stock or buildings.
   1: (state) => (isRecord(state) ? { ...writeState(createInitialState()), ...state } : state),
+  // 2 → 3 (sales-and-customers): the 10 starting neighbours, no open orders, no assistant.
+  2: (state) =>
+    isRecord(state)
+      ? { customers: '10', openOrders: '0', orderProgress: 0, assistant: false, ...state }
+      : state,
 }
 
 export type DecodeResult =
@@ -99,6 +104,10 @@ function writeState(state: GameState): Record<string, unknown> {
     stock: Object.fromEntries(RESOURCES.map((id) => [id, state.stock[id].toString()])),
     buildings: { ...state.buildings },
     progress: { ...state.progress },
+    customers: state.customers.toString(),
+    openOrders: state.openOrders.toString(),
+    orderProgress: state.orderProgress,
+    assistant: state.assistant,
   }
 }
 
@@ -111,10 +120,22 @@ function readState(value: unknown): GameState | null {
   ) {
     return null
   }
-  const { playTime } = value
+  const { playTime, orderProgress, assistant } = value
   const money = readAmount(value.money)
   const totalEarned = readAmount(value.totalEarned)
-  if (!isFiniteNumber(playTime) || playTime < 0 || !money || !totalEarned) {
+  const customers = readAmount(value.customers)
+  const openOrders = readAmount(value.openOrders)
+  if (
+    !isFiniteNumber(playTime) ||
+    playTime < 0 ||
+    !money ||
+    !totalEarned ||
+    !customers ||
+    !openOrders ||
+    !isFiniteNumber(orderProgress) ||
+    orderProgress < 0 ||
+    typeof assistant !== 'boolean'
+  ) {
     return null
   }
 
@@ -139,7 +160,16 @@ function readState(value: unknown): GameState | null {
     }
     state.progress[id] = progress
   }
-  return { ...state, playTime, money, totalEarned }
+  return {
+    ...state,
+    playTime,
+    money,
+    totalEarned,
+    customers,
+    openOrders,
+    orderProgress,
+    assistant,
+  }
 }
 
 /** A saved amount: a non-negative, finite, whole Decimal written as a string. */

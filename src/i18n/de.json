@@ -63,7 +63,14 @@
   "resource.tofuWurst": "Tofu-Wurst",
   "resource.leverkas": "Leverkas",
   "resource.haferCappuccino": "Hafer-Cappuccino",
-  "sales.sellAll": "Alles verkaufen",
-  "sales.sellAllHint": "Verkauft alle Produkte zum Grundpreis.",
-  "stock.short": "Zu wenig für die Produktion"
+  "stock.short": "Zu wenig für die Produktion",
+  "sales.title": "Verkauf",
+  "sales.customers": "Kundschaft: {count}",
+  "sales.orders": "Offene Bestellungen: {open} / {cap}",
+  "sales.sell": "Verkaufen",
+  "sales.sellFor": "Verkaufen (+{amount})",
+  "sales.assistant.hire": "Aushilfe einstellen: {price}",
+  "sales.assistant.hint": "Verkauft offene Bestellungen automatisch.",
+  "sales.assistant.active": "Deine Aushilfe verkauft automatisch.",
+  "sales.overstock": "Das Lager quillt über. Frau Müller von nebenan isst schon Tofu-Wurst zum Frühstück – mehr geht nicht."
 }
