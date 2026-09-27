@@ -207,6 +207,14 @@ describe('encodeSave / decodeSave', () => {
     expect(decodedState(json).shortage).toEqual({})
   })
 
+  it('does not save the stock trend', () => {
+    const state = createInitialState()
+    state.trend = [{ seconds: 1, change: { ...state.stock, soybeans: new Decimal(3) } }]
+    const json = encodeSave(state, NOW)
+    expect(JSON.parse(json).state).not.toHaveProperty('trend')
+    expect(decodedState(json).trend).toEqual([])
+  })
+
   it('migrates a format 1 save to a new economy that keeps its play time', () => {
     expect(decodeSave(envelope(1, { playTime: 77 }))).toEqual({
       ok: true,

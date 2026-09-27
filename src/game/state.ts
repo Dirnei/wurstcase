@@ -12,6 +12,12 @@ export interface Resident {
   name: number
 }
 
+/** Stock changed by tick() over a short span of game time. */
+export interface TrendBucket {
+  seconds: number
+  change: Record<ResourceId, Decimal>
+}
+
 /** The whole game in one plain, serializable object. Game systems mutate it through tick(). */
 export interface GameState {
   /** Total seconds of game time played in this game, restored from the save across reloads. */
@@ -41,6 +47,8 @@ export interface GameState {
   shelters: Record<ShelterId, number>
   /** Fraction towards the next customer converted by awareness. */
   conversionProgress: number
+  /** Net stock change from passing time, newest bucket last; each bucket covers up to 1 s. Not saved. */
+  trend: TrendBucket[]
   /** Seconds left to show a resource as short, held after the last wait so it does not flicker. Not saved. */
   shortage: Partial<Record<ResourceId, number>>
 }
@@ -63,5 +71,6 @@ export function createInitialState(): GameState {
     conversionProgress: 0,
     waiting: {},
     shortage: {},
+    trend: [],
   }
 }

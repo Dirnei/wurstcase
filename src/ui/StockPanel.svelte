@@ -1,6 +1,7 @@
 <script lang="ts">
   import { RESOURCE_KINDS } from '../game/content/resources'
   import { isResourceShown } from '../game/systems/buildings'
+  import { stockTrend, type Trend } from '../game/systems/trend'
   import { amount } from './amounts'
   import { readGame } from './game.svelte'
   import { t } from './i18n.svelte'
@@ -15,10 +16,13 @@
             resource,
             stock: state.stock[resource],
             short: state.shortage[resource] !== undefined,
+            trend: stockTrend(state, resource),
           })),
       })).filter((group) => group.items.length > 0),
     ),
   )
+
+  const MARKS: Record<Trend, string> = { rising: '▲', falling: '▼', steady: '▬' }
 </script>
 
 <section class="panel">
@@ -33,6 +37,10 @@
             <dd class:short={item.short} title={item.short ? t('stock.short') : undefined}>
               {amount(item.stock)}
               {#if item.short}<span class="visually-hidden">({t('stock.short')})</span>{/if}
+            </dd>
+            <dd class="trend {item.trend}" title={t(`stock.trend.${item.trend}`)}>
+              <span aria-hidden="true">{MARKS[item.trend]}</span>
+              <span class="visually-hidden">{t(`stock.trend.${item.trend}`)}</span>
             </dd>
           {/each}
         </dl>
@@ -56,7 +64,7 @@
 
   dl {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto 1.25em;
     gap: 2px 12px;
     margin: 0;
   }
@@ -65,6 +73,24 @@
     margin: 0;
     text-align: right;
     font-variant-numeric: tabular-nums;
+  }
+
+  .trend {
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
+  }
+
+  .rising {
+    color: var(--accent);
+  }
+
+  .falling {
+    color: var(--danger);
+  }
+
+  .steady {
+    color: var(--text-muted);
   }
 
   .short {

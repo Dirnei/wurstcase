@@ -1,7 +1,18 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
-import { createInitialState } from './state'
+import { RESOURCES } from './content/resources'
+import { createInitialState, type GameState } from './state'
+import { bulkSell } from './systems/bulkSales'
+import { performManual } from './systems/manual'
+import { stockTrend } from './systems/trend'
 import { tick } from './tick'
+
+/** Advances the game in live-loop steps of 0.1 s. */
+function runFor(state: GameState, seconds: number): void {
+  for (let i = 0; i < seconds * 10; i++) {
+    tick(state, 0.1)
+  }
+}
 
 function expectRelativelyEqual(actual: number, expected: number): void {
   const tolerance = 1e-9 * Math.max(Math.abs(actual), Math.abs(expected))
@@ -77,6 +88,49 @@ describe('tick', () => {
       tick(state, 60)
     }
     expect(state.residents).toEqual(before)
+  })
+
+  it('shows every stock as steady in a new game', () => {
+    const state = createInitialState()
+    for (const resource of RESOURCES) {
+      expect(stockTrend(state, resource)).toBe('steady')
+    }
+  })
+
+  it('shows soybeans rising while a field fills the stock', () => {
+    const state = createInitialState()
+    state.buildings.soybeanField = 1
+    runFor(state, 10)
+    expect(stockTrend(state, 'soybeans')).toBe('rising')
+  })
+
+  it('shows tofu falling and Tofu-Wurst rising while kitchens use up tofu', () => {
+    const state = createInitialState()
+    state.stock.tofu = new Decimal(100)
+    state.buildings.tofuWurstKitchen = 2
+    runFor(state, 10)
+    expect(stockTrend(state, 'tofu')).toBe('falling')
+    expect(stockTrend(state, 'tofuWurst')).toBe('rising')
+  })
+
+  it('ignores player actions between ticks', () => {
+    const state = createInitialState()
+    state.buildings.soybeanField = 1
+    state.totalEarned = new Decimal(100)
+    runFor(state, 10)
+    expect(stockTrend(state, 'soybeans')).toBe('rising')
+    bulkSell(state, 'megaMeat', 'soybeans')
+    expect(state.stock.soybeans.lt(10)).toBe(true)
+    tick(state, 0.1)
+    expect(stockTrend(state, 'soybeans')).toBe('rising')
+
+    const idle = createInitialState()
+    runFor(idle, 5)
+    for (let i = 0; i < 20; i++) {
+      performManual(idle, 'harvestSoybeans')
+      tick(idle, 0.1)
+    }
+    expect(stockTrend(idle, 'soybeans')).toBe('steady')
   })
 
   it('agrees within one order for one big and many small ticks while the assistant sells', () => {
