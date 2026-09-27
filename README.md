@@ -53,3 +53,17 @@ LEGAL_HOSTING_PROVIDER=Beispiel Hosting GmbH, Beispielstraße 5, 10115 Berlin
 ```
 
 Then apply them with `docker compose up -d` (no rebuild needed).
+
+### Developer page
+
+`#dev` shows a balancing page with cost, payback and demand charts and a simulated playthrough,
+all computed from the current content. It is always on under `npm run dev`. In the container it
+is off unless `DEV_TOOLS=true` is set, for example in `.env`:
+
+```bash
+DEV_TOOLS=true
+```
+
+Then recreate the container with `docker compose up -d` (no rebuild needed). The container logs
+"developer tools enabled at #dev" while it is on. Builds without a server (such as the itch.io
+zip) never show it.

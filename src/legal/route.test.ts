@@ -10,6 +10,8 @@ describe('routeFromHash', () => {
     ['', 'game'],
     ['#', 'game'],
     ['#unknown', 'game'],
+    ['#dev', 'dev'],
+    ['#DEV', 'dev'],
   ])('maps %j to %s', (hash, route) => {
     expect(routeFromHash(hash)).toBe(route)
   })

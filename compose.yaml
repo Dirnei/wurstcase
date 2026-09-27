@@ -14,6 +14,8 @@ services:
       LEGAL_COUNTRY: ${LEGAL_COUNTRY:-Deutschland}
       LEGAL_EMAIL: ${LEGAL_EMAIL:-kontakt@example.com}
       LEGAL_HOSTING_PROVIDER: ${LEGAL_HOSTING_PROVIDER:-Muster Hosting GmbH, Musterweg 2, 12345 Musterstadt}
+      # Developer page at #dev with balancing charts. Only exactly "true" turns it on (see README).
+      DEV_TOOLS: ${DEV_TOOLS:-false}
     # Rotate logs so old access entries are overwritten, as stated in the privacy policy.
     logging:
       driver: json-file

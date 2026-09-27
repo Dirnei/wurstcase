@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { Component } from 'svelte'
+  import { devToolsEnabled } from './dev/enabled'
   import { CHAINS } from './game/content/buildings'
   import { isLebenshofUnlocked } from './game/systems/rescue'
   import BulkBuyersPanel from './ui/BulkBuyersPanel.svelte'
@@ -19,32 +21,52 @@
 
   const route = $derived(currentRoute())
   const lebenshof = $derived(readGame(isLebenshofUnlocked))
+  // Asked only when #dev is opened; the page and its chart library load only if it is on.
+  const devPage = $derived(route === 'dev' ? loadDevPage() : null)
+
+  async function loadDevPage(): Promise<Component | null> {
+    return (await devToolsEnabled()) ? (await import('./dev/DevPage.svelte')).default : null
+  }
 </script>
 
 <main>
   <Header />
   <Notices />
   {#if route === 'game'}
-    <div class="status">
-      <Money />
-      <PlayTime />
-    </div>
-    <SalesPanel />
-    <ManualActions />
-    {#each CHAINS as chain (chain)}
-      <ChainPanel {chain} />
-    {/each}
-    {#if lebenshof}
-      <LebenshofPanel />
-    {/if}
-    <StockPanel />
-    <BulkBuyersPanel />
-    <SavePanel />
+    {@render game()}
+  {:else if route === 'dev'}
+    {#await devPage}
+      {@render game()}
+    {:then DevPage}
+      {#if DevPage}
+        <DevPage />
+      {:else}
+        {@render game()}
+      {/if}
+    {/await}
   {:else}
     <LegalPage page={route} />
   {/if}
   <Footer />
 </main>
+
+{#snippet game()}
+  <div class="status">
+    <Money />
+    <PlayTime />
+  </div>
+  <SalesPanel />
+  <ManualActions />
+  {#each CHAINS as chain (chain)}
+    <ChainPanel {chain} />
+  {/each}
+  {#if lebenshof}
+    <LebenshofPanel />
+  {/if}
+  <StockPanel />
+  <BulkBuyersPanel />
+  <SavePanel />
+{/snippet}
 
 <style>
   main {

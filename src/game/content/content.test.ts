@@ -6,17 +6,9 @@ import { BUILDINGS, BUILDING_IDS, CHAINS } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
 import { MANUAL_ACTIONS } from './manual'
 import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
-import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES, type ProductId, type ResourceId } from './resources'
+import { veganValue } from '../balance/value'
+import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES } from './resources'
 import { LEBENSHOF_UNLOCK_AT, SHELTER_IDS, SHELTERS } from './shelters'
-
-/** What one unit earns once turned into its chain's product and sold to a customer. */
-function veganValue(resource: ResourceId): number {
-  if ((PRODUCTS as readonly string[]).includes(resource)) {
-    return PRODUCT_PRICES[resource as ProductId]
-  }
-  const consumer = BUILDINGS.find((building) => building.input?.resource === resource)!
-  return veganValue(consumer.output) / consumer.input!.ratio
-}
 
 describe('content', () => {
   it('uses only known resources', () => {
