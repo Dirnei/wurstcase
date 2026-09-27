@@ -3,6 +3,7 @@ import { coolDown } from './systems/aktionen'
 import { convert, gatherAwareness } from './systems/awareness'
 import { produce } from './systems/production'
 import { takeOrders } from './systems/sales'
+import { advanceSalesStats } from './systems/salesStats'
 import { recordTrend } from './systems/trend'
 import { advanceVillain } from './systems/villain'
 
@@ -11,6 +12,7 @@ export function tick(state: GameState, seconds: number): void {
   // Only what happens inside tick() counts for the stock trend, never the player's own actions.
   const before = { ...state.stock }
   state.playTime += seconds
+  advanceSalesStats(state, seconds)
   produce(state, seconds)
   advanceVillain(state, seconds)
   gatherAwareness(state, seconds)

@@ -8,6 +8,7 @@ import {
   OVERSTOCK_SECONDS,
 } from '../content/town'
 import type { GameState } from '../state'
+import { recordSale } from './salesStats'
 
 /** Orders per second from all customers. */
 export function orderRate(state: Readonly<GameState>): Decimal {
@@ -53,6 +54,7 @@ function fillOrders(state: GameState): void {
     state.openOrders = state.openOrders.sub(sold)
     state.money = state.money.add(earned)
     state.totalEarned = state.totalEarned.add(earned)
+    recordSale(state, product, sold)
   }
 }
 

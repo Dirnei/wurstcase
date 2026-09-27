@@ -260,9 +260,17 @@ describe('encodeSave / decodeSave', () => {
     expect(decodedState(json).shortage).toEqual({})
   })
 
+  it('does not save the sales figures', () => {
+    const state = createInitialState()
+    state.sales = [{ seconds: 1, values: { leverkas: new Decimal(2) } }]
+    const json = encodeSave(state, NOW)
+    expect(JSON.parse(json).state).not.toHaveProperty('sales')
+    expect(decodedState(json).sales).toEqual([])
+  })
+
   it('does not save the stock trend', () => {
     const state = createInitialState()
-    state.trend = [{ seconds: 1, change: { ...state.stock, soybeans: new Decimal(3) } }]
+    state.trend = [{ seconds: 1, values: { soybeans: new Decimal(3) } }]
     const json = encodeSave(state, NOW)
     expect(JSON.parse(json).state).not.toHaveProperty('trend')
     expect(decodedState(json).trend).toEqual([])

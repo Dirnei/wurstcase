@@ -4,20 +4,15 @@ import { AKTION_IDS, type AktionId } from './content/aktionen'
 import type { SpeciesId } from './content/animals'
 import { BUYER_IDS, type BuyerId } from './content/buyers'
 import type { MegaMeatEventId } from './content/megaMeatEvents'
-import { RESOURCES, type ResourceId } from './content/resources'
+import { RESOURCES, type ProductId, type ResourceId } from './content/resources'
 import { SHELTER_IDS, type ShelterId } from './content/shelters'
+import type { Bucket } from './systems/rollingWindow'
 import { STARTING_CUSTOMERS } from './content/town'
 
 /** An animal rescued into the Lebenshof. `name` is its index in the species' name pool, so saves stay language-independent. */
 export interface Resident {
   species: SpeciesId
   name: number
-}
-
-/** Stock changed by tick() over a short span of game time. */
-export interface TrendBucket {
-  seconds: number
-  change: Record<ResourceId, Decimal>
 }
 
 /** MegaMeat's counter-events: the active one, and when and which comes next. */
@@ -72,7 +67,9 @@ export interface GameState {
   }
   megaMeat: MegaMeatState
   /** Net stock change from passing time, newest bucket last; each bucket covers up to 1 s. Not saved. */
-  trend: TrendBucket[]
+  trend: Bucket<ResourceId>[]
+  /** Units sold to customers, newest bucket last; each bucket covers up to 1 s. Not saved. */
+  sales: Bucket<ProductId>[]
   /** Seconds left to show a resource as short, held after the last wait so it does not flicker. Not saved. */
   shortage: Partial<Record<ResourceId, number>>
 }
@@ -103,5 +100,6 @@ export function createInitialState(): GameState {
     waiting: {},
     shortage: {},
     trend: [],
+    sales: [],
   }
 }

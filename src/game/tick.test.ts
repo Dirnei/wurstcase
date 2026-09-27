@@ -5,6 +5,7 @@ import { createInitialState, type GameState } from './state'
 import { runAktion } from './systems/aktionen'
 import { bulkSell } from './systems/bulkSales'
 import { performManual } from './systems/manual'
+import { demandPerMinute, soldPerMinute } from './systems/salesStats'
 import { stockTrend } from './systems/trend'
 import { tick } from './tick'
 
@@ -113,6 +114,20 @@ describe('tick', () => {
     runFor(state, 10)
     expect(atStart - poolBefore).toBeLessThanOrEqual(1)
     expect(state.awareness.toNumber() - atStart).toBe(50)
+  })
+
+  it('sells no Tofu-Wurst while Leverkas and Hafer-Cappuccino cover all orders', () => {
+    const state = createInitialState()
+    state.assistant = true
+    state.buildings.leverkasOven = 2
+    state.buildings.cafeBar = 2
+    state.stock.seitan = new Decimal(1_000)
+    state.stock.oatDrink = new Decimal(1_000)
+    state.stock.tofuWurst = new Decimal(50)
+    runFor(state, 60)
+    expect(soldPerMinute(state, 'tofuWurst')).toBe(0)
+    expect(soldPerMinute(state, 'leverkas') + soldPerMinute(state, 'haferCappuccino')).toBeGreaterThan(25)
+    expect(demandPerMinute(state).toNumber()).toBe(30)
   })
 
   it('shows every stock as steady in a new game', () => {
