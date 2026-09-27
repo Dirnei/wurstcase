@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ASSISTANT } from '../game/content/town'
+  import { ASSISTANT, POPULATION } from '../game/content/town'
   import {
     canHireAssistant,
     canSell,
@@ -28,7 +28,7 @@
 <section class="panel">
   <h2>{t('sales.title')}</h2>
   <div class="numbers">
-    <span>{t('sales.customers', { count: customers })}</span>
+    <span>{t('sales.customers', { count: customers, population: amount(POPULATION) })}</span>
     <span>{t('sales.orders', { open: openOrders, cap })}</span>
   </div>
 

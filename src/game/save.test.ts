@@ -143,6 +143,51 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.unitsSold.biogas.eq(0)).toBe(true)
   })
 
+  it('restores residents, shelters and conversion progress', () => {
+    const state = createInitialState()
+    state.residents = [
+      { species: 'chicken', name: 0 },
+      { species: 'chicken', name: 1 },
+      { species: 'pig', name: 11 },
+    ]
+    state.shelters.stable = 2
+    state.shelters.pasture = 1
+    state.conversionProgress = 0.375
+    const restored = decodedState(encodeSave(state, NOW))
+    expect(restored.residents).toEqual(state.residents)
+    expect(restored.shelters).toEqual({ stable: 2, pasture: 1 })
+    expect(restored.conversionProgress).toBe(0.375)
+  })
+
+  it('migrates a format 4 save to an empty Lebenshof', () => {
+    const format4 = savedState()
+    delete format4.residents
+    delete format4.shelters
+    delete format4.conversionProgress
+    format4.buildings.tofuPress = 3
+    format4.customers = '40'
+
+    const restored = decodedState(envelope(4, format4))
+
+    expect(restored.buildings.tofuPress).toBe(3)
+    expect(restored.customers.toNumber()).toBe(40)
+    expect(restored.residents).toEqual([])
+    expect(restored.shelters).toEqual({ stable: 0, pasture: 0 })
+    expect(restored.conversionProgress).toBe(0)
+  })
+
+  it('skips residents of an unknown species and ignores unknown shelters', () => {
+    const state = savedState()
+    state.residents = [
+      { species: 'unicorn', name: 0 },
+      { species: 'cow', name: 2 },
+    ]
+    state.shelters.moonBarn = 3
+    const restored = decodedState(envelope(CURRENT_FORMAT, state))
+    expect(restored.residents).toEqual([{ species: 'cow', name: 2 }])
+    expect(restored).not.toHaveProperty('shelters.moonBarn')
+  })
+
   it('ignores unknown bulk buyers', () => {
     const state = savedState()
     state.unitsSold.moonBaseCafeteria = '12'
@@ -209,6 +254,18 @@ describe('encodeSave / decodeSave', () => {
     ['negative bulk count', (s: Record<string, any>) => (s.unitsSold.biogas = '-1')],
     ['missing bulk count', (s: Record<string, any>) => delete s.unitsSold.biogas],
     ['missing bulk counts', (s: Record<string, any>) => delete s.unitsSold],
+    ['fractional name index', (s: Record<string, any>) => (s.residents = [{ species: 'pig', name: 1.5 }])],
+    ['negative name index', (s: Record<string, any>) => (s.residents = [{ species: 'pig', name: -1 }])],
+    ['name index beyond the pool', (s: Record<string, any>) => (s.residents = [{ species: 'pig', name: 12 }])],
+    ['name index as text', (s: Record<string, any>) => (s.residents = [{ species: 'pig', name: '1' }])],
+    ['residents not a list', (s: Record<string, any>) => (s.residents = {})],
+    ['resident not an object', (s: Record<string, any>) => (s.residents = ['pig'])],
+    ['negative shelter count', (s: Record<string, any>) => (s.shelters.stable = -1)],
+    ['fractional shelter count', (s: Record<string, any>) => (s.shelters.stable = 1.5)],
+    ['missing shelter count', (s: Record<string, any>) => delete s.shelters.pasture],
+    ['missing shelters', (s: Record<string, any>) => delete s.shelters],
+    ['negative conversion progress', (s: Record<string, any>) => (s.conversionProgress = -0.1)],
+    ['conversion progress as text', (s: Record<string, any>) => (s.conversionProgress = '0.5')],
   ])('rejects %s', (_, change) => {
     const state = savedState()
     change(state)

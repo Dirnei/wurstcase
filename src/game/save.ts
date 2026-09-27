@@ -1,8 +1,10 @@
 import Decimal from 'break_eternity.js'
+import { isSpeciesId, NAME_POOL_SIZE } from './content/animals'
 import { BUILDING_IDS } from './content/buildings'
 import { BUYER_IDS } from './content/buyers'
 import { RESOURCES } from './content/resources'
-import { createInitialState, type GameState } from './state'
+import { SHELTER_IDS } from './content/shelters'
+import { createInitialState, type GameState, type Resident } from './state'
 
 /*
  * Save format. When a later change adds a field to GameState:
@@ -12,7 +14,7 @@ import { createInitialState, type GameState } from './state'
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 4
+export const CURRENT_FORMAT = 5
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -28,6 +30,11 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   // 3 → 4 (bulk-buyers): nothing sold to MegaMeat or the biogas plant yet.
   3: (state) =>
     isRecord(state) ? { unitsSold: { megaMeat: '0', biogas: '0' }, ...state } : state,
+  // 4 → 5 (lebenshof-rescue): an empty Lebenshof.
+  4: (state) =>
+    isRecord(state)
+      ? { residents: [], shelters: { stable: 0, pasture: 0 }, conversionProgress: 0, ...state }
+      : state,
 }
 
 export type DecodeResult =
@@ -113,6 +120,9 @@ function writeState(state: GameState): Record<string, unknown> {
     orderProgress: state.orderProgress,
     assistant: state.assistant,
     unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, state.unitsSold[id].toString()])),
+    residents: state.residents.map(({ species, name }) => ({ species, name })),
+    shelters: { ...state.shelters },
+    conversionProgress: state.conversionProgress,
   }
 }
 
@@ -122,11 +132,13 @@ function readState(value: unknown): GameState | null {
     !isRecord(value.stock) ||
     !isRecord(value.buildings) ||
     !isRecord(value.progress) ||
-    !isRecord(value.unitsSold)
+    !isRecord(value.unitsSold) ||
+    !isRecord(value.shelters) ||
+    !Array.isArray(value.residents)
   ) {
     return null
   }
-  const { playTime, orderProgress, assistant } = value
+  const { playTime, orderProgress, assistant, conversionProgress } = value
   const money = readAmount(value.money)
   const totalEarned = readAmount(value.totalEarned)
   const customers = readAmount(value.customers)
@@ -140,7 +152,9 @@ function readState(value: unknown): GameState | null {
     !openOrders ||
     !isFiniteNumber(orderProgress) ||
     orderProgress < 0 ||
-    typeof assistant !== 'boolean'
+    typeof assistant !== 'boolean' ||
+    !isFiniteNumber(conversionProgress) ||
+    conversionProgress < 0
   ) {
     return null
   }
@@ -173,9 +187,26 @@ function readState(value: unknown): GameState | null {
     }
     state.unitsSold[id] = units
   }
+  for (const id of SHELTER_IDS) {
+    const count = value.shelters[id]
+    if (!Number.isSafeInteger(count) || (count as number) < 0) {
+      return null
+    }
+    state.shelters[id] = count as number
+  }
+  for (const entry of value.residents) {
+    const resident = readResident(entry)
+    if (resident === null) {
+      return null
+    }
+    if (resident !== 'unknown') {
+      state.residents.push(resident)
+    }
+  }
   return {
     ...state,
     playTime,
+    conversionProgress,
     money,
     totalEarned,
     customers,
@@ -183,6 +214,21 @@ function readState(value: unknown): GameState | null {
     orderProgress,
     assistant,
   }
+}
+
+/** A saved resident, 'unknown' for a species this build does not know (skipped), or null if broken. */
+function readResident(value: unknown): Resident | 'unknown' | null {
+  if (!isRecord(value)) {
+    return null
+  }
+  const { species, name } = value
+  if (!isSpeciesId(species)) {
+    return typeof species === 'string' ? 'unknown' : null
+  }
+  if (!Number.isSafeInteger(name) || (name as number) < 0 || (name as number) >= NAME_POOL_SIZE) {
+    return null
+  }
+  return { species, name: name as number }
 }
 
 /** A saved amount: a non-negative, finite, whole Decimal written as a string. */

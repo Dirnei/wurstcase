@@ -12,3 +12,9 @@ export const OVERSTOCK_SECONDS = 120
 
 /** The shop assistant: a one-time purchase that sells open orders automatically. */
 export const ASSISTANT = { price: 150, unlockAt: 50 }
+
+/** Act 1's town: customers never exceed it. */
+export const POPULATION = 20_000
+
+/** Townspeople converted per second for each awareness per second, before saturation. */
+export const CONVERSION_PER_AWARENESS = 0.02

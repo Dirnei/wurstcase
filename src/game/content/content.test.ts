@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import de from '../../i18n/de.json'
+import en from '../../i18n/en.json'
+import { NAME_POOL_SIZE, SPECIES, SPECIES_IDS } from './animals'
 import { BUILDINGS, BUILDING_IDS, CHAINS } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
 import { MANUAL_ACTIONS } from './manual'
 import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
 import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES, type ProductId, type ResourceId } from './resources'
+import { LEBENSHOF_UNLOCK_AT, SHELTER_IDS, SHELTERS } from './shelters'
 
 /** What one unit earns once turned into its chain's product and sold to a customer. */
 function veganValue(resource: ResourceId): number {
@@ -107,5 +111,44 @@ describe('content', () => {
         expect(meat, resource).toBeLessThan(veganValue(resource))
       }
     }
+  })
+
+  it('has unique species and shelter ids', () => {
+    expect(new Set(SPECIES_IDS).size).toBe(SPECIES_IDS.length)
+    expect(new Set(SHELTER_IDS).size).toBe(SHELTER_IDS.length)
+  })
+
+  it('gives every species and shelter a positive price, unlock, space and awareness', () => {
+    for (const species of SPECIES) {
+      for (const value of [species.basePrice, species.unlockAt, species.space, species.awareness]) {
+        expect(value, species.id).toBeGreaterThan(0)
+      }
+    }
+    for (const shelter of SHELTERS) {
+      for (const value of [shelter.basePrice, shelter.unlockAt, shelter.space]) {
+        expect(value, shelter.id).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('has a full name pool for every species in both languages', () => {
+    for (const dictionary of [de, en] as Record<string, string>[]) {
+      for (const species of SPECIES_IDS) {
+        for (let index = 0; index < NAME_POOL_SIZE; index++) {
+          expect(dictionary[`animal.${species}.name.${index}`], `${species} ${index}`).toBeTruthy()
+        }
+        expect(dictionary[`animal.${species}.name.${NAME_POOL_SIZE}`], species).toBeUndefined()
+      }
+    }
+  })
+
+  it('lists species by price', () => {
+    const prices = SPECIES.map((species) => species.basePrice)
+    expect(prices).toEqual([...prices].sort((a, b) => a - b))
+  })
+
+  it('unlocks the Lebenshof no later than the cheapest species and shelter', () => {
+    expect(LEBENSHOF_UNLOCK_AT).toBeLessThanOrEqual(Math.min(...SPECIES.map((s) => s.unlockAt)))
+    expect(LEBENSHOF_UNLOCK_AT).toBeLessThanOrEqual(Math.min(...SHELTERS.map((s) => s.unlockAt)))
   })
 })

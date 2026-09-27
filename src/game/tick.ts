@@ -1,4 +1,5 @@
 import type { GameState } from './state'
+import { convert } from './systems/awareness'
 import { produce } from './systems/production'
 import { takeOrders } from './systems/sales'
 
@@ -6,5 +7,6 @@ import { takeOrders } from './systems/sales'
 export function tick(state: GameState, seconds: number): void {
   state.playTime += seconds
   produce(state, seconds)
+  convert(state, seconds)
   takeOrders(state, seconds)
 }

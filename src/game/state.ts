@@ -1,8 +1,16 @@
 import Decimal from 'break_eternity.js'
 import { BUILDING_IDS, type BuildingId } from './content/buildings'
+import type { SpeciesId } from './content/animals'
 import { BUYER_IDS, type BuyerId } from './content/buyers'
 import { RESOURCES, type ResourceId } from './content/resources'
+import { SHELTER_IDS, type ShelterId } from './content/shelters'
 import { STARTING_CUSTOMERS } from './content/town'
+
+/** An animal rescued into the Lebenshof. `name` is its index in the species' name pool, so saves stay language-independent. */
+export interface Resident {
+  species: SpeciesId
+  name: number
+}
 
 /** The whole game in one plain, serializable object. Game systems mutate it through tick(). */
 export interface GameState {
@@ -27,6 +35,12 @@ export interface GameState {
   assistant: boolean
   /** Whole units sold to each bulk buyer in this game; later changes react to these. */
   unitsSold: Record<BuyerId, Decimal>
+  /** Rescued animals in rescue order. Nothing ever removes one. */
+  residents: Resident[]
+  /** How many of each shelter type the Lebenshof has. */
+  shelters: Record<ShelterId, number>
+  /** Fraction towards the next customer converted by awareness. */
+  conversionProgress: number
   /** Seconds left to show a resource as short, held after the last wait so it does not flicker. Not saved. */
   shortage: Partial<Record<ResourceId, number>>
 }
@@ -44,6 +58,9 @@ export function createInitialState(): GameState {
     orderProgress: 0,
     assistant: false,
     unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, new Decimal(0)])) as Record<BuyerId, Decimal>,
+    residents: [],
+    shelters: Object.fromEntries(SHELTER_IDS.map((id) => [id, 0])) as Record<ShelterId, number>,
+    conversionProgress: 0,
     waiting: {},
     shortage: {},
   }

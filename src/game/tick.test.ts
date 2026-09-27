@@ -23,6 +23,9 @@ describe('tick', () => {
     expect(state.assistant).toBe(false)
     expect(state.unitsSold.megaMeat.toNumber()).toBe(0)
     expect(state.unitsSold.biogas.toNumber()).toBe(0)
+    expect(state.residents).toEqual([])
+    expect(state.shelters).toEqual({ stable: 0, pasture: 0 })
+    expect(state.conversionProgress).toBe(0)
   })
 
   it('advances play time by the given seconds', () => {
@@ -41,6 +44,39 @@ describe('tick', () => {
     }
 
     expectRelativelyEqual(split.playTime, once.playTime)
+  })
+
+  it('builds orders four times as fast with 40 customers as with 10', () => {
+    const ten = createInitialState()
+    tick(ten, 10)
+    const forty = createInitialState()
+    forty.customers = new Decimal(40)
+    tick(forty, 10)
+    expect(ten.openOrders.toNumber()).toBe(5)
+    expect(forty.openOrders.toNumber()).toBe(20)
+  })
+
+  it('converts townspeople through the Lebenshof while time passes', () => {
+    const state = createInitialState()
+    state.residents.push({ species: 'cow', name: 0 })
+    tick(state, 60)
+    expect(state.customers.toNumber()).toBeGreaterThan(10)
+  })
+
+  it('never loses a resident over 12 hours', () => {
+    const state = createInitialState()
+    state.residents.push(
+      { species: 'chicken', name: 3 },
+      { species: 'chicken', name: 7 },
+      { species: 'pig', name: 0 },
+      { species: 'cow', name: 11 },
+      { species: 'chicken', name: 3 },
+    )
+    const before = structuredClone(state.residents)
+    for (let i = 0; i < 12 * 60; i++) {
+      tick(state, 60)
+    }
+    expect(state.residents).toEqual(before)
   })
 
   it('agrees within one order for one big and many small ticks while the assistant sells', () => {

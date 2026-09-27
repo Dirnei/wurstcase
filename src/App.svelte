@@ -1,9 +1,11 @@
 <script lang="ts">
   import { CHAINS } from './game/content/buildings'
+  import { isLebenshofUnlocked } from './game/systems/rescue'
   import BulkBuyersPanel from './ui/BulkBuyersPanel.svelte'
   import ChainPanel from './ui/ChainPanel.svelte'
   import Footer from './ui/Footer.svelte'
   import Header from './ui/Header.svelte'
+  import LebenshofPanel from './ui/LebenshofPanel.svelte'
   import LegalPage from './ui/LegalPage.svelte'
   import ManualActions from './ui/ManualActions.svelte'
   import Money from './ui/Money.svelte'
@@ -12,9 +14,11 @@
   import SalesPanel from './ui/SalesPanel.svelte'
   import SavePanel from './ui/SavePanel.svelte'
   import StockPanel from './ui/StockPanel.svelte'
+  import { readGame } from './ui/game.svelte'
   import { currentRoute } from './ui/route.svelte'
 
   const route = $derived(currentRoute())
+  const lebenshof = $derived(readGame(isLebenshofUnlocked))
 </script>
 
 <main>
@@ -30,6 +34,9 @@
     {#each CHAINS as chain (chain)}
       <ChainPanel {chain} />
     {/each}
+    {#if lebenshof}
+      <LebenshofPanel />
+    {/if}
     <StockPanel />
     <BulkBuyersPanel />
     <SavePanel />
