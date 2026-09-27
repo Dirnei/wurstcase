@@ -1,11 +1,6 @@
-# awareness Specification
+# Spec Delta
 
-## Purpose
-
-Turns the Lebenshof's residents into a growing customer base. Animals produce awareness, and
-awareness steadily converts the townspeople into customers until the town runs out of people.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Awareness production
 Each resident SHALL produce awareness at its species' rate (chicken 1, pig 5, cow 20 per second).
@@ -36,15 +31,6 @@ reduced.
 - **WHEN** the Lebenshof has 3 chickens, the "Echte Männer essen Fleisch" campaign is active and
   10 seconds pass
 - **THEN** awareness is 1.5 per second, shown as reduced, and the pool grows by 15
-
-### Requirement: Town population
-Act 1's town SHALL have a population of 20,000. The sales panel SHALL show the customers
-together with the population, both in the game's number format ("12 of 20K townspeople").
-
-#### Scenario: New game
-- **WHEN** a new game starts
-- **THEN** the sales panel shows "Customers: 10 of 20K townspeople" in English and
-  "Kundschaft: 10 von 20 Tsd. Einwohnern" in German
 
 ### Requirement: Passive conversion
 Every time the game advances, townspeople SHALL become customers at a rate of 0.02 × awareness per
@@ -87,10 +73,3 @@ awareness pool. Customers SHALL never exceed the population.
 #### Scenario: Paused by the study
 - **WHEN** the MegaMeat "study" is active, awareness is 100 per second and 30 seconds pass
 - **THEN** no customers are converted passively, and the pool still grows by 3,000
-
-### Requirement: More customers, more orders
-Converted customers SHALL place orders in the same way as the starting neighbours.
-
-#### Scenario: Orders follow customers
-- **WHEN** conversion has raised the customers from 10 to 40
-- **THEN** open orders build up four times as fast as with 10 customers

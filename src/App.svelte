@@ -2,7 +2,9 @@
   import type { Component } from 'svelte'
   import { devToolsEnabled } from './dev/enabled'
   import { CHAINS } from './game/content/buildings'
+  import { isAktionenUnlocked } from './game/systems/aktionen'
   import { isLebenshofUnlocked } from './game/systems/rescue'
+  import AktionenPanel from './ui/AktionenPanel.svelte'
   import BulkBuyersPanel from './ui/BulkBuyersPanel.svelte'
   import ChainPanel from './ui/ChainPanel.svelte'
   import Footer from './ui/Footer.svelte'
@@ -11,6 +13,7 @@
   import LegalPage from './ui/LegalPage.svelte'
   import ManualActions from './ui/ManualActions.svelte'
   import Money from './ui/Money.svelte'
+  import NewsTicker from './ui/NewsTicker.svelte'
   import Notices from './ui/Notices.svelte'
   import PlayTime from './ui/PlayTime.svelte'
   import SalesPanel from './ui/SalesPanel.svelte'
@@ -21,6 +24,7 @@
 
   const route = $derived(currentRoute())
   const lebenshof = $derived(readGame(isLebenshofUnlocked))
+  const aktionen = $derived(readGame(isAktionenUnlocked))
   // Asked only when #dev is opened; the page and its chart library load only if it is on.
   const devPage = $derived(route === 'dev' ? loadDevPage() : null)
 
@@ -51,6 +55,7 @@
 </main>
 
 {#snippet game()}
+  <NewsTicker />
   <div class="status">
     <Money />
     <PlayTime />
@@ -62,6 +67,9 @@
   {/each}
   {#if lebenshof}
     <LebenshofPanel />
+  {/if}
+  {#if aktionen}
+    <AktionenPanel />
   {/if}
   <StockPanel />
   <BulkBuyersPanel />

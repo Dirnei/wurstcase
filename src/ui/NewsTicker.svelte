@@ -1,0 +1,94 @@
+<script lang="ts">
+  import { HEADLINE_SECONDS } from '../game/content/headlines'
+  import { createTickerMemory, nextHeadline } from '../game/systems/ticker'
+  import type { TranslationKey } from '../i18n/translate'
+  import { readGame } from './game.svelte'
+  import { t } from './i18n.svelte'
+
+  // The ticker runs on real time, like the rest of the UI; its position is never saved.
+  let memory = createTickerMemory()
+  let key = $state(advance())
+  // Bumped on every new headline so the fade-in replays.
+  let shown = $state(0)
+  let timer: ReturnType<typeof setInterval> | undefined
+
+  const started = $derived(readGame((state) => state.megaMeat.started))
+  const breaking = $derived(readGame((state) => state.megaMeat.active?.event ?? null))
+  let seenStarted = readGame((state) => state.megaMeat.started)
+
+  function advance(): string {
+    const next = readGame((state) => nextHeadline(state, memory))
+    memory = next.memory
+    return next.key
+  }
+
+  function show(next: string): void {
+    key = next
+    shown++
+  }
+
+  function restart(): void {
+    clearInterval(timer)
+    timer = setInterval(() => show(advance()), HEADLINE_SECONDS * 1000)
+  }
+
+  $effect(() => {
+    restart()
+    return () => clearInterval(timer)
+  })
+
+  // A new counter-event breaks into the ticker at once and holds for a full rotation.
+  $effect(() => {
+    if (started > seenStarted && breaking) {
+      show(`headline.event.${breaking}`)
+      restart()
+    }
+    seenStarted = started
+  })
+</script>
+
+<p class="ticker" aria-live="polite" aria-label={t('ticker.label')}>
+  <span class="label" aria-hidden="true">📰</span>
+  {#key shown}
+    <span class="headline" class:breaking={key.startsWith('headline.event.')}>{t(key as TranslationKey)}</span>
+  {/key}
+</p>
+
+<style>
+  .ticker {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    padding: 6px 12px;
+    min-height: 2.5em;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 0.9rem;
+  }
+
+  .headline {
+    animation: fade-in 0.6s ease-out;
+  }
+
+  .breaking {
+    color: var(--danger);
+    font-weight: 600;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .headline {
+      animation: none;
+    }
+  }
+</style>

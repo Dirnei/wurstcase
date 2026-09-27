@@ -1,7 +1,7 @@
 <script lang="ts">
   import { SPECIES, type SpeciesId } from '../game/content/animals'
   import { SHELTERS, type ShelterId } from '../game/content/shelters'
-  import { awarenessRate } from '../game/systems/awareness'
+  import { awarenessRate, isAwarenessReduced } from '../game/systems/awareness'
   import {
     animalPrice,
     buildShelter,
@@ -23,6 +23,7 @@
   const used = $derived(readGame(usedSpace))
   const total = $derived(readGame(totalSpace))
   const awareness = $derived(readGame(awarenessRate))
+  const reduced = $derived(readGame(isAwarenessReduced))
 
   const shelters = $derived(
     readGame((state) =>
@@ -71,7 +72,10 @@
   <h2>{t('lebenshof.title')}</h2>
   <div class="numbers">
     <span>{t('lebenshof.space', { used: amount(used), total: amount(total) })}</span>
-    <span>{t('lebenshof.awareness', { amount: amount(awareness) })}</span>
+    <span class:reduced>
+      {t('lebenshof.awareness', { amount: amount(awareness) })}
+      {#if reduced}{t('lebenshof.reduced')}{/if}
+    </span>
   </div>
 
   <h3>{t('lebenshof.shelters')}</h3>
@@ -159,6 +163,10 @@
   .groups li {
     display: flex;
     gap: 12px;
+  }
+
+  .reduced {
+    color: var(--danger);
   }
 
   .count {

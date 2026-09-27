@@ -176,6 +176,59 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.conversionProgress).toBe(0)
   })
 
+  it('restores the awareness pool, Aktionen and MegaMeat', () => {
+    const state = createInitialState()
+    state.awareness = new Decimal(1234)
+    state.awarenessProgress = 0.25
+    state.aktionen.cooldown.openFarmDay = 100
+    state.aktionen.runs.flyer = 7
+    state.megaMeat = { active: { event: 'study', remaining: 40 }, nextIn: null, nextIndex: 2, started: 2 }
+    const restored = decodedState(encodeSave(state, NOW))
+    expect(restored.awareness.toNumber()).toBe(1234)
+    expect(restored.awarenessProgress).toBe(0.25)
+    expect(restored.aktionen).toEqual(state.aktionen)
+    expect(restored.megaMeat).toEqual(state.megaMeat)
+  })
+
+  it('migrates a format 5 save to an empty pool and a quiet MegaMeat', () => {
+    const format5 = savedState()
+    for (const key of ['awareness', 'awarenessProgress', 'aktionen', 'megaMeat']) {
+      delete format5[key]
+    }
+    format5.residents = [0, 1, 2].map((name) => ({ species: 'chicken', name }))
+    format5.customers = '40'
+
+    const restored = decodedState(envelope(5, format5))
+
+    expect(restored.residents).toHaveLength(3)
+    expect(restored.customers.toNumber()).toBe(40)
+    expect(restored.awareness.toNumber()).toBe(0)
+    expect(restored.aktionen.runs.flyer).toBe(0)
+    expect(restored.megaMeat).toEqual({ active: null, nextIn: null, nextIndex: 0, started: 0 })
+  })
+
+  it('ignores unknown Aktionen', () => {
+    const state = savedState()
+    state.aktionen.cooldown.petition = 5
+    state.aktionen.runs.petition = 2
+    const restored = decodedState(envelope(CURRENT_FORMAT, state))
+    expect(restored.aktionen.cooldown).not.toHaveProperty('petition')
+    expect(restored.aktionen.runs).not.toHaveProperty('petition')
+  })
+
+  it('drops an unknown active event and schedules the next one', () => {
+    const state = savedState()
+    state.megaMeat = { active: { event: 'lawsuit', remaining: 50 }, nextIn: null, nextIndex: 1, started: 3 }
+    const restored = decodedState(envelope(CURRENT_FORMAT, state))
+    expect(restored.megaMeat).toEqual({ active: null, nextIn: 300, nextIndex: 1, started: 3 })
+  })
+
+  it('resets an out-of-range next event to the first', () => {
+    const state = savedState()
+    state.megaMeat.nextIndex = 7
+    expect(decodedState(envelope(CURRENT_FORMAT, state)).megaMeat.nextIndex).toBe(0)
+  })
+
   it('skips residents of an unknown species and ignores unknown shelters', () => {
     const state = savedState()
     state.residents = [
@@ -274,6 +327,17 @@ describe('encodeSave / decodeSave', () => {
     ['missing shelters', (s: Record<string, any>) => delete s.shelters],
     ['negative conversion progress', (s: Record<string, any>) => (s.conversionProgress = -0.1)],
     ['conversion progress as text', (s: Record<string, any>) => (s.conversionProgress = '0.5')],
+    ['fractional awareness pool', (s: Record<string, any>) => (s.awareness = '2.5')],
+    ['missing awareness pool', (s: Record<string, any>) => delete s.awareness],
+    ['negative awareness progress', (s: Record<string, any>) => (s.awarenessProgress = -1)],
+    ['negative cooldown', (s: Record<string, any>) => (s.aktionen.cooldown.flyer = -1)],
+    ['cooldown as text', (s: Record<string, any>) => (s.aktionen.cooldown.flyer = '5')],
+    ['fractional runs', (s: Record<string, any>) => (s.aktionen.runs.flyer = 1.5)],
+    ['missing Aktionen', (s: Record<string, any>) => delete s.aktionen],
+    ['missing MegaMeat', (s: Record<string, any>) => delete s.megaMeat],
+    ['fractional events started', (s: Record<string, any>) => (s.megaMeat.started = 0.5)],
+    ['negative time to the next event', (s: Record<string, any>) => (s.megaMeat.nextIn = -5)],
+    ['negative event time left', (s: Record<string, any>) => (s.megaMeat.active = { event: 'study', remaining: -1 })],
   ])('rejects %s', (_, change) => {
     const state = savedState()
     change(state)

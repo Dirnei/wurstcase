@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import de from '../../i18n/de.json'
 import en from '../../i18n/en.json'
+import { AKTION_IDS, AKTIONEN } from './aktionen'
 import { NAME_POOL_SIZE, SPECIES, SPECIES_IDS } from './animals'
 import { BUILDINGS, BUILDING_IDS, CHAINS } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
+import { HINTS, SATIRE } from './headlines'
 import { MANUAL_ACTIONS } from './manual'
+import { MEGAMEAT_EVENT_IDS, MEGAMEAT_EVENTS } from './megaMeatEvents'
 import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
 import { veganValue } from '../balance/value'
 import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES } from './resources'
@@ -130,6 +133,65 @@ describe('content', () => {
           expect(dictionary[`animal.${species}.name.${index}`], `${species} ${index}`).toBeTruthy()
         }
         expect(dictionary[`animal.${species}.name.${NAME_POOL_SIZE}`], species).toBeUndefined()
+      }
+    }
+  })
+
+  it('has valid Aktionen', () => {
+    expect(new Set(AKTION_IDS).size).toBe(AKTION_IDS.length)
+    for (const aktion of AKTIONEN) {
+      expect(aktion.cost, aktion.id).toBeGreaterThan(0)
+      expect(aktion.cooldown, aktion.id).toBeGreaterThan(0)
+      expect(Boolean(aktion.endsEvent) !== Boolean(aktion.customers), aktion.id).toBe(true)
+      if (aktion.requiresSpecies) {
+        expect(SPECIES_IDS, aktion.id).toContain(aktion.requiresSpecies)
+      }
+    }
+    expect(AKTIONEN.filter((aktion) => aktion.endsEvent)).toHaveLength(1)
+  })
+
+  it('has counter-events that last and change something', () => {
+    expect(new Set(MEGAMEAT_EVENT_IDS).size).toBe(MEGAMEAT_EVENT_IDS.length)
+    for (const event of MEGAMEAT_EVENTS) {
+      expect(event.duration, event.id).toBeGreaterThan(0)
+      expect(Object.keys(event.factors).length, event.id).toBeGreaterThan(0)
+    }
+  })
+
+  it('writes hints only about known buildings and Aktionen', () => {
+    expect(new Set(HINTS.map((hint) => hint.id)).size).toBe(HINTS.length)
+    for (const hint of HINTS) {
+      expect(hint.when.length, hint.id).toBeGreaterThan(0)
+      for (const clause of hint.when) {
+        if ('owned' in clause) expect(BUILDING_IDS, hint.id).toContain(clause.owned)
+        if ('unlocked' in clause) expect(BUILDING_IDS, hint.id).toContain(clause.unlocked)
+        if ('aktionNeverRun' in clause) expect(AKTION_IDS, hint.id).toContain(clause.aktionNeverRun)
+      }
+    }
+  })
+
+  it('has enough satirical headlines, several from the start', () => {
+    expect(new Set(SATIRE.map((s) => s.id)).size).toBe(SATIRE.length)
+    expect(SATIRE.length).toBeGreaterThanOrEqual(12)
+    expect(SATIRE.filter((s) => s.unlockAt === 0).length).toBeGreaterThanOrEqual(4)
+    expect(Math.max(...SATIRE.map((s) => s.unlockAt))).toBeLessThanOrEqual(20_000)
+  })
+
+  it('has every ticker, Aktion and event text in both languages', () => {
+    const keys = [
+      ...SATIRE.map((s) => `headline.satire.${s.id}`),
+      ...HINTS.map((h) => `headline.hint.${h.id}`),
+      ...MEGAMEAT_EVENT_IDS.flatMap((id) => [
+        `headline.event.${id}`,
+        `event.${id}.name`,
+        `event.${id}.description`,
+        `event.${id}.effect`,
+      ]),
+      ...AKTION_IDS.map((id) => `aktion.${id}.name`),
+    ]
+    for (const dictionary of [de, en] as Record<string, string>[]) {
+      for (const key of keys) {
+        expect(dictionary[key], key).toBeTruthy()
       }
     }
   })

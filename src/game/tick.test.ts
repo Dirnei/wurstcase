@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { RESOURCES } from './content/resources'
 import { createInitialState, type GameState } from './state'
+import { runAktion } from './systems/aktionen'
 import { bulkSell } from './systems/bulkSales'
 import { performManual } from './systems/manual'
 import { stockTrend } from './systems/trend'
@@ -37,6 +38,11 @@ describe('tick', () => {
     expect(state.residents).toEqual([])
     expect(state.shelters).toEqual({ stable: 0, pasture: 0 })
     expect(state.conversionProgress).toBe(0)
+    expect(state.awareness.toNumber()).toBe(0)
+    expect(state.awarenessProgress).toBe(0)
+    expect(state.aktionen.cooldown).toEqual({ flyer: 0, openFarmDay: 0, viralReel: 0, factCheck: 0 })
+    expect(state.aktionen.runs).toEqual({ flyer: 0, openFarmDay: 0, viralReel: 0, factCheck: 0 })
+    expect(state.megaMeat).toEqual({ active: null, nextIn: null, nextIndex: 0, started: 0 })
   })
 
   it('advances play time by the given seconds', () => {
@@ -88,6 +94,25 @@ describe('tick', () => {
       tick(state, 60)
     }
     expect(state.residents).toEqual(before)
+  })
+
+  it('answers the first flyers with the ad campaign a minute later, which slows the pool', () => {
+    const state = createInitialState()
+    state.totalEarned = new Decimal(1_000)
+    state.awareness = new Decimal(100)
+    for (let i = 0; i < 10; i++) {
+      state.residents.push({ species: 'chicken', name: i })
+    }
+    expect(runAktion(state, 'flyer')).toBe(true)
+    runFor(state, 59.9)
+    expect(state.megaMeat.active).toBeNull()
+    const poolBefore = state.awareness.toNumber()
+    runFor(state, 0.1)
+    expect(state.megaMeat.active?.event).toBe('adCampaign')
+    const atStart = state.awareness.toNumber()
+    runFor(state, 10)
+    expect(atStart - poolBefore).toBeLessThanOrEqual(1)
+    expect(state.awareness.toNumber() - atStart).toBe(50)
   })
 
   it('shows every stock as steady in a new game', () => {

@@ -1,10 +1,12 @@
 import Decimal from 'break_eternity.js'
+import { AKTION_IDS } from './content/aktionen'
 import { isSpeciesId, NAME_POOL_SIZE } from './content/animals'
 import { BUILDING_IDS } from './content/buildings'
 import { BUYER_IDS } from './content/buyers'
+import { EVENT_PAUSE, isMegaMeatEventId, MEGAMEAT_EVENTS } from './content/megaMeatEvents'
 import { RESOURCES } from './content/resources'
 import { SHELTER_IDS } from './content/shelters'
-import { createInitialState, type GameState, type Resident } from './state'
+import { createInitialState, type GameState, type MegaMeatState, type Resident } from './state'
 
 /*
  * Save format. When a later change adds a field to GameState:
@@ -14,7 +16,7 @@ import { createInitialState, type GameState, type Resident } from './state'
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 5
+export const CURRENT_FORMAT = 6
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -34,6 +36,17 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   4: (state) =>
     isRecord(state)
       ? { residents: [], shelters: { stable: 0, pasture: 0 }, conversionProgress: 0, ...state }
+      : state,
+  // 5 → 6 (aktionen-and-megameat): an empty awareness pool, no Aktion run, MegaMeat quiet.
+  5: (state) =>
+    isRecord(state)
+      ? {
+          awareness: '0',
+          awarenessProgress: 0,
+          aktionen: { cooldown: {}, runs: {} },
+          megaMeat: { active: null, nextIn: null, nextIndex: 0, started: 0 },
+          ...state,
+        }
       : state,
 }
 
@@ -123,6 +136,10 @@ function writeState(state: GameState): Record<string, unknown> {
     residents: state.residents.map(({ species, name }) => ({ species, name })),
     shelters: { ...state.shelters },
     conversionProgress: state.conversionProgress,
+    awareness: state.awareness.toString(),
+    awarenessProgress: state.awarenessProgress,
+    aktionen: { cooldown: { ...state.aktionen.cooldown }, runs: { ...state.aktionen.runs } },
+    megaMeat: { ...state.megaMeat, active: state.megaMeat.active && { ...state.megaMeat.active } },
   }
 }
 
@@ -134,11 +151,16 @@ function readState(value: unknown): GameState | null {
     !isRecord(value.progress) ||
     !isRecord(value.unitsSold) ||
     !isRecord(value.shelters) ||
-    !Array.isArray(value.residents)
+    !Array.isArray(value.residents) ||
+    !isRecord(value.aktionen) ||
+    !isRecord(value.aktionen.cooldown) ||
+    !isRecord(value.aktionen.runs)
   ) {
     return null
   }
-  const { playTime, orderProgress, assistant, conversionProgress } = value
+  const { playTime, orderProgress, assistant, conversionProgress, awarenessProgress } = value
+  const awareness = readAmount(value.awareness)
+  const megaMeat = readMegaMeat(value.megaMeat)
   const money = readAmount(value.money)
   const totalEarned = readAmount(value.totalEarned)
   const customers = readAmount(value.customers)
@@ -154,7 +176,11 @@ function readState(value: unknown): GameState | null {
     orderProgress < 0 ||
     typeof assistant !== 'boolean' ||
     !isFiniteNumber(conversionProgress) ||
-    conversionProgress < 0
+    conversionProgress < 0 ||
+    !awareness ||
+    !isFiniteNumber(awarenessProgress) ||
+    awarenessProgress < 0 ||
+    !megaMeat
   ) {
     return null
   }
@@ -194,6 +220,16 @@ function readState(value: unknown): GameState | null {
     }
     state.shelters[id] = count as number
   }
+  for (const id of AKTION_IDS) {
+    // A known Aktion missing from the save (added in a later build) starts ready and never run.
+    const cooldown = value.aktionen.cooldown[id] ?? 0
+    const runs = value.aktionen.runs[id] ?? 0
+    if (!isFiniteNumber(cooldown) || cooldown < 0 || !Number.isSafeInteger(runs) || (runs as number) < 0) {
+      return null
+    }
+    state.aktionen.cooldown[id] = cooldown
+    state.aktionen.runs[id] = runs as number
+  }
   for (const entry of value.residents) {
     const resident = readResident(entry)
     if (resident === null) {
@@ -207,6 +243,9 @@ function readState(value: unknown): GameState | null {
     ...state,
     playTime,
     conversionProgress,
+    awareness,
+    awarenessProgress,
+    megaMeat,
     money,
     totalEarned,
     customers,
@@ -214,6 +253,40 @@ function readState(value: unknown): GameState | null {
     orderProgress,
     assistant,
   }
+}
+
+/** MegaMeat's saved timers; an event this build does not know is dropped and the next one scheduled. */
+function readMegaMeat(value: unknown): MegaMeatState | null {
+  if (!isRecord(value)) {
+    return null
+  }
+  const { active, nextIn, nextIndex, started } = value
+  if (
+    !Number.isSafeInteger(started) ||
+    (started as number) < 0 ||
+    !Number.isSafeInteger(nextIndex) ||
+    (nextIndex as number) < 0 ||
+    (nextIn !== null && (!isFiniteNumber(nextIn) || nextIn < 0))
+  ) {
+    return null
+  }
+  const state: MegaMeatState = {
+    active: null,
+    nextIn,
+    nextIndex: (nextIndex as number) < MEGAMEAT_EVENTS.length ? (nextIndex as number) : 0,
+    started: started as number,
+  }
+  if (active !== null) {
+    if (!isRecord(active) || !isFiniteNumber(active.remaining) || active.remaining < 0) {
+      return null
+    }
+    if (isMegaMeatEventId(active.event)) {
+      state.active = { event: active.event, remaining: active.remaining }
+    } else {
+      state.nextIn = EVENT_PAUSE
+    }
+  }
+  return state
 }
 
 /** A saved resident, 'unknown' for a species this build does not know (skipped), or null if broken. */
