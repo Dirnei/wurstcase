@@ -67,3 +67,35 @@ DEV_TOOLS=true
 Then recreate the container with `docker compose up -d` (no rebuild needed). The container logs
 "developer tools enabled at #dev" while it is on. Builds without a server (such as the itch.io
 zip) never show it.
+
+## GitHub Pages
+
+The workflow in `.github/workflows/pages.yml` publishes the game to GitHub Pages on every push
+to `main` (and on manual dispatch from the Actions tab). It runs `npm ci`, the type check, the
+tests and the build; if any of them fails, nothing is published and the previous deployment stays
+online.
+
+One-time setup in the repository settings:
+
+1. Pages → Build and deployment → Source: **GitHub Actions**.
+2. Settings → Secrets and variables → Actions → **Variables**: add the operator details under
+   the same names as in `.env`: `LEGAL_NAME`, `LEGAL_STREET`, `LEGAL_POSTAL_CODE`, `LEGAL_CITY`,
+   `LEGAL_COUNTRY`, `LEGAL_EMAIL`, `LEGAL_HOSTING_PROVIDER`. They are variables, not secrets: the
+   Impressum shows them publicly anyway. While any of them is missing, the site shows the
+   placeholders and the workflow run carries a warning naming the unset ones.
+
+After the first green run, the URL appears on the workflow run and under Settings → Pages,
+normally `https://<owner>.github.io/<repo>/`. The build uses relative URLs and hash routes, so
+it works from that sub-path unchanged.
+
+Optional variables:
+
+- `DEV_TOOLS=true` enables the developer page at `#dev`, as in the container. Unset, it is off.
+- `PAGES_CNAME=leberkas.org` serves the game at that domain. Point the DNS at GitHub Pages first:
+  an `A` (and `AAAA`) record for the apex at GitHub's Pages addresses, or a `CNAME` record for a
+  subdomain at `<owner>.github.io`, as GitHub's Pages documentation lists them. Unset, no `CNAME`
+  file is published, so a fork does not claim the domain.
+
+What Pages does not do compared with the container: it caches pages for up to 10 minutes, sets
+its own response headers (no custom security or cache headers), and offers no access logs. For
+leberkas.org as a container, those requirements stay with the Docker image.

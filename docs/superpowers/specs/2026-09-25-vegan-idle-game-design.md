@@ -276,9 +276,14 @@ The UI is verified by playing.
 
 ### 7.6 Deployment
 
-`npm run build` → zip upload to itch.io. For leberkas.org the game ships as a Docker image
-(the build, served by a small static web server); the same image runs locally with
-`docker compose up` to check the real production build. CI automation comes later.
+Three targets, all from the same `npm run build`:
+
+- **itch.io**: zip upload of `dist/`.
+- **GitHub Pages**: a GitHub Actions workflow runs check, tests and build on every push to
+  `main` and publishes `dist/`; a red step publishes nothing. Operator details, the developer
+  switch and an optional custom domain come from repository variables.
+- **Docker image** for leberkas.org (the build, served by a small static web server); the same
+  image runs locally with `docker compose up` to check the real production build.
 
 ## 8. Development workflow — OpenSpec
 
