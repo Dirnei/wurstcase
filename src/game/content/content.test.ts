@@ -7,7 +7,7 @@ import { createInitialState } from '../state'
 import { hasLot, lotFor } from '../systems/bulkSales'
 import { BUILDINGS, BUILDING_IDS, CHAIN_RESOURCES, CHAINS } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
-import { HINTS, SATIRE } from './headlines'
+import { ALL_HEADLINE_KEYS, HINTS, SATIRE } from './headlines'
 import { MANUAL_ACTIONS } from './manual'
 import { MEGAMEAT_EVENT_IDS, MEGAMEAT_EVENTS } from './megaMeatEvents'
 import { CHAIN_MILESTONES, UPGRADE_IDS, UPGRADES } from './upgrades'
@@ -242,10 +242,8 @@ describe('content', () => {
 
   it('has every ticker, Aktion and event text in both languages', () => {
     const keys = [
-      ...SATIRE.map((s) => `headline.satire.${s.id}`),
-      ...HINTS.map((h) => `headline.hint.${h.id}`),
+      ...ALL_HEADLINE_KEYS,
       ...MEGAMEAT_EVENT_IDS.flatMap((id) => [
-        `headline.event.${id}`,
         `event.${id}.name`,
         `event.${id}.description`,
         `event.${id}.effect`,
@@ -257,6 +255,14 @@ describe('content', () => {
     for (const dictionary of [de, en] as Record<string, string>[]) {
       for (const key of keys) {
         expect(dictionary[key], key).toBeTruthy()
+      }
+    }
+  })
+
+  it('keeps every headline to 100 characters, so the ticker stays small on phones', () => {
+    for (const [lang, dictionary] of [['de', de], ['en', en]] as [string, Record<string, string>][]) {
+      for (const key of ALL_HEADLINE_KEYS) {
+        expect(dictionary[key].length, `${lang} ${key}`).toBeLessThanOrEqual(100)
       }
     }
   })

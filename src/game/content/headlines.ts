@@ -1,5 +1,6 @@
 import type { AktionId } from './aktionen'
 import type { BuildingId } from './buildings'
+import { MEGAMEAT_EVENT_IDS } from './megaMeatEvents'
 
 /** Real seconds each ticker headline stays before the next one. */
 export const HEADLINE_SECONDS = 15
@@ -54,4 +55,11 @@ export const HINTS: readonly HintDef[] = [
   { id: 'flyer', when: [{ aktionNeverRun: 'flyer' }] },
   { id: 'factCheck', when: [{ canFactCheck: true }] },
   { id: 'upgrades', when: [{ upgradeOffered: true }] },
+]
+
+/** Every text key the ticker can show: satire, hints and MegaMeat's breaking news. */
+export const ALL_HEADLINE_KEYS: readonly string[] = [
+  ...SATIRE.map((s) => `headline.satire.${s.id}`),
+  ...HINTS.map((h) => `headline.hint.${h.id}`),
+  ...MEGAMEAT_EVENT_IDS.map((id) => `headline.event.${id}`),
 ]

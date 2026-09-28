@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { HEADLINE_SECONDS } from '../game/content/headlines'
+  import { ALL_HEADLINE_KEYS, HEADLINE_SECONDS } from '../game/content/headlines'
   import { createTickerMemory, nextHeadline } from '../game/systems/ticker'
   import type { TranslationKey } from '../i18n/translate'
   import ArtSlot from './ArtSlot.svelte'
@@ -50,9 +50,22 @@
 
 <p class="ticker" aria-live="polite" aria-label={t('ticker.label')}>
   <ArtSlot kind="misc" id="newspaper" size="md" />
-  {#key shown}
-    <span class="headline" class:breaking={key.startsWith('headline.event.')}>{t(key as TranslationKey)}</span>
-  {/key}
+  <!--
+    Every headline sits in the same grid cell, all but the current one invisible, so the ticker is
+    always as tall as the longest headline at this width and never moves what is below it.
+  -->
+  <span class="stack">
+    {#each ALL_HEADLINE_KEYS as other (other)}
+      {#if other !== key}
+        <span class="headline reserve" class:breaking={other.startsWith('headline.event.')} aria-hidden="true">
+          {t(other as TranslationKey)}
+        </span>
+      {/if}
+    {/each}
+    {#key shown}
+      <span class="headline" class:breaking={key.startsWith('headline.event.')}>{t(key as TranslationKey)}</span>
+    {/key}
+  </span>
 </p>
 
 <style>
@@ -69,8 +82,21 @@
     font-size: 0.9rem;
   }
 
+  .stack {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+  }
+
   .headline {
+    grid-area: 1 / 1;
     animation: fade-in 0.6s ease-out;
+  }
+
+  /* Takes up space, shows nothing and is left out of the accessibility tree. */
+  .reserve {
+    visibility: hidden;
+    animation: none;
   }
 
   .breaking {
