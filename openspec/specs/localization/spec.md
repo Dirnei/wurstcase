@@ -38,12 +38,13 @@ SHALL use English. A previously chosen language SHALL take precedence over the b
 - **THEN** the game is shown in English
 
 ### Requirement: Language toggle
-The game SHALL offer a DE/EN toggle that is always visible in the header. Switching SHALL update
-all visible text immediately without reloading the page and without resetting game time. The
-choice SHALL be remembered across page reloads.
+The game SHALL offer a DE/EN toggle in the Einstellungen tab. It SHALL mark the current language.
+Switching SHALL update all visible text immediately without reloading the page and without
+resetting game time. The choice SHALL be remembered across page reloads.
 
 #### Scenario: Switch while playing
-- **WHEN** the player switches from German to English while the play-time counter shows 0:01:30
+- **WHEN** the player opens Einstellungen while the play-time counter shows 0:01:30 and switches
+  from German to English
 - **THEN** all visible text changes to English and the counter continues from 0:01:30
 
 #### Scenario: Choice persists
@@ -53,6 +54,10 @@ choice SHALL be remembered across page reloads.
 #### Scenario: Storage unavailable
 - **WHEN** the browser blocks storage (e.g. strict private mode) and the player switches language
 - **THEN** the switch still works for the current visit and no error is shown
+
+#### Scenario: Not in the top bar
+- **WHEN** the player is on any tab
+- **THEN** the top bar shows no language toggle
 
 ### Requirement: Missing translation fallback
 If a translation is missing at runtime, the game SHALL show the English text; if that is missing

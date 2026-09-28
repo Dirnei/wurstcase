@@ -33,7 +33,7 @@
 <nav class="tabnav" aria-label={t('tab.nav')}>
   <ul>
     {#each tabs as tab (tab.id)}
-      <li class:settings={tab.id === 'einstellungen'}>
+      <li>
         {#if tab.unlocked}
           <a href="#{tab.id}" class="tab" aria-current={open === tab.id ? 'page' : undefined}>
             <ArtSlot kind="tab" id={tab.id} size="sm" />
@@ -85,12 +85,6 @@
     font-size: 0.9rem;
     text-decoration: none;
     white-space: nowrap;
-  }
-
-  @media (max-width: 1023px) {
-    .settings {
-      display: none;
-    }
   }
 
   @media (min-width: 768px) and (max-width: 1023px) {
@@ -166,10 +160,6 @@
       min-width: 0;
     }
 
-    .settings {
-      display: none;
-    }
-
     .stack {
       align-items: center;
     }
@@ -211,6 +201,20 @@
     .dot {
       top: 2px;
       right: calc(50% - 16px);
+    }
+  }
+
+  /* Six tabs leave about 50px each on the narrowest phones: labels get smaller and tighter so up to
+     three lines fit the bar. The English labels carry soft hyphens, as browsers often cannot
+     hyphenate English; anything still too long breaks anywhere rather than overflow. */
+  @media (max-width: 400px) {
+    .tab {
+      font-size: 0.68rem;
+    }
+
+    .label {
+      line-height: 1.1;
+      overflow-wrap: anywhere;
     }
   }
 </style>

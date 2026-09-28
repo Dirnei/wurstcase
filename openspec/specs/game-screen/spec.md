@@ -12,11 +12,10 @@ The game view SHALL show a top bar on every tab with:
 - the game's name
 - money
 - income per minute
-- the DE/EN toggle
-- a button that opens the Einstellungen tab
 
 Once the Lebenshof is unlocked, the top bar SHALL also show the awareness pool. The news ticker
-SHALL be shown directly below the top bar. The top bar SHALL NOT show the play time.
+SHALL be shown directly below the top bar. The top bar SHALL NOT show the play time, the language
+toggle or a button that opens the Einstellungen tab.
 
 The top bar SHALL keep a stable layout while the game runs. A value that changes SHALL NOT move,
 resize or re-wrap any other element of the top bar:
@@ -31,8 +30,8 @@ resize or re-wrap any other element of the top bar:
 
 #### Scenario: Top bar at the start
 - **WHEN** a new game starts
-- **THEN** the top bar shows €0.0, the income per minute and the DE/EN toggle, and no awareness
-  and no play time
+- **THEN** the top bar shows the game's name, €0.0 and the income per minute, and no awareness,
+  no play time, no language toggle and no settings button
 
 #### Scenario: Awareness appears
 - **WHEN** the total money earned reaches €100
@@ -44,7 +43,7 @@ resize or re-wrap any other element of the top bar:
 
 #### Scenario: Money gains a decimal
 - **WHEN** the money changes from €37.0 to €37.5, or from €1.20K to €1.23K
-- **THEN** the income, the awareness, the language toggle and the settings button do not move
+- **THEN** the income and the awareness do not move
 
 #### Scenario: Money crosses a thousand
 - **WHEN** the money changes from €999.9 to €1.00K
@@ -299,11 +298,11 @@ page scrolling:
 ### Requirement: Small screens
 Below 1024 px width:
 - the rail SHALL become compact, with amounts and marks and without resource names
-- the tab strip SHALL leave out Einstellungen, which stays reachable through the top bar's
-  settings button
+- the tab strip SHALL still show every tab, Einstellungen included
 
 Below 768 px width:
-- the tabs SHALL move to a bar at the bottom of the screen, each tab with an icon and a label
+- the tabs SHALL move to a bar at the bottom of the screen, each tab with an icon and a label,
+  Einstellungen included
 - the rail SHALL become a strip that shows money and the Sell button
 - a control SHALL open the full stock and close it again
 
@@ -319,6 +318,15 @@ at least 44 × 44 px on screens below 768 px.
 - **WHEN** the viewport is 375 px wide and the player opens the stock
 - **THEN** every shown resource is listed with its amount and trend mark, and the player can close
   it again
+
+#### Scenario: Settings on a tablet
+- **WHEN** the viewport is 900 px wide
+- **THEN** the tab strip shows Einstellungen as its last tab, and choosing it opens the tab
+
+#### Scenario: Settings on a phone
+- **WHEN** the viewport is 320 px wide
+- **THEN** the bottom bar shows six tabs, Einstellungen last, each at least 44 × 44 px, with
+  readable labels and no horizontal scrolling
 
 ### Requirement: Paper look in light and dark
 The game view SHALL use the storybook paper look: paper panels with ink outlines. It SHALL show
