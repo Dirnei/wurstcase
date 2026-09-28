@@ -223,6 +223,25 @@ describe('encodeSave / decodeSave', () => {
     expect(isUpgradeOffered(restored, 'betterSeeds')).toBe(true)
   })
 
+  it('migrates a format 7 save to own the chain milestones its chains had completed', () => {
+    const format7 = savedState()
+    format7.buildings.soybeanField = 60
+    format7.buildings.tofuPress = 55
+    format7.buildings.tofuWurstKitchen = 30
+    format7.upgrades = ['betterSeeds']
+    const restored = decodedState(envelope(7, format7))
+    expect(restored.upgrades).toEqual(['betterSeeds', 'soyChain25'])
+    expect(isUpgradeOffered(restored, 'soyChain50')).toBe(false)
+    restored.buildings.tofuWurstKitchen = 50
+    expect(isUpgradeOffered(restored, 'soyChain50')).toBe(true)
+  })
+
+  it('migrates a format 7 save with one building past a milestone alone without milestone upgrades', () => {
+    const format7 = savedState()
+    format7.buildings.soybeanField = 60
+    expect(decodedState(envelope(7, format7)).upgrades).toEqual([])
+  })
+
   it('drops unknown and repeated upgrades', () => {
     const state = savedState()
     state.upgrades = ['strongHands', 'goldenSpatula', 'strongHands', 'mustard']

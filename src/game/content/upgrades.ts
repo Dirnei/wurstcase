@@ -1,6 +1,6 @@
 import type { AktionId } from './aktionen'
 import type { SpeciesId } from './animals'
-import type { BuildingId } from './buildings'
+import { BUILDINGS, CHAINS, type BuildingId, type ChainId } from './buildings'
 import type { ProductId } from './resources'
 import type { ShelterId } from './shelters'
 
@@ -22,6 +22,18 @@ export type UpgradeId =
   | 'steamOven'
   | 'baristaCourse'
   | 'newMillstones'
+  | ChainMilestoneId
+
+/** Copies of every building of a chain at which its chain milestone upgrade comes on offer. */
+export const OWNED_MILESTONES = [25, 50, 100] as const
+
+/** Output factor each milestone upgrade multiplies in. */
+export const MILESTONE_FACTOR = 2
+
+/** A chain milestone costs this many times the copies that complete it. */
+export const MILESTONE_PRICE_MULTIPLE = 10
+
+export type ChainMilestoneId = `${ChainId}Chain${(typeof OWNED_MILESTONES)[number]}`
 
 /** One unlock condition; all of an upgrade's conditions must hold. Each can only go from false to true. */
 export type UnlockClause =
@@ -55,6 +67,33 @@ export interface UpgradeDef {
 }
 
 const FIELDS: readonly BuildingId[] = ['soybeanField', 'wheatField', 'oatField']
+
+/** Rounds to two significant digits, so a buy button reads €1,900 rather than €1,882. */
+function roundTwoDigits(value: number): number {
+  const step = 10 ** Math.max(0, Math.floor(Math.log10(value)) - 1)
+  return Math.round(value / step) * step
+}
+
+/**
+ * One upgrade per chain and milestone: on offer once every building of the chain reaches the count,
+ * it doubles the whole chain so its stages stay in balance. The price follows the buildings' own
+ * price rule: the copies that complete the milestone, times the multiple.
+ */
+export const CHAIN_MILESTONES: readonly { chain: ChainId; at: number; upgrade: UpgradeDef }[] = CHAINS.flatMap((chain) => {
+  const buildings = BUILDINGS.filter((building) => building.chain === chain)
+  return OWNED_MILESTONES.map((at) => ({
+    chain,
+    at,
+    upgrade: {
+      id: `${chain}Chain${at}` as ChainMilestoneId,
+      price: roundTwoDigits(
+        MILESTONE_PRICE_MULTIPLE * buildings.reduce((sum, b) => sum + b.basePrice * b.priceGrowth ** (at - 1), 0),
+      ),
+      when: buildings.map((building) => ({ owned: building.id, atLeast: at })),
+      effect: { kind: 'rate', buildings: buildings.map((building) => building.id), factor: MILESTONE_FACTOR },
+    },
+  }))
+})
 
 /** Act 1 one-time upgrades; starting values, tuned with the balancing page. */
 export const UPGRADES: readonly UpgradeDef[] = [
@@ -120,6 +159,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     when: [{ owned: 'oatMill', atLeast: 5 }],
     effect: { kind: 'rate', buildings: ['oatMill'], factor: 2 },
   },
+  ...CHAIN_MILESTONES.map((milestone) => milestone.upgrade),
 ]
 
 export const UPGRADE_IDS: readonly UpgradeId[] = UPGRADES.map((upgrade) => upgrade.id)

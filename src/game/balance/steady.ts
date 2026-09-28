@@ -3,7 +3,6 @@ import { RESOURCES, type ResourceId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import type { UpgradeId } from '../content/upgrades'
 import { bestBuyer } from '../systems/bulkSales'
-import { milestoneFactor } from '../systems/ownedMilestones'
 import { ordersFactor, productPrice, productsByPrice, rateFactor } from '../systems/upgrades'
 
 /** Products per second the owned buildings turn out at steady state, each stage capped by its input. */
@@ -16,7 +15,7 @@ export function steadyOutput(
   // BUILDINGS lists every building after the one that makes its input.
   for (const building of BUILDINGS) {
     const count = buildings[building.id]
-    const capacity = count * building.rate * milestoneFactor(count) * rateFactor(owned, building.id)
+    const capacity = count * building.rate * rateFactor(owned, building.id)
     flow[building.output] = building.input
       ? Math.min(capacity, (flow[building.input.resource] ?? 0) / building.input.ratio)
       : capacity

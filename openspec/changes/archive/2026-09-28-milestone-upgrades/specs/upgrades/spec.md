@@ -1,60 +1,37 @@
-# upgrades Specification
+# Spec Delta
 
-## Purpose
+## ADDED Requirements
 
-Gives the player one-time purchases that permanently change the rules of the current game:
-faster buildings, better prices, more demand, stronger awareness, cheaper animals and Aktionen.
+### Requirement: Chain milestone upgrades
+For each chain, the game SHALL offer three chain milestone upgrades, on offer once the player owns
+at least 25, 50 and 100 of every building of that chain (its field, its processing building and
+its kitchen). Each SHALL be a rate upgrade that doubles the output per second of all buildings of
+its chain. Each SHALL have its own name and joke line in every language.
 
-## Requirements
+A chain milestone upgrade's price SHALL be a fixed multiple (starting value 10) of the sum of the
+prices of the copies that complete it (the 25th, 50th or 100th copy of each of the chain's
+buildings), rounded to two significant digits. The milestones, the factor and the price multiple
+SHALL be content data, and the prices SHALL follow the buildings' base prices and price growth.
 
-### Requirement: Upgrades panel
-The Upgrades tab SHALL be locked until the first upgrade is on offer, and SHALL stay unlocked
-after that. Its lock hint SHALL name the total money earned at which the first upgrade comes on
-offer. The tab SHALL list every upgrade that is on offer and not yet owned, cheapest first. Each
-entry SHALL show the upgrade's name, a short joke line, its effect in plain words and its price in
-a buy button. Owned upgrades SHALL be listed in a collapsed section with their count.
+#### Scenario: First chain milestone offer
+- **WHEN** the player owns 25 soybean fields, 25 tofu presses and 25 Tofu-Wurst kitchens
+- **THEN** the soy chain's first milestone upgrade is on offer for €14,000
 
-#### Scenario: Nothing on offer yet
-- **WHEN** a new game starts
-- **THEN** the Upgrades tab is locked with the hint that it unlocks at €30 earned
+#### Scenario: One building alone is not enough
+- **WHEN** the player owns 60 soybean fields, 60 tofu presses and 24 Tofu-Wurst kitchens
+- **THEN** no soy chain milestone upgrade is on offer
 
-#### Scenario: First offer
-- **WHEN** the total money earned reaches €30
-- **THEN** the Upgrades tab can be opened and shows "strong hands" and its price of €40
+#### Scenario: Chain milestone doubles the whole chain
+- **WHEN** the player owns 25 of each soy chain building and the soy chain's first milestone
+  upgrade
+- **THEN** each soybean field, tofu press and Tofu-Wurst kitchen produces twice its base rate, and
+  the oat and wheat chains are unchanged
 
-### Requirement: Unlock conditions
-An upgrade SHALL be on offer while all of its conditions hold. A condition SHALL be one of:
+#### Scenario: Skipped milestones stay on offer
+- **WHEN** the player owns 50 of each soy chain building and no soy chain milestone upgrade
+- **THEN** the soy chain's 25 and 50 milestone upgrades are both on offer
 
-- total money earned of at least an amount
-- owning at least a number of a building or of a shelter type
-- having at least a number of residents, of one species or in total
-- having run an Aktion at least a number of times
-
-Every condition SHALL only ever go from false to true within a game (money earned, buildings,
-shelters, residents and Aktion runs never decrease), so an upgrade on offer stays on offer until
-it is bought.
-
-#### Scenario: Building count
-- **WHEN** the player owns 4 soybean fields
-- **THEN** "better seeds" is not on offer, and it is on offer once the fifth field is bought
-
-#### Scenario: Spending keeps the offer
-- **WHEN** "mustard on the side" is on offer and the player spends all their money
-- **THEN** "mustard on the side" is still on offer
-
-### Requirement: Buying an upgrade
-The player SHALL be able to buy an upgrade that is on offer when they have at least its price.
-Buying it SHALL subtract the price from money, SHALL NOT change the total money earned, and SHALL
-make the upgrade owned for the rest of this game. An owned upgrade SHALL NOT be offered again.
-The buy button SHALL be unavailable while money is short.
-
-#### Scenario: Buying
-- **WHEN** "strong hands" is on offer and the player has €50 and buys it
-- **THEN** money is €10, "strong hands" is owned and it moves to the owned section
-
-#### Scenario: Not enough money
-- **WHEN** the player has less money than an upgrade costs
-- **THEN** its buy button is unavailable
+## MODIFIED Requirements
 
 ### Requirement: Upgrade effects
 Values that other capabilities define (building output rates, units per manual click, product
@@ -169,32 +146,3 @@ completed (every building of the chain at the milestone's count or more).
   Tofu-Wurst kitchens and "better seeds" is loaded
 - **THEN** "better seeds" and the soy chain's 25 milestone upgrade are owned, and the soy chain's
   50 milestone upgrade comes on offer only once the kitchens reach 50 too
-
-### Requirement: Chain milestone upgrades
-For each chain, the game SHALL offer three chain milestone upgrades, on offer once the player owns
-at least 25, 50 and 100 of every building of that chain (its field, its processing building and
-its kitchen). Each SHALL be a rate upgrade that doubles the output per second of all buildings of
-its chain. Each SHALL have its own name and joke line in every language.
-
-A chain milestone upgrade's price SHALL be a fixed multiple (starting value 10) of the sum of the
-prices of the copies that complete it (the 25th, 50th or 100th copy of each of the chain's
-buildings), rounded to two significant digits. The milestones, the factor and the price multiple
-SHALL be content data, and the prices SHALL follow the buildings' base prices and price growth.
-
-#### Scenario: First chain milestone offer
-- **WHEN** the player owns 25 soybean fields, 25 tofu presses and 25 Tofu-Wurst kitchens
-- **THEN** the soy chain's first milestone upgrade is on offer for €14,000
-
-#### Scenario: One building alone is not enough
-- **WHEN** the player owns 60 soybean fields, 60 tofu presses and 24 Tofu-Wurst kitchens
-- **THEN** no soy chain milestone upgrade is on offer
-
-#### Scenario: Chain milestone doubles the whole chain
-- **WHEN** the player owns 25 of each soy chain building and the soy chain's first milestone
-  upgrade
-- **THEN** each soybean field, tofu press and Tofu-Wurst kitchen produces twice its base rate, and
-  the oat and wheat chains are unchanged
-
-#### Scenario: Skipped milestones stay on offer
-- **WHEN** the player owns 50 of each soy chain building and no soy chain milestone upgrade
-- **THEN** the soy chain's 25 and 50 milestone upgrades are both on offer

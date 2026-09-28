@@ -8,7 +8,7 @@ import { BUYERS, getBuyer } from './buyers'
 import { HINTS, SATIRE } from './headlines'
 import { MANUAL_ACTIONS } from './manual'
 import { MEGAMEAT_EVENT_IDS, MEGAMEAT_EVENTS } from './megaMeatEvents'
-import { UPGRADE_IDS, UPGRADES } from './upgrades'
+import { CHAIN_MILESTONES, UPGRADE_IDS, UPGRADES } from './upgrades'
 import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
 import { veganValue } from '../balance/value'
 import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES, type ProductId } from './resources'
@@ -254,7 +254,7 @@ describe('content', () => {
 
   it('has valid upgrades', () => {
     expect(new Set(UPGRADE_IDS).size).toBe(UPGRADE_IDS.length)
-    expect(UPGRADES).toHaveLength(17)
+    expect(UPGRADES).toHaveLength(26)
     for (const upgrade of UPGRADES) {
       expect(Number.isInteger(upgrade.price) && upgrade.price > 0, upgrade.id).toBe(true)
       expect(upgrade.when.length, upgrade.id).toBeGreaterThan(0)
@@ -269,6 +269,19 @@ describe('content', () => {
       if (effect.kind === 'manual') expect(Number.isInteger(effect.factor), upgrade.id).toBe(true)
       if ('add' in effect) expect(Number.isInteger(effect.add) && effect.add > 0, upgrade.id).toBe(true)
       if (effect.kind === 'rate') for (const id of effect.buildings) expect(BUILDING_IDS, upgrade.id).toContain(id)
+    }
+  })
+
+  it('has three chain milestone upgrades per chain with readable, rising prices', () => {
+    expect(CHAIN_MILESTONES).toHaveLength(CHAINS.length * 3)
+    for (const chain of CHAINS) {
+      const prices = CHAIN_MILESTONES.filter((m) => m.chain === chain).map((m) => m.upgrade.price)
+      expect(prices, chain).toHaveLength(3)
+      expect(prices[0] < prices[1] && prices[1] < prices[2], chain).toBe(true)
+      for (const price of prices) {
+        const digits = String(price).replace(/0+$/, '')
+        expect(digits.length, `${chain} ${price}`).toBeLessThanOrEqual(2)
+      }
     }
   })
 

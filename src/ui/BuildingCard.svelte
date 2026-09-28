@@ -3,7 +3,7 @@
   import { MANUAL_ACTIONS } from '../game/content/manual'
   import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../game/systems/buildings'
   import { canPerform, performManual } from '../game/systems/manual'
-  import { nextMilestone, outputFactor } from '../game/systems/ownedMilestones'
+  import { rateFactor } from '../game/systems/upgrades'
   import { amount, euros } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
   import { act, readGame } from './game.svelte'
@@ -19,8 +19,7 @@
   const manual = $derived(MANUAL_ACTIONS.find((action) => action.building === id)!)
   const unlocked = $derived(readGame((state) => isUnlocked(state, id)))
   const owned = $derived(readGame((state) => state.buildings[id]))
-  const rate = $derived(building.rate * readGame((state) => outputFactor(state, id)))
-  const milestone = $derived(nextMilestone(owned))
+  const rate = $derived(building.rate * readGame((state) => rateFactor(state, id)))
   const price = $derived(euros(readGame((state) => buildingPrice(state, id))))
   const affordable = $derived(readGame((state) => canBuy(state, id)))
   const performable = $derived(readGame((state) => canPerform(state, manual.id)))
@@ -48,9 +47,6 @@
   {#if unlocked}
     <p class="rate">
       {t('building.perSecond', { amount: amount(owned * rate), resource: t(`resource.${building.output}`) })}
-      {#if milestone}
-        · <span class="milestone">{t('building.nextMilestone', { factor: milestone.factor, count: milestone.at })}</span>
-      {/if}
     </p>
     {#if building.input}
       <p class="recipe">
@@ -122,10 +118,6 @@
     font-size: 0.95rem;
     font-weight: 800;
     line-height: 1.25;
-  }
-
-  .milestone {
-    font-weight: 800;
   }
 
   .count {

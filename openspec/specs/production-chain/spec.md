@@ -83,10 +83,8 @@ completed unit is added to stock at once, taking its whole input at that moment.
 SHALL show how many the player owns, what it produces per second, and how far along its next
 unit is.
 
-Owning 25, 50 and 100 copies of a building SHALL each double that building type's output per
-second, so 25 copies run at ×2, 50 at ×4 and 100 at ×8. A processing building or kitchen SHALL
-take its input at the same multiplied rate. Each building SHALL show the next milestone it has
-not reached and its multiplier, and SHALL show nothing more once it owns 100.
+The number of copies owned SHALL NOT change a building's output per copy by itself; output per
+copy changes only through upgrades. The building SHALL NOT show owned-count milestones.
 
 #### Scenario: Field output
 - **WHEN** the player owns 2 soybean fields, each producing 1 soybean per second, and 10 seconds
@@ -109,19 +107,22 @@ not reached and its multiplier, and SHALL show nothing more once it owns 100.
 
 #### Scenario: Below the first milestone
 - **WHEN** the player owns 24 soybean fields and 1 second passes
-- **THEN** the soybean stock has grown by 24, and the soybean field shows "×2 at 25"
+- **THEN** the soybean stock has grown by 24, and the soybean field shows no milestone
 
 #### Scenario: First milestone
-- **WHEN** the player owns 25 soybean fields and 1 second passes
-- **THEN** the soybean stock has grown by 50, and the soybean field shows "×4 at 50"
+- **WHEN** the player owns 25 soybean fields and no upgrades, and 1 second passes
+- **THEN** the soybean stock has grown by 25, and the soybean field shows only its count, its
+  output per second and its progress bar
 
 #### Scenario: Milestones stack
-- **WHEN** the player owns 50 soybean fields and 1 second passes
-- **THEN** the soybean stock has grown by 200
+- **WHEN** the player owns 50 of each soy chain building and the soy chain's 25 and 50 milestone
+  upgrades
+- **THEN** the soybean field shows 200 soybeans per second
 
 #### Scenario: Last milestone
-- **WHEN** the player owns 100 soybean fields
-- **THEN** they produce 800 soybeans per second and the field shows no next milestone
+- **WHEN** the player owns 100 of each soy chain building and all three soy chain milestone
+  upgrades
+- **THEN** the soybean field shows 800 soybeans per second
 
 ### Requirement: Buying buildings
 The player SHALL be able to buy one building at a time when they have enough money. The price

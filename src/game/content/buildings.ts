@@ -35,12 +35,6 @@ export interface BuildingDef {
   unlockAt: number
 }
 
-/** Copies owned at which a building type's output doubles, as in AdVenture Capitalist. */
-export const OWNED_MILESTONES: readonly number[] = [25, 50, 100]
-
-/** Output factor each reached milestone multiplies in. */
-export const MILESTONE_FACTOR = 2
-
 /** All buildings in production order: fields, then processing, then kitchens. */
 export const BUILDINGS: readonly BuildingDef[] = [...FIELDS, ...PROCESSORS, ...KITCHENS]
 

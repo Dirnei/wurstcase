@@ -6,7 +6,7 @@ import { BUYER_IDS } from './content/buyers'
 import { EVENT_PAUSE, isMegaMeatEventId, MEGAMEAT_EVENTS } from './content/megaMeatEvents'
 import { RESOURCES } from './content/resources'
 import { SHELTER_IDS } from './content/shelters'
-import { isUpgradeId, type UpgradeId } from './content/upgrades'
+import { CHAIN_MILESTONES, isUpgradeId, type UpgradeId } from './content/upgrades'
 import { createInitialState, type GameState, type MegaMeatState, type Resident } from './state'
 
 /*
@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 7
+export const CURRENT_FORMAT = 8
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -51,6 +51,18 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
       : state,
   // 6 → 7 (upgrades): no upgrade owned.
   6: (state) => (isRecord(state) ? { upgrades: [], ...state } : state),
+  // 7 → 8 (milestone-upgrades): milestones became chain upgrades; own those whose chain the save
+  // had completed.
+  7: (state) => {
+    if (!isRecord(state) || !isRecord(state.buildings) || !Array.isArray(state.upgrades)) {
+      return state
+    }
+    const buildings = state.buildings
+    const reached = CHAIN_MILESTONES.filter(({ upgrade }) =>
+      upgrade.when.every((clause) => 'owned' in clause && typeof buildings[clause.owned] === 'number' && (buildings[clause.owned] as number) >= clause.atLeast),
+    ).map(({ upgrade }) => upgrade.id)
+    return { ...state, upgrades: [...new Set([...state.upgrades, ...reached])] }
+  },
 }
 
 export type DecodeResult =

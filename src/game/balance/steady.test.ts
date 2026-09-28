@@ -50,12 +50,16 @@ describe('steadyIncome', () => {
 })
 
 describe('steadyOutput', () => {
-  it('doubles a building type at its first milestone', () => {
-    expect(steadyOutput(owned({ soybeanField: 25 })).soybeans).toBe(50)
+  it('gives no bonus for the count alone', () => {
+    expect(steadyOutput(owned({ soybeanField: 25 })).soybeans).toBe(25)
   })
 
-  it('stacks milestones with rate upgrades', () => {
-    expect(steadyOutput(owned({ soybeanField: 25 }), ['betterSeeds']).soybeans).toBe(100)
+  it('doubles a building type with its milestone upgrade', () => {
+    expect(steadyOutput(owned({ soybeanField: 25 }), ['soyChain25']).soybeans).toBe(50)
+  })
+
+  it('stacks milestone upgrades with other rate upgrades', () => {
+    expect(steadyOutput(owned({ soybeanField: 25 }), ['soyChain25', 'betterSeeds']).soybeans).toBe(100)
   })
 })
 

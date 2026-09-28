@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { BUILDINGS } from '../content/buildings'
 import type { ResourceId } from '../content/resources'
+import type { UpgradeId } from '../content/upgrades'
 import { createInitialState, type GameState } from '../state'
 import { produce } from './production'
 
@@ -20,9 +21,23 @@ describe('produce', () => {
     expect(stock(state, 'soybeans')).toBe(20)
   })
 
-  it("doubles a building type's output at each milestone owned", () => {
-    for (const [owned, made] of [[24, 24], [25, 50], [50, 200]]) {
-      const state = stateWith((s) => (s.buildings.soybeanField = owned))
+  it('gives no bonus for the count alone', () => {
+    const state = stateWith((s) => (s.buildings.soybeanField = 25))
+    produce(state, 1)
+    expect(stock(state, 'soybeans')).toBe(25)
+  })
+
+  it("doubles a building type's output with each milestone upgrade owned", () => {
+    const cases: [number, UpgradeId[], number][] = [
+      [25, ['soyChain25'], 50],
+      [50, ['soyChain25', 'soyChain50'], 200],
+      [100, ['soyChain25', 'soyChain50', 'soyChain100'], 800],
+    ]
+    for (const [owned, upgrades, made] of cases) {
+      const state = stateWith((s) => {
+        s.buildings.soybeanField = owned
+        s.upgrades = upgrades
+      })
       produce(state, 1)
       expect(stock(state, 'soybeans'), `${owned} fields`).toBe(made)
     }
@@ -31,6 +46,7 @@ describe('produce', () => {
   it('takes input at the multiplied rate', () => {
     const state = stateWith((s) => {
       s.buildings.tofuPress = 26
+      s.upgrades = ['soyChain25']
       s.stock.soybeans = new Decimal(200)
     })
     produce(state, 1)

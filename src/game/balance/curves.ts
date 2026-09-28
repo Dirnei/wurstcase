@@ -4,9 +4,10 @@ import { BUYERS, type BuyerId } from '../content/buyers'
 import { KITCHENS, PRODUCT_PRICES } from '../content/products'
 import { PRODUCTS, RESOURCES, type ProductId, type ResourceId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
+import { CHAIN_MILESTONES, type UpgradeId } from '../content/upgrades'
+import type { GameState } from '../state'
 import { createInitialState } from '../state'
 import { buildingPrice } from '../systems/buildings'
-import { milestoneFactor } from '../systems/ownedMilestones'
 import { animalPrice } from '../systems/rescue'
 import { steadyOutput } from './steady'
 import { buildingIncome, chainBalance, veganValue } from './value'
@@ -23,10 +24,19 @@ export interface CostPoint {
   income: number
 }
 
-/** Income per second of this many copies of a building, milestone multipliers included. */
+/** Income per second of this many copies of a building, without upgrades. */
 function incomeOf(id: BuildingId, owned: number): number {
-  return owned * milestoneFactor(owned) * buildingIncome(id)
+  return owned * buildingIncome(id)
 }
+
+/** Chain milestones on offer with these buildings; the chain set chart assumes each is bought at once. */
+function completedMilestones(buildings: GameState['buildings']): UpgradeId[] {
+  return CHAIN_MILESTONES.filter(({ upgrade }) =>
+    upgrade.when.every((clause) => 'owned' in clause && buildings[clause.owned] >= clause.atLeast),
+  ).map(({ upgrade }) => upgrade.id)
+}
+
+const milestonePrice = (id: UpgradeId) => CHAIN_MILESTONES.find((m) => m.upgrade.id === id)!.upgrade.price
 
 /** Price and income of a building for 0 to maxCopies copies, from the game's own price rule. */
 export function costCurve(id: BuildingId, maxCopies = MAX_COPIES): CostPoint[] {
@@ -70,16 +80,22 @@ export function chainSetPayback(maxSets = MAX_SETS): { chain: ChainId; sets: Set
   return CHAINS.map((chain) => {
     const balance = chainBalance(chain)
     const state = createInitialState()
-    const income = () => (steadyOutput(state.buildings)[balance.product] ?? 0) * PRODUCT_PRICES[balance.product]
+    const income = () =>
+      (steadyOutput(state.buildings, completedMilestones(state.buildings))[balance.product] ?? 0) *
+      PRODUCT_PRICES[balance.product]
     const sets: SetPoint[] = []
     for (let k = 0; k < maxSets; k++) {
       const before = income()
+      const ownedBefore = completedMilestones(state.buildings)
       let price = 0
       for (const { id, count } of balance.buildings) {
         for (let i = 0; i < count; i++) {
           price += buildingPrice(state, id).toNumber()
           state.buildings[id] += 1
         }
+      }
+      for (const id of completedMilestones(state.buildings)) {
+        if (!ownedBefore.includes(id)) price += milestonePrice(id)
       }
       const added = income() - before
       sets.push({ price, income: added, seconds: price / added })

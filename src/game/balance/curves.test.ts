@@ -14,11 +14,11 @@ describe('costCurve', () => {
     }
   })
 
-  it('includes the milestone multipliers in the income', () => {
+  it('gives no jump for the count alone', () => {
     const curve = costCurve('soybeanField')
     expect(curve[24].income).toBe(24)
-    expect(curve[25].income).toBe(50)
-    expect(curve[50].income).toBe(200)
+    expect(curve[25].income).toBe(25)
+    expect(curve[25].spent - curve[24].spent).toBe(curve[24].nextPrice)
   })
 })
 
@@ -33,9 +33,9 @@ describe('paybackCurves', () => {
     expect(field.seconds[1]).toBe(12)
   })
 
-  it('makes the copy that reaches a milestone pay back faster than the one before', () => {
+  it('makes every copy pay back more slowly than the one before', () => {
     const field = paybackCurves().find((c) => c.id === 'soybeanField')!
-    expect(field.seconds[24]).toBeLessThan(field.seconds[23])
+    for (let n = 1; n < field.seconds.length; n++) expect(field.seconds[n]).toBeGreaterThan(field.seconds[n - 1])
   })
 })
 
@@ -89,11 +89,18 @@ describe('chainSetPayback', () => {
     }
   })
 
+  it('adds the chain milestone a set completes to its price', () => {
+    // The 13th soy set takes the soy chain to 39 fields, 26 presses and 26 kitchens: 25 of each.
+    const soy = chainSetPayback().find((c) => c.chain === 'soy')!
+    expect(soy.sets[12].price - soy.sets[11].price).toBeGreaterThan(14_000)
+  })
+
   it('lets each later chain start behind the one before and end ahead of it', () => {
     const [soy, oat, wheat] = chainSetPayback().map((c) => c.sets.map((set) => set.seconds))
     for (const [early, late] of [[soy, oat], [oat, wheat]]) {
       expect(early[0]).toBeLessThan(late[0])
-      expect(early[24]).toBeGreaterThan(late[24])
+      // The 25th set completes a chain milestone in every chain, so compare the set before it.
+      expect(early[23]).toBeGreaterThan(late[23])
     }
   })
 })

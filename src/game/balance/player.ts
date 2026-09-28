@@ -9,7 +9,6 @@ import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
 import { bestBuyer, bulkSell } from '../systems/bulkSales'
 import { canPerform, isManualUnlocked, performManual } from '../systems/manual'
-import { outputFactor } from '../systems/ownedMilestones'
 import {
   animalPrice,
   buildShelter,
@@ -32,6 +31,7 @@ import {
   ordersFactor,
   productPrice,
   productsByPrice,
+  rateFactor,
   spaceBonus,
 } from '../systems/upgrades'
 import { steadyIncome, steadyOutput, usedOutput } from './steady'
@@ -126,7 +126,7 @@ function sellSurplus(state: GameState): void {
   const perSecond: Partial<Record<string, number>> = {}
   for (const building of BUILDINGS) {
     if (building.input) {
-      const use = state.buildings[building.id] * building.rate * outputFactor(state, building.id) * building.input.ratio
+      const use = state.buildings[building.id] * building.rate * rateFactor(state, building.id) * building.input.ratio
       perSecond[building.input.resource] = (perSecond[building.input.resource] ?? 0) + use
     }
   }
@@ -275,7 +275,7 @@ function servingChain(
     let need = units
     let cost = 0
     for (const building of [...stages].reverse()) {
-      cost += (need / (building.rate * outputFactor(state, building.id))) * buildingPrice(state, building.id).toNumber()
+      cost += (need / (building.rate * rateFactor(state, building.id))) * buildingPrice(state, building.id).toNumber()
       if (!building.input) {
         break
       }

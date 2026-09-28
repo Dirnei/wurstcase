@@ -74,7 +74,9 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
   oat 11%, wheat 9% (idle games use 7–15%). Each new chain starts as a worse deal and overtakes the
   one before, as in AdVenture Capitalist. Animals follow the same idea (chicken 25%, pig 18%,
   cow 12%).
-- Owning 25, 50 and 100 of a building doubles its output each time (×2, ×4, ×8).
+- A chain grows as a whole: once every building of a chain is owned 25, 50 and 100 times, a chain
+  milestone upgrade comes on offer that doubles the whole chain. Owning more of one building alone
+  gives no bonus.
 - **Manual start:** the player clicks "Sojabohnen ernten" (harvest soybeans) and "Tofu pressen"
   (press tofu) until they can afford the first field and press.
 

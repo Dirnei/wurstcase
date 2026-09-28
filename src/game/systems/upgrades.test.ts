@@ -61,13 +61,47 @@ describe('offers', () => {
     expect(offeredUpgrades(state).map((u) => u.id)).toEqual(['strongHands', 'betterSeeds', 'mustard'])
   })
 
-  it('offers all 17 when every condition is met', () => {
+  it('offers all 26 when every condition is met', () => {
     const state = withMoney(0, 1e6)
-    for (const id of Object.keys(state.buildings) as (keyof typeof state.buildings)[]) state.buildings[id] = 10
+    for (const id of Object.keys(state.buildings) as (keyof typeof state.buildings)[]) state.buildings[id] = 100
     state.shelters.stable = 5
     state.aktionen.runs.flyer = 5
     for (let i = 0; i < 5; i++) state.residents.push({ species: 'chicken', name: i }, { species: 'pig', name: i })
-    expect(offeredUpgrades(state)).toHaveLength(UPGRADES.length)
+    expect(offeredUpgrades(state)).toHaveLength(26)
+    expect(UPGRADES).toHaveLength(26)
+  })
+})
+
+describe('chain milestone upgrades', () => {
+  function soyChain(fields: number, presses: number, kitchens: number): GameState {
+    const state = createInitialState()
+    state.buildings.soybeanField = fields
+    state.buildings.tofuPress = presses
+    state.buildings.tofuWurstKitchen = kitchens
+    return state
+  }
+  const chainOffers = (state: GameState) =>
+    offeredUpgrades(state)
+      .map((u) => u.id)
+      .filter((id) => id.startsWith('soyChain'))
+
+  it('offers the first soy chain milestone when every soy building reaches 25', () => {
+    expect(chainOffers(soyChain(25, 25, 25))).toEqual(['soyChain25'])
+    expect(UPGRADES.find((u) => u.id === 'soyChain25')!.price).toBe(14_000)
+  })
+
+  it('offers nothing while one building of the chain is short', () => {
+    expect(chainOffers(soyChain(60, 60, 24))).toEqual([])
+  })
+
+  it('keeps skipped milestones on offer', () => {
+    expect(chainOffers(soyChain(50, 50, 50))).toEqual(['soyChain25', 'soyChain50'])
+  })
+
+  it('doubles every building of its chain and nothing else', () => {
+    const state = owning('soyChain25')
+    for (const id of ['soybeanField', 'tofuPress', 'tofuWurstKitchen'] as const) expect(rateFactor(state, id)).toBe(2)
+    expect(rateFactor(state, 'oatField')).toBe(1)
   })
 })
 
