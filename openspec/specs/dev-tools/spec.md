@@ -98,19 +98,24 @@ show as a table how many kitchens of each product that demand keeps busy.
 
 ### Requirement: Bulk buyer table
 The page SHALL list every resource with its market value and each bulk buyer's price per unit,
-both in euros and as a percentage of the market value. The header of the table SHALL show the step
+both in euros and as a percentage of the market value, at base product prices and, for MegaMeat,
+its full price at a fresh market. It SHALL also show MegaMeat's half-price flood K and the flood's
+half-life H, and the most MegaMeat can pay per second for each resource (full price × K × ln 2 ÷ H). The header of the table SHALL show the step
 markup.
 
 #### Scenario: Soybeans
 - **WHEN** the table is shown with the current content
-- **THEN** soybeans read a market value of €0.64, MegaMeat €0.57 (89%) and the biogas plant
-  €0.43 (67%)
+- **THEN** soybeans read a market value of €0.64, MegaMeat €3.15 (492%) with at most about €55 per
+  second, and the biogas plant €0.43 (67%)
 
 ### Requirement: Simulated playthrough
 The page SHALL simulate a game from a new game state with the game's own simulation step. The
 default length is 60 minutes of game time, and the default click rate is 2 clicks per second;
 both can be changed on the page. The surplus buyer is the biogas plant by default and can be
-switched to MegaMeat on the page. The scripted player SHALL:
+switched to MegaMeat on the page. The page SHALL also offer a tempted strategy: the player buys
+only fields and storeroom expansions, never processes, and every 10 seconds sells to MegaMeat
+every raw ingredient beyond what its buildings use in the next 30 seconds; it clicks only the
+harvest actions. Unless it plays the tempted strategy, the scripted player SHALL:
 
 - spend its clicks on the manual actions, furthest step of the chain first
 - sell by hand until the shop assistant is hired
@@ -168,6 +173,16 @@ expansions and campaign runs included, with its game time.
 - **WHEN** a default simulation has run
 - **THEN** the log lists at least one storeroom expansion, and the storeroom's final level is in
   the result
+
+#### Scenario: Temptation pays early
+- **WHEN** the default and the tempted strategy are simulated with otherwise default settings
+- **THEN** the tempted run has earned more in total than the default run at 5 minutes and at 10
+  minutes of game time
+
+#### Scenario: Temptation loses in the end
+- **WHEN** the default and the tempted strategy are simulated for 60 minutes with otherwise default
+  settings
+- **THEN** the default run ends with at least 1.5 times the total earned of the tempted run
 
 ### Requirement: Pacing table
 After a simulation, the page SHALL show each pacing milestone with its target window from the

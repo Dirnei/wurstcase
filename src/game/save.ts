@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 12
+export const CURRENT_FORMAT = 13
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -88,6 +88,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     const earned = readAmount(state.totalEarned)?.gte(100) ?? false
     return { ...state, aktionen: { ...state.aktionen, unlocked: runs || pool || earned } }
   },
+  // 12 → 13 (megameat-outbids): MegaMeat's markets start fresh.
+  12: (state) => (isRecord(state) ? { megaMeatFlood: {}, ...state } : state),
 }
 
 export type DecodeResult =
@@ -186,6 +188,9 @@ function writeState(state: GameState): Record<string, unknown> {
     upgrades: [...state.upgrades],
     customerIncome: state.customerIncome.toString(),
     storeroom: state.storeroom,
+    megaMeatFlood: Object.fromEntries(
+      Object.entries(state.megaMeatFlood).map(([resource, flood]) => [resource, flood.toString()]),
+    ),
   }
 }
 
@@ -202,7 +207,8 @@ function readState(value: unknown): GameState | null {
     !isRecord(value.aktionen.cooldown) ||
     !isRecord(value.aktionen.runs) ||
     typeof value.aktionen.unlocked !== 'boolean' ||
-    !Array.isArray(value.upgrades)
+    !Array.isArray(value.upgrades) ||
+    !isRecord(value.megaMeatFlood)
   ) {
     return null
   }
@@ -281,6 +287,17 @@ function readState(value: unknown): GameState | null {
     state.aktionen.runs[id] = runs as number
   }
   state.aktionen.unlocked = value.aktionen.unlocked
+  for (const id of RESOURCES) {
+    const saved = value.megaMeatFlood[id]
+    if (saved === undefined) {
+      continue
+    }
+    const flood = readRate(saved)
+    if (!flood) {
+      return null
+    }
+    state.megaMeatFlood[id] = flood
+  }
   // Unknown ids (content removed) and repeats are dropped; the purchase order is kept.
   state.upgrades = [...new Set(value.upgrades.filter(isUpgradeId))] as UpgradeId[]
   for (const entry of value.residents) {

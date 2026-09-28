@@ -3,6 +3,8 @@ import de from '../../i18n/de.json'
 import en from '../../i18n/en.json'
 import { AKTION_IDS, AKTIONEN } from './aktionen'
 import { NAME_POOL_SIZE, SPECIES, SPECIES_IDS } from './animals'
+import { createInitialState } from '../state'
+import { hasLot, lotFor } from '../systems/bulkSales'
 import { BUILDINGS, BUILDING_IDS, CHAIN_RESOURCES, CHAINS } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
 import { HINTS, SATIRE } from './headlines'
@@ -108,52 +110,63 @@ describe('content', () => {
   })
 
   it('lets MegaMeat buy raw ingredients and intermediates, and the biogas plant everything', () => {
-    expect(Object.keys(getBuyer('megaMeat').lots).sort()).toEqual([...RAW, ...INTERMEDIATES].sort())
-    expect(Object.keys(getBuyer('biogas').lots).sort()).toEqual([...RESOURCES].sort())
+    expect(RESOURCES.filter((r) => hasLot('megaMeat', r)).sort()).toEqual([...RAW, ...INTERMEDIATES].sort())
+    expect(RESOURCES.filter((r) => hasLot('biogas', r)).sort()).toEqual([...RESOURCES].sort())
   })
 
   it('sells in lots of whole units for whole euros', () => {
+    const base = createInitialState()
     for (const buyer of BUYERS) {
-      for (const [resource, lot] of Object.entries(buyer.lots)) {
+      for (const resource of RESOURCES.filter((r) => hasLot(buyer.id, r))) {
+        const lot = lotFor(base, buyer.id, resource)!
         expect(Number.isInteger(lot.price) && lot.price > 0, `${buyer.id} ${resource}`).toBe(true)
         expect(Number.isInteger(lot.units) && lot.units > 0, `${buyer.id} ${resource}`).toBe(true)
       }
     }
   })
 
-  it('pays less at the biogas plant than at MegaMeat, and both less than the market value', () => {
-    const megaMeat = getBuyer('megaMeat').lots
-    const biogas = getBuyer('biogas').lots
-    for (const resource of RESOURCES) {
-      const gas = biogas[resource]!.price / biogas[resource]!.units
-      expect(gas, resource).toBeLessThan(marketValue(resource))
-      const meatLot = megaMeat[resource]
-      if (meatLot) {
-        const meat = meatLot.price / meatLot.units
-        expect(gas, resource).toBeLessThan(meat)
-        expect(meat, resource).toBeLessThan(marketValue(resource))
-      }
+  it('has MegaMeat pay the chain product × 1.05 for raw ingredients and half that for intermediates, in lots of 20', () => {
+    const base = createInitialState()
+    for (const { resources } of CHAIN_RESOURCES) {
+      const [raw, intermediate, product] = resources
+      const price = PRODUCT_PRICES[product as ProductId]
+      expect(lotFor(base, 'megaMeat', raw), raw).toEqual({ units: 20, price: Math.floor(20 * price * 1.05 + 1e-9) })
+      expect(lotFor(base, 'megaMeat', intermediate), intermediate).toEqual({
+        units: 20,
+        price: Math.floor(20 * price * 1.05 * 0.5 + 1e-9),
+      })
     }
   })
 
-  it('pays a fixed share of the market value, and processing before selling pays', () => {
-    const ranges: Record<string, [number, number]> = { megaMeat: [0.85, 0.95], biogas: [0.62, 0.72] }
-    for (const buyer of BUYERS) {
-      const perUnit = (resource: string) => {
-        const lot = buyer.lots[resource as keyof typeof buyer.lots]!
-        return lot.price / lot.units
-      }
-      for (const resource of Object.keys(buyer.lots)) {
-        const share = perUnit(resource) / marketValue(resource as (typeof RESOURCES)[number])
-        expect(share, `${buyer.id} ${resource}`).toBeGreaterThanOrEqual(ranges[buyer.id][0])
-        expect(share, `${buyer.id} ${resource}`).toBeLessThanOrEqual(ranges[buyer.id][1])
-      }
-      for (const building of BUILDINGS) {
-        const { input, output } = building
-        if (!input || !(output in buyer.lots) || !(input.resource in buyer.lots)) {
-          continue
-        }
-        expect(perUnit(output), `${buyer.id} ${output}`).toBeGreaterThan(input.ratio * perUnit(input.resource))
+  it('has MegaMeat pay more for 3 soybeans than a customer pays for 1 Tofu-Wurst', () => {
+    const lot = lotFor(createInitialState(), 'megaMeat', 'soybeans')!
+    expect((3 * lot.price) / lot.units).toBeGreaterThan(PRODUCT_PRICES.tofuWurst)
+  })
+
+  it('pays less at the biogas plant than the market value, and than MegaMeat for raw ingredients', () => {
+    const base = createInitialState()
+    for (const resource of RESOURCES) {
+      const biogas = lotFor(base, 'biogas', resource)!
+      expect(biogas.price / biogas.units, resource).toBeLessThan(marketValue(resource))
+    }
+    for (const resource of RAW) {
+      const biogas = lotFor(base, 'biogas', resource)!
+      const meat = lotFor(base, 'megaMeat', resource)!
+      expect(biogas.price / biogas.units, resource).toBeLessThan(meat.price / meat.units)
+    }
+  })
+
+  it('has the biogas plant pay a fixed share of the market value, where processing before selling pays', () => {
+    const lots = getBuyer('biogas').lots!
+    const perUnit = (resource: (typeof RESOURCES)[number]) => lots[resource]!.price / lots[resource]!.units
+    for (const resource of RESOURCES) {
+      const share = perUnit(resource) / marketValue(resource)
+      expect(share, resource).toBeGreaterThanOrEqual(0.62)
+      expect(share, resource).toBeLessThanOrEqual(0.72)
+    }
+    for (const { input, output } of BUILDINGS) {
+      if (input) {
+        expect(perUnit(output), output).toBeGreaterThan(input.ratio * perUnit(input.resource))
       }
     }
   })

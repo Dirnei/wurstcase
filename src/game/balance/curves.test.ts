@@ -54,8 +54,10 @@ describe('bulkTable', () => {
   it('compares bulk prices with the market value', () => {
     const soybeans = bulkTable().find((row) => row.resource === 'soybeans')!
     expect(soybeans.marketValue).toBeCloseTo(0.64, 10)
-    expect(soybeans.buyers.megaMeat!.perUnit).toBeCloseTo(0.571, 3)
-    expect(soybeans.buyers.megaMeat!.share).toBeCloseTo(0.893, 3)
+    expect(soybeans.buyers.megaMeat!.perUnit).toBeCloseTo(3.15, 10)
+    expect(soybeans.buyers.megaMeat!.share).toBeCloseTo(4.92, 2)
+    expect(soybeans.buyers.megaMeat!.capPerSecond).toBeCloseTo(54.6, 1)
+    expect(soybeans.buyers.biogas!.capPerSecond).toBeUndefined()
     expect(soybeans.buyers.biogas!.perUnit).toBeCloseTo(0.429, 3)
     expect(soybeans.buyers.biogas!.share).toBeCloseTo(0.67, 3)
   })

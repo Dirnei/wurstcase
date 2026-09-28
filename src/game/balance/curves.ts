@@ -8,6 +8,7 @@ import { CHAIN_MILESTONES, type UpgradeId } from '../content/upgrades'
 import type { GameState } from '../state'
 import { createInitialState } from '../state'
 import { buildingPrice } from '../systems/buildings'
+import { fullPrice, lotFor } from '../systems/bulkSales'
 import { animalPrice } from '../systems/rescue'
 import { steadyOutput } from './steady'
 import { buildingIncome, chainBalance, marketValue, veganValue } from './value'
@@ -128,19 +129,27 @@ export function demandCeiling(customerCounts: readonly number[]): DemandPoint[] 
 export interface BulkRow {
   resource: ResourceId
   marketValue: number
-  /** Price per unit, and as a share of the market value; missing if the buyer does not take it. */
-  buyers: Partial<Record<BuyerId, { perUnit: number; share: number }>>
+  /**
+   * Price per unit (for a flooded market: at a fresh market), as a share of the market value, and
+   * for a flooded market the most it pays per second; missing if the buyer does not take it.
+   */
+  buyers: Partial<Record<BuyerId, { perUnit: number; share: number; capPerSecond?: number }>>
 }
 
+/** The table at base product prices: MegaMeat's pegged prices are read with no upgrades owned. */
 export function bulkTable(): BulkRow[] {
+  const base = { upgrades: [] }
   return RESOURCES.map((resource) => {
     const value = marketValue(resource)
     const buyers: BulkRow['buyers'] = {}
     for (const buyer of BUYERS) {
-      const lot = buyer.lots[resource]
+      const lot = lotFor(base, buyer.id, resource)
       if (lot) {
-        const perUnit = lot.price / lot.units
-        buyers[buyer.id] = { perUnit, share: perUnit / value }
+        const full = buyer.flood ? fullPrice(base, resource) : undefined
+        const perUnit = full ?? lot.price / lot.units
+        // A flooded market pays at most full × K ÷ τ per second, with τ = H ÷ ln 2.
+        const capPerSecond = buyer.flood && (perUnit * buyer.flood.halfPriceUnits * Math.LN2) / buyer.flood.halfLifeSeconds
+        buyers[buyer.id] = { perUnit, share: perUnit / value, ...(capPerSecond ? { capPerSecond } : {}) }
       }
     }
     return { resource, marketValue: value, buyers }

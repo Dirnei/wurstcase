@@ -1,9 +1,9 @@
 import { BUILDINGS, type BuildingId } from '../content/buildings'
-import { BUYERS, type BuyerId } from '../content/buyers'
+import { BUYERS, getBuyer, type BuyerId } from '../content/buyers'
 import { RESOURCES, type ResourceId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import type { UpgradeId } from '../content/upgrades'
-import { bestBuyer } from '../systems/bulkSales'
+import { bestBuyer, fullPrice, lotFor } from '../systems/bulkSales'
 import { ordersFactor, productPrice, productsByPrice, rateFactor, yieldPerRun } from '../systems/upgrades'
 
 /** Products per second the owned buildings turn out at steady state, each stage capped by its input. */
@@ -26,17 +26,20 @@ export function steadyOutput(
 }
 
 /**
- * What surplus earns per unit when it goes to the given buyer: its own lot where it takes the
- * resource, otherwise the best-paying buyer without a feed cost. Content, so computed once.
+ * What a steady surplus of this many units per second earns at the given buyer: its own lot where
+ * it takes the resource, otherwise the best-paying buyer without a feed cost. A flooded market
+ * (MegaMeat) settles at a flood of rate × τ, with τ = H ÷ ln 2, where it pays full × K ÷ (K + flood)
+ * per unit, so its income approaches full × K ÷ τ however much is sold.
  */
-const SURPLUS_PRICE = {} as Record<BuyerId, ReadonlyMap<ResourceId, number>>
-for (const buyer of BUYERS) {
-  SURPLUS_PRICE[buyer.id] = new Map(
-    RESOURCES.map((resource) => {
-      const lot = buyer.lots[resource]
-      return [resource, lot ? lot.price / lot.units : (bestBuyer(resource, { withoutFeedCost: true })?.perUnit ?? 0)]
-    }),
-  )
+function surplusIncome(owned: { upgrades: UpgradeId[] }, buyer: BuyerId, resource: ResourceId, rate: number): number {
+  const { flood } = getBuyer(buyer)
+  const full = flood ? fullPrice(owned, resource) : undefined
+  if (flood && full !== undefined) {
+    const settled = rate * (flood.halfLifeSeconds / Math.LN2)
+    return rate * full * (flood.halfPriceUnits / (flood.halfPriceUnits + settled))
+  }
+  const lot = lotFor(owned, buyer, resource)
+  return rate * (lot ? lot.price / lot.units : (bestBuyer(owned, resource, { withoutFeedCost: true })?.perUnit ?? 0))
 }
 
 /** Units per second of each resource that the next stage of its chain takes, at steady state. */
@@ -81,7 +84,7 @@ export function steadyIncome(
   for (const resource of RESOURCES) {
     const surplus = (flow[resource] ?? 0) - (taken[resource] ?? 0)
     if (surplus > 0) {
-      income += surplus * SURPLUS_PRICE[surplusBuyer].get(resource)!
+      income += surplusIncome(owned, surplusBuyer, resource, surplus)
     }
   }
   return income

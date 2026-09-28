@@ -2,7 +2,7 @@
   // The developer page is a tool for the author, so its text is plain English (no i18n).
   import { SPECIES } from '../game/content/animals'
   import { BUILDINGS, CHAINS, type BuildingId } from '../game/content/buildings'
-  import { BUYERS, STEP_MARKUP, type BuyerId } from '../game/content/buyers'
+  import { BUYERS, getBuyer, STEP_MARKUP, type BuyerId } from '../game/content/buyers'
   import { PRODUCTS } from '../game/content/resources'
   import { SHELTERS } from '../game/content/shelters'
   import { POPULATION } from '../game/content/town'
@@ -18,6 +18,7 @@
     paybackCurves,
   } from '../game/balance/curves'
   import { pacingTable } from '../game/balance/milestones'
+  import type { Strategy } from '../game/balance/player'
   import { DEFAULT_SETTINGS, simulate, type SimulationResult } from '../game/balance/simulate'
   import { chainBalance, manualPass } from '../game/balance/value'
   import { translate } from '../i18n/translate'
@@ -40,6 +41,7 @@
   let minutes = $state(DEFAULT_SETTINGS.minutes)
   let clicksPerSecond = $state(DEFAULT_SETTINGS.clicksPerSecond)
   let surplusBuyer = $state<BuyerId>('biogas')
+  let strategy = $state<Strategy>('default')
   let running = $state(false)
   let result = $state.raw<SimulationResult | null>(null)
   let runMs = $state(0)
@@ -49,7 +51,7 @@
     // Let the page paint "Running…" before the synchronous simulation blocks it.
     setTimeout(() => {
       const start = performance.now()
-      result = simulate({ minutes: Math.max(1, minutes), clicksPerSecond: Math.max(0, clicksPerSecond), surplusBuyer })
+      result = simulate({ minutes: Math.max(1, minutes), clicksPerSecond: Math.max(0, clicksPerSecond), surplusBuyer, strategy })
       runMs = performance.now() - start
       running = false
     }, 20)
@@ -90,6 +92,7 @@
   const demand = demandCeiling(customerSteps)
   const demandRows = demandCeiling([10, 100, 1000, 10_000, POPULATION])
   const bulk = bulkTable()
+  const megaMeatFlood = getBuyer('megaMeat').flood!
 
   const animals = SPECIES.map((species) => ({ species, curve: animalCurve(species.id) }))
   const animalCopies = animals[0].curve.map((point) => point.owned)
@@ -125,6 +128,12 @@
         >Surplus to <select bind:value={surplusBuyer}>
           <option value="biogas">biogas</option>
           <option value="megaMeat">megaMeat</option>
+        </select></label
+      >
+      <label
+        >Strategy <select bind:value={strategy}>
+          <option value="default">default</option>
+          <option value="tempted">tempted (fields only, all raw to MegaMeat)</option>
         </select></label
       >
       <button type="submit" class="game-button" disabled={running}>{running ? 'Running…' : 'Run'}</button>
@@ -353,7 +362,13 @@
 
   <section class="panel">
     <h2>Bulk buyers</h2>
-    <p class="muted">Market value: the product's price, less {percent(STEP_MARKUP)} per processing step still to come.</p>
+    <p class="muted">
+      Market value: the product's price, less {percent(STEP_MARKUP)} per processing step still to come. All
+      prices at base product prices; MegaMeat's follow the products' upgraded prices in the game.
+      MegaMeat's are at a fresh market: its price halves at a flood of {megaMeatFlood.halfPriceUnits} units
+      (K), the flood halves every {megaMeatFlood.halfLifeSeconds} s (H), and it pays at most the rate shown
+      per second.
+    </p>
     <table>
       <thead>
         <tr>
@@ -368,7 +383,10 @@
             <td class="num">{euro(row.marketValue)}</td>
             {#each BUYERS as buyer (buyer.id)}
               {@const offer = row.buyers[buyer.id]}
-              <td class="num">{offer ? `${euro(offer.perUnit)} (${percent(offer.share)})` : '–'}</td>
+              <td class="num">
+                {offer ? `${euro(offer.perUnit)} (${percent(offer.share)})` : '–'}
+                {#if offer?.capPerSecond}· max {euro(offer.capPerSecond)}/s{/if}
+              </td>
             {/each}
           </tr>
         {/each}

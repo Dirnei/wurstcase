@@ -18,9 +18,38 @@ export interface FeedCost {
   eurosPerAwareness: number
 }
 
+/**
+ * Prices tied to the product of the resource's chain at its current price, upgrades included, so
+ * the buyer always outbids what the vegan product earns.
+ */
+export interface PeggedPricing {
+  /** Units in every lot. */
+  lotUnits: number
+  /** A raw ingredient's price per unit, as a share of its chain product's price. */
+  raw: number
+  /** An intermediate's price per unit, as a share of its chain's raw ingredient price. */
+  intermediate: number
+}
+
+/**
+ * A market that floods: at a flood of F units the price per unit is the full price × K ÷ (K + F),
+ * and the flood halves every H seconds of game time.
+ */
+export interface Flood {
+  /** K: the flood, in units, at which the price is half the full price. */
+  halfPriceUnits: number
+  /** H: seconds of game time in which the flood halves. */
+  halfLifeSeconds: number
+}
+
 export interface BuyerDef {
   id: BuyerId
-  lots: Partial<Record<ResourceId, Lot>>
+  /** Fixed lots, per resource the buyer takes. */
+  lots?: Partial<Record<ResourceId, Lot>>
+  /** Instead of fixed lots: prices that follow the chain products. Never for products themselves. */
+  pegged?: PeggedPricing
+  /** A market the player's sales flood, per resource; only for pegged prices. */
+  flood?: Flood
   /** Only for buyers whose money comes at a moral price. */
   feedCost?: FeedCost
 }
@@ -32,23 +61,18 @@ export interface BuyerDef {
 export const STEP_MARKUP = 0.25
 
 /**
- * Bulk buyers for surplus the customers cannot take. MegaMeat pays about 90% of the market value
- * for raw ingredients and intermediates (they become animal feed), which tempts; every sale costs
- * customers and awareness. The biogas plant pays about 67% for everything, finished products
- * included, and costs nothing. Each processing step adds value, so processing before selling pays.
+ * Bulk buyers for surplus the customers cannot take. MegaMeat openly outbids vegan food: a raw
+ * ingredient pays more than the finished product it would become, an intermediate half that (they
+ * become animal feed), so processing first loses money there; every sale costs customers and
+ * awareness. The biogas plant pays about 67% of the market value for everything, finished products
+ * included, and costs nothing; there, each processing step adds value.
  */
 export const BUYERS: readonly BuyerDef[] = [
   {
     id: 'megaMeat',
-    lots: {
-      soybeans: { units: 7, price: 4 },
-      wheat: { units: 5, price: 18 },
-      oats: { units: 2, price: 7 },
-      tofu: { units: 6, price: 13 },
-      seitan: { units: 1, price: 9 },
-      oatDrink: { units: 2, price: 17 },
-    },
-    feedCost: { horizonSeconds: 600, eurosPerAwareness: 10 },
+    pegged: { lotUnits: 20, raw: 1.05, intermediate: 0.5 },
+    flood: { halfPriceUnits: 500, halfLifeSeconds: 20 },
+    feedCost: { horizonSeconds: 480, eurosPerAwareness: 10 },
   },
   {
     id: 'biogas',

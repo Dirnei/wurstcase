@@ -91,11 +91,16 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
   between the business half and the rescue half of the game.
 - Stock is sold **most expensive product first**, so moving up to Leverkas is directly rewarding.
 - Customers come slowly ("vegan words spread slowly"), so Act 1 lives in **overproduction**, like
-  the real food system. Surplus goes to bulk buyers at a share of its market value (the product's
-  price, less 25% for each processing step still to come). **MegaMeat** buys it as animal feed for
-  about 90% — tempting — but every sale drives away the share of customers that it is of what they
-  spend with you in 10 minutes, plus awareness. The **biogas plant** pays about 67% and costs
-  nothing. Feeding the industry pays for a while, then the lost customers cap the whole game.
+  the real food system. Surplus goes to bulk buyers. The **biogas plant** pays about 67% of the
+  market value (the product's price, less 25% for each processing step still to come) and costs
+  nothing. **MegaMeat** openly outbids vegan food: a raw ingredient pays the chain product's price
+  +5% (one soybean beats one Tofu-Wurst), an intermediate half of that, so processing first loses
+  money there. Its market floods, though: every unit sold lowers the price of the next (half price
+  after 500 units), and the flood halves every 20 seconds, so MegaMeat pays at most about €55 per
+  second for soybeans however much the player dumps. Every sale also drives away the share of
+  customers that it is of what they spend with you in 8 minutes, plus awareness. Feeding the
+  industry wins the first minutes; a player who only feeds MegaMeat ends an hour far behind the
+  fair player, with the customers the industry took. (Changed by `megameat-outbids`.)
 
 ### 3.4 Lebenshof and rescue
 

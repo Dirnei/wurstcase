@@ -291,6 +291,31 @@ describe('encodeSave / decodeSave', () => {
     expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
   })
 
+  it('restores the MegaMeat floods exactly, also beyond 2^53', () => {
+    const state = createInitialState()
+    state.megaMeatFlood.soybeans = new Decimal('400.25')
+    state.megaMeatFlood.wheat = new Decimal('1.5e20')
+    const restored = decodedState(encodeSave(state, NOW))
+    expect(restored.megaMeatFlood.soybeans!.eq('400.25')).toBe(true)
+    expect(restored.megaMeatFlood.wheat!.eq('1.5e20')).toBe(true)
+    expect(restored.megaMeatFlood.tofu).toBeUndefined()
+  })
+
+  it('migrates a format 12 save to fresh MegaMeat markets', () => {
+    const format12 = savedState()
+    delete format12.megaMeatFlood
+    format12.customers = '321'
+    const restored = decodedState(envelope(12, format12))
+    expect(restored.megaMeatFlood).toEqual({})
+    expect(restored.customers.toNumber()).toBe(321)
+  })
+
+  it.each([['-1'], ['abc'], [5]])('rejects a MegaMeat flood of %j', (flood) => {
+    const state = savedState()
+    state.megaMeatFlood = { soybeans: flood }
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
+  })
+
   it('restores the storeroom level exactly', () => {
     const state = createInitialState()
     state.storeroom = 5

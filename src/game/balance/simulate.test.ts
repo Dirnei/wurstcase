@@ -69,6 +69,32 @@ describe('simulate', () => {
     expect(final.customers.toNumber()).toBeGreaterThan(10)
   })
 
+  describe('tempted by MegaMeat', () => {
+    const fair = simulate({ minutes: 60, clicksPerSecond: 2 })
+    const tempted = simulate({ minutes: 60, clicksPerSecond: 2, strategy: 'tempted' })
+    const earnedAt = (run: typeof fair, minutes: number) => run.samples[minutes * 60 - 1].totalEarned
+
+    it('only buys fields and never processes', () => {
+      expect(tempted.log.every((p) => p.kind === 'storeroom' || ['soybeanField', 'oatField', 'wheatField'].includes(p.id))).toBe(true)
+      expect(tempted.final.unitsSold.megaMeat.toNumber()).toBeGreaterThan(0)
+    })
+
+    it('earns more than the fair player at 5 and 10 minutes', () => {
+      expect(earnedAt(tempted, 5)).toBeGreaterThan(earnedAt(fair, 5))
+      expect(earnedAt(tempted, 10)).toBeGreaterThan(earnedAt(fair, 10))
+    })
+
+    it('ends with at most two thirds of what the fair player earned at 60 minutes', () => {
+      expect(earnedAt(fair, 60)).toBeGreaterThanOrEqual(1.5 * earnedAt(tempted, 60))
+    })
+
+    it('is deterministic', () => {
+      const again = simulate({ minutes: 60, clicksPerSecond: 2, strategy: 'tempted' })
+      expect(again.final.money.eq(tempted.final.money)).toBe(true)
+      expect(again.log).toEqual(tempted.log)
+    })
+  })
+
   it('expands the storeroom when goods fill up', () => {
     const { log, final } = simulate({ minutes: 60, clicksPerSecond: 2 })
     const expansions = log.filter((p) => p.kind === 'storeroom')

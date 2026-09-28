@@ -1,7 +1,7 @@
 import { getSpecies, SPECIES, type SpeciesId } from '../content/animals'
 import { BUILDINGS, CHAINS, type BuildingId, type ChainId } from '../content/buildings'
 import { MANUAL_ACTIONS } from '../content/manual'
-import { PRODUCTS, RESOURCES } from '../content/resources'
+import { PRODUCTS, RAW, RESOURCES } from '../content/resources'
 import { SHELTERS, type ShelterId } from '../content/shelters'
 import { getUpgrade, type UpgradeEffect, type UpgradeId } from '../content/upgrades'
 import { AKTIONEN } from '../content/aktionen'
@@ -10,7 +10,7 @@ import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
 import type { BuyerId } from '../content/buyers'
 import { aktionCost, aktionEstimate, canRun, isAktionOffered, runAktion } from '../systems/aktionen'
-import { bestBuyer, bulkSell, hasLot } from '../systems/bulkSales'
+import { bestBuyer, bulkSell, hasLot, unitPrice } from '../systems/bulkSales'
 import { canPerform, isManualUnlocked, performManual } from '../systems/manual'
 import {
   animalPrice,
@@ -55,7 +55,14 @@ type Target =
   | { kind: 'upgrade'; id: UpgradeId }
   | { kind: 'rescue'; species: SpeciesId }
 
+/**
+ * How the scripted player plays: the default balanced player, or the tempted one that only buys
+ * fields and sells every raw ingredient to MegaMeat.
+ */
+export type Strategy = 'default' | 'tempted'
+
 export interface Player {
+  strategy: Strategy
   clicksPerSecond: number
   clickCarry: number
   /** Game seconds since the surplus was last sold in bulk. */
@@ -84,12 +91,22 @@ const RESCUE_HORIZON_SECONDS = 600
 const BULK_SALE_EVERY_SECONDS = 10
 const BULK_KEEP_SECONDS = 30
 
-export function createPlayer(clicksPerSecond: number, surplusBuyer: BuyerId = 'biogas'): Player {
-  return { clicksPerSecond, clickCarry: 0, sinceBulkSale: 0, surplusBuyer, target: null }
+export function createPlayer(
+  clicksPerSecond: number,
+  surplusBuyer: BuyerId = 'biogas',
+  strategy: Strategy = 'default',
+): Player {
+  // The tempted player feeds MegaMeat whatever the surplus setting says.
+  const buyer = strategy === 'tempted' ? 'megaMeat' : surplusBuyer
+  return { strategy, clicksPerSecond, clickCarry: 0, sinceBulkSale: 0, surplusBuyer: buyer, target: null }
 }
 
 /** One decision step of the scripted player; the caller then advances the game with tick(). */
 export function playerStep(player: Player, state: GameState, seconds: number, log: (p: Purchase) => void): void {
+  if (player.strategy === 'tempted') {
+    temptedStep(player, state, seconds, log)
+    return
+  }
   click(player, state, seconds)
   if (!state.assistant && canSell(state)) {
     sell(state)
@@ -111,6 +128,48 @@ export function playerStep(player: Player, state: GameState, seconds: number, lo
   player.target ??= chooseTarget(state, player.surplusBuyer)
   if (player.target) {
     buyTowards(player, state, log)
+  }
+}
+
+const HARVESTS = MANUAL_ACTIONS.filter((action) => !action.input)
+
+/**
+ * The tempted player: harvests by hand the raw ingredient MegaMeat pays most for right now, buys
+ * the cheapest unlocked field whenever it can, expands the storeroom like the default player, and
+ * every 10 seconds sells every raw ingredient to MegaMeat. It never processes, rescues or upgrades.
+ */
+function temptedStep(player: Player, state: GameState, seconds: number, log: (p: Purchase) => void): void {
+  player.clickCarry += player.clicksPerSecond * seconds
+  while (player.clickCarry >= 1) {
+    player.clickCarry -= 1
+    const harvest = HARVESTS.filter((action) => canPerform(state, action.id)).reduce<(typeof HARVESTS)[number] | null>(
+      (best, action) =>
+        !best || (unitPrice(state, 'megaMeat', action.output.resource) ?? 0) > (unitPrice(state, 'megaMeat', best.output.resource) ?? 0)
+          ? action
+          : best,
+      null,
+    )
+    if (harvest) {
+      performManual(state, harvest.id)
+    }
+  }
+  player.sinceBulkSale += seconds
+  if (player.sinceBulkSale >= BULK_SALE_EVERY_SECONDS - 1e-9) {
+    player.sinceBulkSale = 0
+    for (const resource of RAW) {
+      bulkSell(state, 'megaMeat', resource)
+    }
+    expandWhenFull(state, log, 'megaMeat')
+  }
+  const fields = BUILDINGS.filter((building) => !building.input && isUnlocked(state, building.id))
+  const cheapest = fields.reduce<(typeof fields)[number] | null>(
+    (best, field) => (!best || buildingPrice(state, field.id).lt(buildingPrice(state, best.id)) ? field : best),
+    null,
+  )
+  if (cheapest && canBuy(state, cheapest.id)) {
+    const price = buildingPrice(state, cheapest.id).toNumber()
+    buyBuilding(state, cheapest.id)
+    log({ time: state.playTime, kind: 'building', id: cheapest.id, price })
   }
 }
 
@@ -141,7 +200,7 @@ function sellSurplus(state: GameState, surplusBuyer: BuyerId): void {
   }
   const orders = orderRate(state).toNumber()
   for (const resource of RESOURCES) {
-    const buyer = hasLot(surplusBuyer, resource) ? surplusBuyer : bestBuyer(resource, { withoutFeedCost: true })?.buyer
+    const buyer = hasLot(surplusBuyer, resource) ? surplusBuyer : bestBuyer(state, resource, { withoutFeedCost: true })?.buyer
     if (!buyer) {
       continue
     }

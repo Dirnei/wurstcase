@@ -1,12 +1,4 @@
-# bulk-sales Specification
-
-## Purpose
-
-Gives surplus production an outlet when customers cannot take more: MegaMeat Corp buys raw
-ingredients and intermediates as animal feed, and a biogas plant buys them, and unsold finished
-products too, for even less without feeding the industry. Both pay far less than customers do for vegan food.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Bulk buyers
 The game SHALL offer two bulk buyers: MegaMeat Corp (animal feed) and a biogas plant. Both SHALL
@@ -102,30 +94,6 @@ is smaller than one lot.
 - **WHEN** total money earned is €29,950 and the player sells 20 soybeans to MegaMeat for €61
 - **THEN** the oat chain unlocks at its €30,000 threshold
 
-### Requirement: Buyer flavour
-Each buyer SHALL be shown with its name and a short satirical line in the selected language.
-
-#### Scenario: Panel
-- **WHEN** the bulk buyers panel is shown
-- **THEN** MegaMeat Corp and the biogas plant each appear with their name and their line
-
-### Requirement: Units sold per buyer
-The game SHALL count, per buyer, the total units sold to it in this game, as a whole number. The
-counts SHALL be saved and restored. A save from before this change SHALL load with both counts at
-0 and keep everything else.
-
-#### Scenario: Counting
-- **WHEN** the player sells 30 soybeans and 8 wheat to MegaMeat and 20 tofu to the biogas plant
-- **THEN** MegaMeat's count is 38 and the biogas plant's count is 20
-
-#### Scenario: Reload
-- **WHEN** MegaMeat's count is 38 and the player reloads the page
-- **THEN** MegaMeat's count is still 38
-
-#### Scenario: Older save
-- **WHEN** a save from before this change with 3 tofu presses and the shop assistant is loaded
-- **THEN** the game continues with 3 tofu presses, the assistant, and both counts at 0
-
 ### Requirement: Price of feeding MegaMeat
 Every sale to MegaMeat SHALL cost the player customers and awareness. The customers lost SHALL be
 the current customers times the sale's euros divided by what the customers spend in the feed
@@ -165,23 +133,7 @@ SHALL be content data.
   sale would pay €600
 - **THEN** its button shows that it costs 125 customers and 60 awareness
 
-### Requirement: Customer income
-The game SHALL keep the customer income: the euros per second customers pay for the products they
-buy, smoothed over about 5 minutes of game time, so that it follows lasting changes but not a
-single sale. Bulk sales SHALL NOT count towards it. It SHALL start at 0 in a new game, be saved and
-restored, and a save from before this change SHALL load with it at 0.
-
-#### Scenario: Steady sales
-- **WHEN** customers pay a steady €10 per second for 30 minutes of game time
-- **THEN** the customer income is €10 per second, within 1%
-
-#### Scenario: Bulk sales do not count
-- **WHEN** the player sells to the biogas plant for €500 and customers buy nothing
-- **THEN** the customer income does not rise
-
-#### Scenario: Older save
-- **WHEN** a save from before this change is loaded
-- **THEN** the customer income is 0 and everything else is unchanged
+## ADDED Requirements
 
 ### Requirement: Flooded market
 Every unit sold to MegaMeat SHALL flood MegaMeat's market for that resource. Each resource that

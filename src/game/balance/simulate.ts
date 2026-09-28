@@ -3,7 +3,7 @@ import { UPGRADES, type UpgradeId } from '../content/upgrades'
 import { createInitialState, type GameState } from '../state'
 import { isUpgradeOffered } from '../systems/upgrades'
 import { tick } from '../tick'
-import { createPlayer, playerStep, type Purchase } from './player'
+import { createPlayer, playerStep, type Purchase, type Strategy } from './player'
 import { steadyIncome } from './steady'
 
 export interface SimulationSettings {
@@ -11,6 +11,8 @@ export interface SimulationSettings {
   clicksPerSecond: number
   /** Where the scripted player sells its surplus; MegaMeat shows what feeding the industry costs. */
   surplusBuyer?: BuyerId
+  /** The default balanced player, or the tempted one that sells every raw ingredient to MegaMeat. */
+  strategy?: Strategy
 }
 
 export interface Sample {
@@ -48,7 +50,7 @@ const INCOME_WINDOW_SECONDS = 10
 /** Plays a new game with the scripted player through the real tick(). Deterministic. */
 export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): SimulationResult {
   const state = createInitialState()
-  const player = createPlayer(settings.clicksPerSecond, settings.surplusBuyer)
+  const player = createPlayer(settings.clicksPerSecond, settings.surplusBuyer, settings.strategy)
   const log: Purchase[] = []
   const samples: Sample[] = []
   const offers: UpgradeOffer[] = []

@@ -52,6 +52,8 @@ export interface GameState {
   orderProgress: number
   /** Whether the shop assistant has been hired to sell automatically. */
   assistant: boolean
+  /** MegaMeat's flood per resource, in units; missing means a fresh market. Falls over time. */
+  megaMeatFlood: Partial<Record<ResourceId, Decimal>>
   /** Whole units sold to each bulk buyer in this game; later changes react to these. */
   unitsSold: Record<BuyerId, Decimal>
   /** Rescued animals in rescue order. Nothing ever removes one. */
@@ -97,6 +99,7 @@ export function createInitialState(): GameState {
     openOrders: new Decimal(0),
     orderProgress: 0,
     assistant: false,
+    megaMeatFlood: {},
     unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, new Decimal(0)])) as Record<BuyerId, Decimal>,
     residents: [],
     shelters: Object.fromEntries(SHELTER_IDS.map((id) => [id, 0])) as Record<ShelterId, number>,
