@@ -10,7 +10,7 @@
     orderCap,
   } from '../game/systems/sales'
   import { demandPerMinute, incomePerMinute, soldPerMinute } from '../game/systems/salesStats'
-  import { amount, euros } from './amounts'
+  import { amount, euros, liveAmount, liveEuros } from './amounts'
   import { act, readGame } from './game.svelte'
   import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
@@ -22,8 +22,9 @@
   const offered = $derived(readGame(isAssistantOffered))
   const affordable = $derived(readGame(canHireAssistant))
   const overstocked = $derived(readGame(isOverstocked))
-  const demand = $derived(amount(readGame(demandPerMinute)))
-  const income = $derived(euros(readGame(incomePerMinute)))
+  const demand = $derived(liveAmount(readGame(demandPerMinute)))
+  const income = $derived(liveEuros(readGame(incomePerMinute)))
+  const population = $derived(amount(POPULATION))
   const sold = $derived(
     readGame((state) =>
       PRODUCTS_BY_PRICE.filter((product) => isResourceShown(state, product)).map((product) => ({
@@ -37,10 +38,22 @@
 <section class="panel">
   <h2>{t('sales.title')}</h2>
   <div class="numbers">
-    <span>{t('sales.customers', { count: customers, population: amount(POPULATION) })}</span>
-    <span>{t('sales.orders', { open: openOrders, cap })}</span>
-    <span>{t('sales.demand', { amount: demand })}</span>
-    <span>{t('sales.income', { amount: income })}</span>
+    <div class="stat" title={t('sales.stat.customersHint', { population })}>
+      <span class="label">{t('sales.stat.customers')}</span>
+      <span class="value">{t('sales.stat.customersValue', { count: customers, population })}</span>
+    </div>
+    <div class="stat">
+      <span class="label">{t('sales.stat.orders')}</span>
+      <span class="value">{t('sales.stat.ordersValue', { open: openOrders, cap })}</span>
+    </div>
+    <div class="stat">
+      <span class="label">{t('sales.stat.demand')}</span>
+      <span class="value">{t('sales.perMinute', { amount: demand })}</span>
+    </div>
+    <div class="stat">
+      <span class="label">{t('sales.stat.income')}</span>
+      <span class="value">{t('sales.perMinute', { amount: income })}</span>
+    </div>
   </div>
 
   <div class="sold">
@@ -48,9 +61,10 @@
     <dl>
       {#each sold as item (item.product)}
         <dt class:idle={item.perMinute === 0}>
-          <ArtSlot kind="resource" id={item.product} size="sm" />{t(`resource.${item.product}`)}
+          <ArtSlot kind="resource" id={item.product} size="sm" />
+          <span class="name">{t(`resource.${item.product}`)}</span>
         </dt>
-        <dd class:idle={item.perMinute === 0}>{t('sales.soldPerMinute', { amount: amount(item.perMinute) })}</dd>
+        <dd class:idle={item.perMinute === 0}>{t('sales.soldPerMinute', { amount: liveAmount(item.perMinute) })}</dd>
       {/each}
     </dl>
   </div>
@@ -79,11 +93,38 @@
 </section>
 
 <style>
+  /* The grid owns every width, so a changing value only moves its own digits. */
   .numbers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .stat {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px 24px;
+    flex-direction: column;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1.4px solid var(--ink);
+    border-radius: var(--radius-sm);
+    background: var(--paper-2);
+  }
+
+  .label {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-align: right;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 
   .actions {
@@ -103,10 +144,12 @@
     font-weight: 600;
   }
 
+  /* Icon and name share the first track; the value track fits the fixed-decimal form. */
   dl {
     display: grid;
-    grid-template-columns: max-content max-content;
-    gap: 0 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(9ch, max-content);
+    gap: 2px 16px;
+    max-width: 420px;
     margin: 0;
     font-size: 0.9rem;
   }
@@ -115,12 +158,21 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+  }
+
+  .name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   dd {
     margin: 0;
     text-align: right;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 
   .idle {

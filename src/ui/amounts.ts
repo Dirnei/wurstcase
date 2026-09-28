@@ -10,3 +10,12 @@ export function amount(value: Decimal | number): string {
 export function euros(value: Decimal | number): string {
   return t('money.amount', { amount: amount(value) })
 }
+
+/** A figure that changes while the player watches, with fixed decimals so its width stays put. */
+export function liveAmount(value: Decimal | number): string {
+  return formatNumber(value, currentLang(), { fixed: true })
+}
+
+export function liveEuros(value: Decimal | number): string {
+  return t('money.amount', { amount: liveAmount(value) })
+}

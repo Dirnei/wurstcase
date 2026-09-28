@@ -3,7 +3,7 @@
   import { RESOURCES, type ResourceId } from '../game/content/resources'
   import { bulkSaleCost, bulkSaleUnits, bulkSaleValue, bulkSell, canBulkSell } from '../game/systems/bulkSales'
   import { isResourceShown } from '../game/systems/buildings'
-  import { amount, euros } from './amounts'
+  import { amount, euros, liveAmount, liveEuros } from './amounts'
   import { act, readGame } from './game.svelte'
   import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
@@ -26,6 +26,9 @@
     ),
   )
 
+  // The cards share the rows of one grid: a header row, then one row per offer of the longest list.
+  const offerRows = $derived(Math.max(1, ...buyers.map((buyer) => buyer.offers.length)))
+
   function sell(buyer: BuyerId, resource: ResourceId) {
     act((state) => bulkSell(state, buyer, resource))
   }
@@ -36,7 +39,7 @@
   <p class="muted">{t('bulk.hint')}</p>
   <div class="buyers">
     {#each buyers as buyer (buyer.id)}
-      <div class="buyer card">
+      <div class="buyer card" style:grid-row="span {offerRows + 1}">
         <div class="who">
           <ArtSlot kind="buyer" id={buyer.id} size="lg" />
           <div>
@@ -44,23 +47,23 @@
             <p class="line">{t(`bulk.${buyer.id}.line`)}</p>
           </div>
         </div>
-        <ul>
+        <ul style:grid-row="span {offerRows}">
           {#each buyer.offers as offer (offer.resource)}
             <li>
               <button
                 type="button"
-                class="game-button"
+                class="game-button offer"
                 disabled={!offer.sellable}
                 onclick={() => sell(buyer.id, offer.resource)}
               >
                 <ArtSlot kind="resource" id={offer.resource} size="sm" />
-                {offer.sellable
-                  ? t('bulk.sell', {
-                      units: amount(offer.units),
-                      resource: t(`resource.${offer.resource}`),
-                      price: euros(offer.value),
-                    })
-                  : t(`resource.${offer.resource}`)}
+                <span class="resource">{t(`resource.${offer.resource}`)}</span>
+                <!-- A dash keeps the button's layout while nothing can be sold. -->
+                <span class="value">
+                  {offer.sellable
+                    ? t('bulk.sellValue', { units: liveAmount(offer.units), price: liveEuros(offer.value) })
+                    : '–'}
+                </span>
               </button>
               <small>
                 {t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}
@@ -86,6 +89,7 @@
     font-size: 0.875rem;
   }
 
+  /* Cards side by side share these rows through subgrid, so the same resource lines up. */
   .buyers {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -93,9 +97,10 @@
   }
 
   .buyer {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-rows: subgrid;
+    row-gap: 6px;
+    align-content: start;
     padding: 10px;
   }
 
@@ -118,18 +123,19 @@
   }
 
   ul {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-rows: subgrid;
+    align-content: start;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
+  /* Each offer is a full-width row, so a changing price only moves digits in its value cell. */
   li {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 2px;
   }
 
   small {
@@ -141,10 +147,25 @@
     font-weight: 600;
   }
 
-  button {
-    display: inline-flex;
+  .offer {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 6px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .resource {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .value {
+    text-align: right;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 </style>

@@ -12,16 +12,21 @@ const SCIENTIFIC_FROM_EXPONENT = 15
 // 999.999999999999 still stays below 1000.
 const RELATIVE_EPSILON = 4 * Number.EPSILON
 
-/** Formats an amount for display; always rounds toward zero so the player never sees more than they have. */
-export function formatNumber(value: Decimal | number, lang: Lang): string {
-  const decimal = new Decimal(value)
-  const body = formatAbs(decimal.abs(), lang)
-  return decimal.sign < 0 && body !== '0' ? `-${body}` : body
+export interface FormatOptions {
+  /** Keeps trailing zeros, so a live figure's width depends only on its magnitude: 37.0, 1.20K. */
+  fixed?: boolean
 }
 
-function formatAbs(abs: Decimal, lang: Lang): string {
+/** Formats an amount for display; always rounds toward zero so the player never sees more than they have. */
+export function formatNumber(value: Decimal | number, lang: Lang, { fixed = false }: FormatOptions = {}): string {
+  const decimal = new Decimal(value)
+  const body = formatAbs(decimal.abs(), lang, fixed)
+  return decimal.sign < 0 && /[1-9]/.test(body) ? `-${body}` : body
+}
+
+function formatAbs(abs: Decimal, lang: Lang, fixed: boolean): string {
   if (abs.lt(1000)) {
-    return withSeparator(truncate(abs.toNumber(), 1), lang)
+    return withSeparator(truncate(abs.toNumber(), 1, fixed), lang)
   }
   if (abs.layer >= 2) {
     return abs.toString()
@@ -30,13 +35,13 @@ function formatAbs(abs: Decimal, lang: Lang): string {
   const { mantissa, exponent } = normalize(abs)
 
   if (exponent >= SCIENTIFIC_FROM_EXPONENT) {
-    return `${withSeparator(truncate(mantissa, 2), lang)}e${exponent}`
+    return `${withSeparator(truncate(mantissa, 2, fixed), lang)}e${exponent}`
   }
 
   const group = Math.floor(exponent / 3)
   const digitsBeforePoint = exponent - group * 3 + 1
   const scaled = mantissa * 10 ** (digitsBeforePoint - 1)
-  return withSeparator(truncate(scaled, 3 - digitsBeforePoint), lang) + SUFFIXES[lang][group]
+  return withSeparator(truncate(scaled, 3 - digitsBeforePoint, fixed), lang) + SUFFIXES[lang][group]
 }
 
 // break_eternity can report e.g. 10^15 - 1 as mantissa 0.999… with exponent 15.
@@ -54,10 +59,13 @@ function normalize(abs: Decimal): { mantissa: number; exponent: number } {
   return { mantissa, exponent }
 }
 
-function truncate(value: number, decimals: number): string {
+function truncate(value: number, decimals: number, fixed: boolean): string {
   const factor = 10 ** decimals
   const truncated = Math.floor(value * factor * (1 + RELATIVE_EPSILON)) / factor
   const text = truncated.toFixed(decimals)
+  if (fixed) {
+    return text
+  }
   return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text
 }
 

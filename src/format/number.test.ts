@@ -76,3 +76,24 @@ describe('formatNumber', () => {
     expect(formatNumber(new Decimal(1234), 'en')).toBe(formatNumber(1234, 'en'))
   })
 })
+
+describe('formatNumber in the fixed-decimal form', () => {
+  it.each([
+    [37, 'en', '37.0'],
+    [37.59, 'en', '37.5'],
+    [0, 'de', '0,0'],
+    [1_200, 'en', '1.20K'],
+    [1_000, 'en', '1.00K'],
+    [12_000_000, 'de', '12,0 Mio.'],
+    [250_000, 'en', '250K'],
+    [1.5e15, 'en', '1.50e15'],
+    [-2.5, 'en', '-2.5'],
+    [-0.05, 'en', '0.0'],
+  ] as const)('formats %s in %s as %s', (value, lang, expected) => {
+    expect(formatNumber(value, lang, { fixed: true })).toBe(expected)
+  })
+
+  it('leaves the regular form unchanged', () => {
+    expect(formatNumber(37, 'en')).toBe('37')
+  })
+})
