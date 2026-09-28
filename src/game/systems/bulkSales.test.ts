@@ -1,5 +1,6 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
+import { BULK_SHARES } from '../content/buyers'
 import { createInitialState, type GameState } from '../state'
 import { tick } from '../tick'
 import {
@@ -272,5 +273,58 @@ describe('flooded market', () => {
     bulkSell(state, 'biogas', 'soybeans')
     expect(lotFor(state, 'biogas', 'soybeans')).toEqual({ units: 7, price: 3 })
     expect(state.megaMeatFlood.soybeans).toBeUndefined()
+  })
+})
+
+describe('selling a share of the stock', () => {
+  const soy = (units: number) => stateWith((s) => (s.stock.soybeans = new Decimal(units)))
+
+  it('sells 50% of 130 soybeans as 60 for €178', () => {
+    const state = soy(130)
+    expect(bulkSell(state, 'megaMeat', 'soybeans', 0.5)).toBe(true)
+    expect(state.stock.soybeans.toNumber()).toBe(70)
+    expect(state.money.toNumber()).toBe(178)
+  })
+
+  it('sells 10% of 500 soybeans as 40', () => {
+    const state = soy(500)
+    bulkSell(state, 'megaMeat', 'soybeans', 0.1)
+    expect(state.stock.soybeans.toNumber()).toBe(460)
+  })
+
+  it('leaves a share smaller than a lot unavailable', () => {
+    const state = soy(150)
+    expect(canBulkSell(state, 'megaMeat', 'soybeans', 0.1)).toBe(false)
+    expect(bulkSaleUnits(state, 'megaMeat', 'soybeans', 0.5).toNumber()).toBe(60)
+    expect(bulkSaleUnits(state, 'megaMeat', 'soybeans', 1).toNumber()).toBe(140)
+    for (const share of BULK_SHARES) {
+      expect(canBulkSell(soy(19), 'megaMeat', 'soybeans', share), `${share}`).toBe(false)
+    }
+  })
+
+  it('shows each share its own sale along the flooded market', () => {
+    const state = soy(500)
+    expect(BULK_SHARES.map((share) => bulkSaleValue(state, 'megaMeat', 'soybeans', share).toNumber())).toEqual([
+      121, 617, 1_091,
+    ])
+    expect(BULK_SHARES.map((share) => bulkSaleUnits(state, 'megaMeat', 'soybeans', share).toNumber())).toEqual([
+      40, 240, 500,
+    ])
+  })
+
+  it('costs each share its own customers and awareness', () => {
+    const state = stateWith((s) => {
+      s.customers = new Decimal(1_000)
+      s.customerIncome = new Decimal(10)
+      s.stock.soybeans = new Decimal(500)
+    })
+    expect(bulkSaleCost(state, 'megaMeat', 'soybeans', 0.1)).toEqual({ customers: 26, awareness: 13 })
+    expect(bulkSaleCost(state, 'megaMeat', 'soybeans', 1)).toEqual({ customers: 228, awareness: 110 })
+  })
+
+  it('sells everything when no share is given', () => {
+    const state = soy(47)
+    expect(bulkSaleUnits(state, 'megaMeat', 'soybeans').toNumber()).toBe(40)
+    expect(bulkSaleUnits(state, 'megaMeat', 'soybeans', 1).toNumber()).toBe(40)
   })
 })

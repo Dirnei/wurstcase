@@ -90,6 +90,9 @@ export const BUYERS: readonly BuyerDef[] = [
   },
 ]
 
+/** The shares of a resource's stock a bulk sale can take: each offer has one button per share. */
+export const BULK_SHARES = [0.1, 0.5, 1] as const
+
 export const BUYER_IDS: readonly BuyerId[] = BUYERS.map((buyer) => buyer.id)
 
 const BY_ID = new Map(BUYERS.map((buyer) => [buyer.id, buyer]))

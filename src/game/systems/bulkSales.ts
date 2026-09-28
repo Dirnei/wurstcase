@@ -133,24 +133,28 @@ export function hasLot(buyer: BuyerId, resource: ResourceId): boolean {
   return pegged ? (STAGES.get(resource)?.stage ?? 2) <= 1 : lots?.[resource] !== undefined
 }
 
-function wholeLots(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId): Decimal {
+/**
+ * Whole lots in the given share of the stock: the share is rounded down to whole units first, then
+ * to whole lots, so a share never sells more than it says.
+ */
+function wholeLots(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId, share = 1): Decimal {
   const lot = lotFor(state, buyer, resource)
-  return lot ? state.stock[resource].div(lot.units).floor() : new Decimal(0)
+  return lot ? state.stock[resource].mul(share).floor().div(lot.units).floor() : new Decimal(0)
 }
 
 /** Units a sale would take right now: whole lots only. */
-export function bulkSaleUnits(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId): Decimal {
+export function bulkSaleUnits(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId, share = 1): Decimal {
   const lot = lotFor(state, buyer, resource)
-  return lot ? wholeLots(state, buyer, resource).mul(lot.units) : new Decimal(0)
+  return lot ? wholeLots(state, buyer, resource, share).mul(lot.units) : new Decimal(0)
 }
 
 /** Euros a sale would pay right now; for MegaMeat along its flooded market. */
-export function bulkSaleValue(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId): Decimal {
+export function bulkSaleValue(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId, share = 1): Decimal {
   if (getBuyer(buyer).flood) {
-    return floodedValue(state, resource, bulkSaleUnits(state, buyer, resource))
+    return floodedValue(state, resource, bulkSaleUnits(state, buyer, resource, share))
   }
   const lot = lotFor(state, buyer, resource)
-  return lot ? wholeLots(state, buyer, resource).mul(lot.price) : new Decimal(0)
+  return lot ? wholeLots(state, buyer, resource, share).mul(lot.price) : new Decimal(0)
 }
 
 /** Customers and awareness points a sale would cost right now; both 0 for a buyer without a feed cost. */
@@ -158,9 +162,10 @@ export function bulkSaleCost(
   state: Readonly<GameState>,
   buyer: BuyerId,
   resource: ResourceId,
+  share = 1,
 ): { customers: number; awareness: number } {
   const cost = getBuyer(buyer).feedCost
-  const euros = bulkSaleValue(state, buyer, resource).toNumber()
+  const euros = bulkSaleValue(state, buyer, resource, share).toNumber()
   if (!cost || euros === 0) {
     return { customers: 0, awareness: 0 }
   }
@@ -174,17 +179,18 @@ export function bulkSaleCost(
   }
 }
 
-export function canBulkSell(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId): boolean {
-  return wholeLots(state, buyer, resource).gt(0)
+export function canBulkSell(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId, share = 1): boolean {
+  return wholeLots(state, buyer, resource, share).gt(0)
 }
 
-export function bulkSell(state: GameState, buyer: BuyerId, resource: ResourceId): boolean {
-  if (!canBulkSell(state, buyer, resource)) {
+/** Sells the whole lots in the given share of the stock (all of it by default). */
+export function bulkSell(state: GameState, buyer: BuyerId, resource: ResourceId, share = 1): boolean {
+  if (!canBulkSell(state, buyer, resource, share)) {
     return false
   }
-  const units = bulkSaleUnits(state, buyer, resource)
-  const earned = bulkSaleValue(state, buyer, resource)
-  const cost = bulkSaleCost(state, buyer, resource)
+  const units = bulkSaleUnits(state, buyer, resource, share)
+  const earned = bulkSaleValue(state, buyer, resource, share)
+  const cost = bulkSaleCost(state, buyer, resource, share)
   state.stock[resource] = state.stock[resource].sub(units)
   state.money = state.money.add(earned)
   state.totalEarned = state.totalEarned.add(earned)

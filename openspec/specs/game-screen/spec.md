@@ -279,13 +279,18 @@ resize or re-wrap any other element on the tab:
 - The sold amounts SHALL be shown as a table with the product (icon and name) in one column and
   the amount per minute right-aligned in another. The table SHALL keep its column widths while
   the amounts change.
-- Each bulk offer SHALL be a sell button that fills the width of its buyer card. The resource
-  SHALL be on the left, and the units and price right-aligned on the right. The lot size and any
-  cost of the sale SHALL be shown on a separate line below the button.
+- Each bulk offer SHALL be a row that fills the width of its buyer card: the resource (icon and
+  name) and the lot size on one line, for MegaMeat the market level line that the flooded market
+  requires, and below them three sell buttons (10%, 50%, 100%) in three
+  equal columns. Each button SHALL show its share, and the units and price of its sale in digits
+  of equal width; for MegaMeat it SHALL also show its cost in customers and awareness, on a line
+  that is reserved whether or not the sale costs anything. An unavailable button SHALL keep its
+  size and show a dash instead of the units and price.
 - The buyer cards SHALL share one row grid: side by side, their headers take the same height and
   the same resource sits at the same height in every card that buys it.
-- Demand, income, the sold amounts, and the units and price on the bulk sell buttons SHALL use
-  the fixed-decimal form of the number format.
+- Demand, income and the sold amounts SHALL use the fixed-decimal form of the number format. The
+  units on the bulk sell buttons SHALL use the whole-count form, and their prices the
+  fixed-decimal form.
 
 #### Scenario: Sales content
 - **WHEN** the player opens the Verkauf tab while the bulk buyers are unlocked
@@ -300,8 +305,13 @@ resize or re-wrap any other element on the tab:
 - **THEN** the product names and the other sold amounts stay where they are
 
 #### Scenario: Bulk price grows
-- **WHEN** the soybean stock grows so the MegaMeat button's price changes from €9.0 to €14.0
-- **THEN** the button keeps its size and the lot line below it does not move
+- **WHEN** the soybean stock grows so the MegaMeat 100% button's price changes from €61.0 to €121
+- **THEN** all three buttons keep their size and the lot line above them does not move
+
+#### Scenario: Share becomes available
+- **WHEN** the soybean stock grows from 190 to 200, so the 10% button at MegaMeat turns from a dash
+  into 20 soybeans for €61.0
+- **THEN** no button, line or card on the Verkauf tab moves or changes size
 
 #### Scenario: Buyers line up
 - **WHEN** both buyer cards sit side by side and MegaMeat's lot line wraps onto two lines
@@ -310,7 +320,8 @@ resize or re-wrap any other element on the tab:
 
 #### Scenario: Phone width
 - **WHEN** the viewport is 375 px wide and the player opens the Verkauf tab
-- **THEN** the figure grid, the sold table and the bulk buttons fit without horizontal scrolling
+- **THEN** the figure grid, the sold table and all three bulk buttons of each offer fit without
+  horizontal scrolling, each at least 44 px tall
 
 ### Requirement: Settings tab
 The Einstellungen tab SHALL be always unlocked and SHALL show the DE/EN toggle, the theme choice,

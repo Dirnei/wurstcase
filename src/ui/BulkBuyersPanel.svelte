@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BUYERS, type BuyerId } from '../game/content/buyers'
+  import { BULK_SHARES, BUYERS, type BuyerId } from '../game/content/buyers'
   import { RESOURCES, type ResourceId } from '../game/content/resources'
   import {
     bulkSaleCost,
@@ -14,7 +14,7 @@
   } from '../game/systems/bulkSales'
   import { getBuyer } from '../game/content/buyers'
   import { isResourceShown } from '../game/systems/buildings'
-  import { amount, euros, liveAmount, liveEuros } from './amounts'
+  import { amount, euros, liveCount, liveEuros } from './amounts'
   import { act, readGame } from './game.svelte'
   import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
@@ -23,15 +23,20 @@
     readGame((state) =>
       BUYERS.map((buyer) => ({
         id: buyer.id,
+        feeds: buyer.feedCost !== undefined,
         offers: RESOURCES.filter(
           (resource) => hasLot(buyer.id, resource) && isResourceShown(state, resource),
         ).map((resource) => ({
           resource,
           lot: lotFor(state, buyer.id, resource)!,
-          sellable: canBulkSell(state, buyer.id, resource),
-          units: bulkSaleUnits(state, buyer.id, resource),
-          value: bulkSaleValue(state, buyer.id, resource),
-          cost: bulkSaleCost(state, buyer.id, resource),
+          // One sale per share, each priced as if it were the only one (MegaMeat: along its flood).
+          sales: BULK_SHARES.map((share) => ({
+            share,
+            sellable: canBulkSell(state, buyer.id, resource, share),
+            units: bulkSaleUnits(state, buyer.id, resource, share),
+            value: bulkSaleValue(state, buyer.id, resource, share),
+            cost: bulkSaleCost(state, buyer.id, resource, share),
+          })),
           // Only a flooded market (MegaMeat) has a level; its lot price would only show the full price.
           market: getBuyer(buyer.id).flood
             ? { level: marketLevel(state, resource), recover: timeToRecover(state, resource, RECOVERED) }
@@ -53,9 +58,11 @@
     return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
   }
 
-  function sell(buyer: BuyerId, resource: ResourceId) {
-    act((state) => bulkSell(state, buyer, resource))
+  function sell(buyer: BuyerId, resource: ResourceId, share: number) {
+    act((state) => bulkSell(state, buyer, resource, share))
   }
+
+  const percent = (share: number) => Math.round(share * 100)
 </script>
 
 <section class="panel">
@@ -74,21 +81,15 @@
         <ul style:grid-row="span {offerRows}">
           {#each buyer.offers as offer (offer.resource)}
             <li>
-              <button
-                type="button"
-                class="game-button offer"
-                disabled={!offer.sellable}
-                onclick={() => sell(buyer.id, offer.resource)}
-              >
+              <div class="head">
                 <ArtSlot kind="resource" id={offer.resource} size="sm" />
                 <span class="resource">{t(`resource.${offer.resource}`)}</span>
-                <!-- A dash keeps the button's layout while nothing can be sold. -->
-                <span class="value">
-                  {offer.sellable
-                    ? t('bulk.sellValue', { units: liveAmount(offer.units), price: liveEuros(offer.value) })
-                    : '–'}
-                </span>
-              </button>
+                <small class="lot">
+                  {offer.market
+                    ? t('bulk.lotSize', { units: amount(offer.lot.units) })
+                    : t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}
+                </small>
+              </div>
               {#if offer.market}
                 <!-- Fixed tracks, so the recovering market only changes digits and the meter's fill. -->
                 <small class="market">
@@ -98,21 +99,40 @@
                     {offer.market.recover > 0 ? t('bulk.recover', { percent: Math.round(RECOVERED * 100), time: clock(offer.market.recover) }) : ''}
                   </span>
                 </small>
-                <small>
-                  {#if offer.cost.customers > 0 || offer.cost.awareness > 0}
-                    <span class="cost">{t('bulk.cost', { customers: offer.cost.customers, awareness: offer.cost.awareness })}</span>
-                  {:else}
-                    {t('bulk.lotSize', { units: amount(offer.lot.units) })}
-                  {/if}
-                </small>
-              {:else}
-                <small>
-                  {t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}
-                  {#if offer.cost.customers > 0}
-                    · <span class="cost">{t('bulk.cost', { customers: offer.cost.customers, awareness: offer.cost.awareness })}</span>
-                  {/if}
-                </small>
               {/if}
+              <div class="shares">
+                {#each offer.sales as sale (sale.share)}
+                  <button
+                    type="button"
+                    class="game-button share"
+                    disabled={!sale.sellable}
+                    aria-label={sale.sellable
+                      ? t('bulk.sellShare', {
+                          percent: percent(sale.share),
+                          resource: t(`resource.${offer.resource}`),
+                          buyer: t(`bulk.${buyer.id}.name`),
+                          units: amount(sale.units),
+                          price: euros(sale.value),
+                        }) + (buyer.feeds ? `, ${t('bulk.cost', { customers: sale.cost.customers, awareness: sale.cost.awareness })}` : '')
+                      : t('bulk.sellShareNone', { percent: percent(sale.share), resource: t(`resource.${offer.resource}`) })}
+                    onclick={() => sell(buyer.id, offer.resource, sale.share)}
+                  >
+                    <span class="pct">{t('bulk.share', { percent: percent(sale.share) })}</span>
+                    <!-- Units and price on lines of their own, so a growing value never re-wraps; a dash keeps the size. -->
+                    <span class="units">{sale.sellable ? `${liveCount(sale.units)} →` : '–'}</span>
+                    <span class="price">{sale.sellable ? liveEuros(sale.value) : ''}</span>
+                    {#if buyer.feeds}
+                      <!-- Reserved whether or not the sale costs anything. -->
+                      <span class="cost">
+                        {#if sale.sellable && (sale.cost.customers > 0 || sale.cost.awareness > 0)}
+                          <span class="pair">−{amount(sale.cost.customers)}<ArtSlot kind="stat" id="customers" size="sm" /></span>
+                          <span class="pair">−{amount(sale.cost.awareness)}<ArtSlot kind="stat" id="awareness" size="sm" /></span>
+                        {/if}
+                      </span>
+                    {/if}
+                  </button>
+                {/each}
+              </div>
             </li>
           {/each}
         </ul>
@@ -210,18 +230,12 @@
     text-align: right;
   }
 
-  .cost {
-    color: var(--danger);
-    font-weight: 600;
-  }
 
-  .offer {
+  .head {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 6px;
-    width: 100%;
-    text-align: left;
   }
 
   .resource {
@@ -230,10 +244,66 @@
     text-overflow: ellipsis;
   }
 
-  .value {
-    text-align: right;
+  .lot {
     white-space: nowrap;
+  }
+
+  /* Three equal columns, whatever the values in them. */
+  .shares {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .share {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    padding: 4px 4px;
+    line-height: 1.25;
     font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum';
+  }
+
+  .pct {
+    font-weight: 800;
+  }
+
+  .units,
+  .price {
+    min-height: 1.25em;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Pairs of amount and icon wrap as a whole; phones reserve a second line, so the button never grows. */
+  .cost {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 0 4px;
+    min-height: 18px;
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    white-space: nowrap;
+  }
+
+  .pair :global(.slot) {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media (max-width: 767px) {
+    .cost {
+      min-height: 36px;
+    }
   }
 </style>
