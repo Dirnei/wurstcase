@@ -48,13 +48,13 @@ describe('chainBalance', () => {
 
   it('finds the smallest set that runs without stalls or surplus', () => {
     expect(counts('soy')).toEqual([3, 2, 2])
-    expect(counts('wheat')).toEqual([1, 1, 1])
-    expect(counts('oat')).toEqual([1, 1, 2])
+    expect(counts('wheat')).toEqual([4, 3, 2])
+    expect(counts('oat')).toEqual([4, 3, 2])
   })
 
   it('reports the output and income of that set', () => {
     expect(chainBalance('soy')).toMatchObject({ product: 'tofuWurst', output: 1, income: 3 })
-    expect(chainBalance('wheat')).toMatchObject({ product: 'leverkas', output: 0.25, income: 6.25 })
+    expect(chainBalance('wheat')).toMatchObject({ product: 'leverkas', output: 0.5, income: 12.5 })
   })
 })
 

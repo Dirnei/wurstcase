@@ -1,14 +1,27 @@
 import Decimal from 'break_eternity.js'
-import { BUILDINGS, getBuilding, type BuildingId } from '../content/buildings'
+import { BUILDINGS, getBuilding, SET_GROWTH, setShare, type BuildingId } from '../content/buildings'
 import type { ResourceId } from '../content/resources'
 import type { GameState } from '../state'
 
-/** Rounded up to whole euros, so money stays a whole number. */
+/**
+ * Base price × the chain's set growth ^ (copies owned ÷ the building's share of a balanced set),
+ * rounded up to whole euros, so money stays a whole number. Owning one whole set of a chain
+ * multiplies every price in it by the set growth once.
+ */
 export function buildingPrice(state: Readonly<GameState>, id: BuildingId): Decimal {
-  const building = getBuilding(id)
-  return new Decimal(building.basePrice)
-    .mul(Decimal.pow(building.priceGrowth, state.buildings[id]))
-    .ceil()
+  return grownPrice(id, state.buildings[id])
+}
+
+/** Float noise can put a whole result a hair above it (318.00000000000006); ceil must not add a euro for that. */
+const PRICE_EPSILON = 1e-12
+
+export function grownPrice(id: BuildingId, owned: number): Decimal {
+  const { basePrice, chain } = getBuilding(id)
+  const sets = owned / setShare(id)
+  const price = basePrice * SET_GROWTH[chain] ** sets
+  return price < 1e12
+    ? new Decimal(Math.ceil(price * (1 - PRICE_EPSILON)))
+    : new Decimal(basePrice).mul(Decimal.pow(SET_GROWTH[chain], sets)).ceil()
 }
 
 /** Unlocks follow lifetime earnings, so spending money never locks a building again. */

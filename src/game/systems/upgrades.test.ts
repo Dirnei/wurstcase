@@ -88,7 +88,7 @@ describe('chain milestone upgrades', () => {
 
   it('offers the first soy chain milestone when every soy building reaches 25', () => {
     expect(chainOffers(soyChain(25, 25, 25))).toEqual(['soyChain25'])
-    expect(UPGRADES.find((u) => u.id === 'soyChain25')!.price).toBe(14_000)
+    expect(UPGRADES.find((u) => u.id === 'soyChain25')!.price).toBe(13_000)
   })
 
   it('offers nothing while one building of the chain is short', () => {

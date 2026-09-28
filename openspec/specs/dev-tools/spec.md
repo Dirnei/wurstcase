@@ -55,7 +55,7 @@ into its chain's product and sold to a customer. The chart SHALL offer a logarit
 
 #### Scenario: Soybean field
 - **WHEN** the soybean field is chosen
-- **THEN** the price of the first copy is €10, of the second €12, and one field earns €1 per
+- **THEN** the price of the first copy is €10, of the second €11, and one field earns €1 per
   second
 
 #### Scenario: Milestone jump
@@ -85,6 +85,11 @@ takes.
 #### Scenario: Soy chain
 - **WHEN** the chain balance table is shown with the current content
 - **THEN** the soy chain reads 3 soybean fields : 2 tofu presses : 2 Tofu-Wurst kitchens
+
+#### Scenario: Oat and wheat chains
+- **WHEN** the chain balance table is shown with the starting values
+- **THEN** the oat chain reads 4 oat fields : 3 oat mills : 2 café bars and the wheat chain 4 wheat
+  fields : 3 seitan kitchens : 2 Leverkas ovens
 
 ### Requirement: Demand ceiling chart
 The page SHALL plot, against the number of customers from 10 up to the town size on a logarithmic
@@ -195,7 +200,7 @@ early, in the window, late, or not reached. The milestones are:
 | First tofu press | 2–10 min |
 | First oat field | 10–20 min |
 | First wheat field | 20–35 min |
-| First Leverkas oven | 20–35 min |
+| First Leverkas oven | 20–55 min |
 
 Milestones and windows SHALL be data, so later changes can add their own, such as the first
 chicken.
@@ -203,6 +208,10 @@ chicken.
 #### Scenario: Milestone in its window
 - **WHEN** the simulated player buys the first soybean field at 4:30
 - **THEN** that row shows 4:30 and is marked in the window
+
+#### Scenario: Leverkas at 38 minutes
+- **WHEN** the simulated player buys the first Leverkas oven at 38:00
+- **THEN** that row is marked in the window
 
 #### Scenario: Not reached
 - **WHEN** the simulation ends before any Leverkas oven is bought
@@ -229,12 +238,12 @@ set of fields, processors and kitchens that runs without stalls or surplus (as i
 balance table). The k-th set's price SHALL be the sum of the prices of its buildings when k − 1
 sets are already owned, bought cheapest first, plus the price of every chain milestone upgrade the
 set brings on offer, and its income SHALL be the income it adds, including that upgrade's
-doubling. The header of the page SHALL list the price growth of every building, shelter and
-species.
+doubling. The header of the page SHALL list each chain's set growth and the resulting price
+growth per copy of every building, and the price growth of every shelter and species.
 
 #### Scenario: First soy set
 - **WHEN** the chart is shown with the current content
-- **THEN** the first soy set (3 soybean fields, 2 tofu presses, 2 Tofu-Wurst kitchens) costs €175,
+- **THEN** the first soy set (3 soybean fields, 2 tofu presses, 2 Tofu-Wurst kitchens) costs €173,
   earns €3 per second and pays back in about 58 seconds
 
 #### Scenario: Later chains cross earlier ones

@@ -149,12 +149,12 @@ describe('price of feeding MegaMeat', () => {
     })
   }
 
-  it('costs the share of customers that the sale is of 8 minutes of their spending', () => {
-    // 200 soybeans at a fresh market: €529, about 11% of eight minutes at €10/s.
+  it('costs the share of customers that the sale is of 1 minute of their spending', () => {
+    // 200 soybeans at a fresh market: €529, about 88% of one minute at €10/s.
     const state = feeding(1_000, 10, 100, (s) => (s.stock.soybeans = new Decimal(200)))
     bulkSell(state, 'megaMeat', 'soybeans')
     expect(state.money.toNumber()).toBe(529)
-    expect(state.customers.toNumber()).toBe(889)
+    expect(state.customers.toNumber()).toBe(118)
     expect(state.awareness.toNumber()).toBe(47)
   })
 
@@ -162,7 +162,7 @@ describe('price of feeding MegaMeat', () => {
     const state = feeding(1_000, 10, 100, (s) => (s.stock.soybeans = new Decimal(20)))
     bulkSell(state, 'megaMeat', 'soybeans')
     expect(state.money.toNumber()).toBe(61)
-    expect(state.customers.toNumber()).toBe(987)
+    expect(state.customers.toNumber()).toBe(898)
     expect(state.awareness.toNumber()).toBe(93)
   })
 
@@ -192,13 +192,14 @@ describe('price of feeding MegaMeat', () => {
       s.stock.soybeans = new Decimal(200)
       s.stock.tofuWurst = new Decimal(30)
     })
-    expect(bulkSaleCost(state, 'megaMeat', 'soybeans')).toEqual({ customers: 111, awareness: 53 })
+    expect(bulkSaleCost(state, 'megaMeat', 'soybeans')).toEqual({ customers: 882, awareness: 53 })
     expect(bulkSaleCost(state, 'biogas', 'tofuWurst')).toEqual({ customers: 0, awareness: 0 })
     expect(state.customers.toNumber()).toBe(1_000)
   })
 })
 
 describe('flooded market', () => {
+  // Floods are in euros of full price: €1,575 is 500 soybeans at €3.15.
   const flooded = (flood: number) => stateWith((s) => (s.megaMeatFlood.soybeans = new Decimal(flood)))
 
   it('names the full prices per unit at base product prices and with mustard', () => {
@@ -216,16 +217,16 @@ describe('flooded market', () => {
     expect(fullPrice(base, 'tofuWurst')).toBeUndefined()
   })
 
-  it('pays €61 for 20 soybeans at a fresh market and floods it by 20', () => {
+  it('pays €61 for 20 soybeans at a fresh market and floods it by €63', () => {
     const state = stateWith((s) => (s.stock.soybeans = new Decimal(20)))
     expect(bulkSaleValue(state, 'megaMeat', 'soybeans').toNumber()).toBe(61)
     bulkSell(state, 'megaMeat', 'soybeans')
     expect(state.money.toNumber()).toBe(61)
-    expect(state.megaMeatFlood.soybeans!.toNumber()).toBe(20)
+    expect(state.megaMeatFlood.soybeans!.toNumber()).toBeCloseTo(63, 9)
   })
 
-  it('shows 50% at a flood of 500, where 20 soybeans pay €31', () => {
-    const state = flooded(500)
+  it('shows 50% at a flood of €1,575, where 20 soybeans pay €31', () => {
+    const state = flooded(1_575)
     state.stock.soybeans = new Decimal(20)
     expect(marketLevel(state, 'soybeans')).toBeCloseTo(0.5, 10)
     expect(bulkSaleValue(state, 'megaMeat', 'soybeans').toNumber()).toBe(31)
@@ -237,27 +238,34 @@ describe('flooded market', () => {
   })
 
   it('halves the flood in 20 s, leaving 67% and about 1:05 until 95%', () => {
-    const state = flooded(500)
+    const state = flooded(1_575)
     recoverMarkets(state, 20)
-    expect(state.megaMeatFlood.soybeans!.toNumber()).toBeCloseTo(250, 9)
+    expect(state.megaMeatFlood.soybeans!.toNumber()).toBeCloseTo(787.5, 9)
     expect(marketLevel(state, 'soybeans')).toBeCloseTo(2 / 3, 9)
     expect(timeToRecover(state, 'soybeans', 0.95)).toBeCloseTo(65, 0)
     expect(timeToRecover(createInitialState(), 'soybeans', 0.95)).toBe(0)
   })
 
   it('falls the same in one tick or in 200 ticks of 0.1 s', () => {
-    const once = flooded(500)
+    const once = flooded(1_575)
     recoverMarkets(once, 20)
-    const often = flooded(500)
+    const often = flooded(1_575)
     for (let i = 0; i < 200; i++) recoverMarkets(often, 0.1)
     expect(often.megaMeatFlood.soybeans!.toNumber()).toBeCloseTo(once.megaMeatFlood.soybeans!.toNumber(), 6)
   })
 
   it('recovers through tick() and snaps a tiny flood to a fresh market', () => {
-    const state = flooded(500)
+    const state = flooded(1_575)
     tick(state, 3_600)
     expect(state.megaMeatFlood.soybeans).toBeUndefined()
     expect(marketLevel(state, 'soybeans')).toBe(1)
+  })
+
+  it('floods wheat as fast in euros: 60 wheat pay €1,091 and halve the market', () => {
+    const state = stateWith((s) => (s.stock.wheat = new Decimal(60)))
+    expect(bulkSaleValue(state, 'megaMeat', 'wheat').toNumber()).toBe(1_091)
+    bulkSell(state, 'megaMeat', 'wheat')
+    expect(marketLevel(state, 'wheat')).toBeCloseTo(0.5, 9)
   })
 
   it('keeps each market separate', () => {
@@ -318,8 +326,9 @@ describe('selling a share of the stock', () => {
       s.customerIncome = new Decimal(10)
       s.stock.soybeans = new Decimal(500)
     })
-    expect(bulkSaleCost(state, 'megaMeat', 'soybeans', 0.1)).toEqual({ customers: 26, awareness: 13 })
-    expect(bulkSaleCost(state, 'megaMeat', 'soybeans', 1)).toEqual({ customers: 228, awareness: 110 })
+    expect(bulkSaleCost(state, 'megaMeat', 'soybeans', 0.1)).toEqual({ customers: 202, awareness: 13 })
+    // €1,091 would cost 1,819 customers; the 10 starting neighbours stay.
+    expect(bulkSaleCost(state, 'megaMeat', 'soybeans', 1)).toEqual({ customers: 990, awareness: 110 })
   })
 
   it('sells everything when no share is given', () => {

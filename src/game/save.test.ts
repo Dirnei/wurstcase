@@ -310,6 +310,15 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.customers.toNumber()).toBe(321)
   })
 
+  it('migrates a format 13 save with floods in units to fresh markets', () => {
+    const format13 = savedState()
+    format13.megaMeatFlood = { soybeans: '500', wheat: '60' }
+    format13.customers = '321'
+    const restored = decodedState(envelope(13, format13))
+    expect(restored.megaMeatFlood).toEqual({})
+    expect(restored.customers.toNumber()).toBe(321)
+  })
+
   it.each([['-1'], ['abc'], [5]])('rejects a MegaMeat flood of %j', (flood) => {
     const state = savedState()
     state.megaMeatFlood = { soybeans: flood }

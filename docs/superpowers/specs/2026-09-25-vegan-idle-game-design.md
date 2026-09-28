@@ -70,9 +70,12 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
 - **Products** consume intermediates and go to stock for sale.
 - **Leverkas** is the Act 1 premium product: unlocked mid-act, highest price, the "business takes
   off" moment.
-- Every building's cost rises with each copy owned, and later chains rise more slowly: soy 13%,
-  oat 11%, wheat 9% (idle games use 7–15%). Each new chain starts as a worse deal and overtakes the
-  one before, as in AdVenture Capitalist. Animals follow the same idea (chicken 25%, pig 18%,
+- A balanced line needs more of its early steps than of its late ones (soy 1.5 fields : 1 press :
+  1 kitchen; oat and wheat 2 : 1.5 : 1), and early steps cost less. Prices grow per balanced set,
+  not per copy: owning one more whole set of a chain makes every building in it more expensive by
+  the chain's set growth, and later chains grow more slowly: soy 13%, oat 7%, wheat 6% per set
+  (idle games use 7–15%). Each new chain starts as a worse deal and overtakes the one before, as in
+  AdVenture Capitalist. (Changed by `chain-proportions`; before, prices grew per copy.) Animals follow the same idea (chicken 25%, pig 18%,
   cow 12%).
 - A chain grows as a whole: once every building of a chain is owned 25, 50 and 100 times, a chain
   milestone upgrade comes on offer that doubles the whole chain. Owning more of one building alone
@@ -95,12 +98,14 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
   market value (the product's price, less 25% for each processing step still to come) and costs
   nothing. **MegaMeat** openly outbids vegan food: a raw ingredient pays the chain product's price
   +5% (one soybean beats one Tofu-Wurst), an intermediate half of that, so processing first loses
-  money there. Its market floods, though: every unit sold lowers the price of the next (half price
-  after 500 units), and the flood halves every 20 seconds, so MegaMeat pays at most about €55 per
-  second for soybeans however much the player dumps. Every sale also drives away the share of
-  customers that it is of what they spend with you in 8 minutes, plus awareness. Feeding the
-  industry wins the first minutes; a player who only feeds MegaMeat ends an hour far behind the
-  fair player, with the customers the industry took. (Changed by `megameat-outbids`.)
+  money there. Its market floods, though: every sale lowers the price of the next (half price
+  after €1,575 of full-price sales in that market, e.g. 500 soybeans or 60 wheat), and the flood
+  halves every 20 seconds, so MegaMeat pays at most about €55 per second for any one resource
+  however much the player dumps. Every sale also drives away the share of customers that it is of
+  what they spend with you in one minute, plus awareness. Feeding the industry wins the first
+  minutes; a player who only feeds MegaMeat ends an hour far behind the fair player, with the
+  customers the industry took. (Changed by `megameat-outbids`; flood in euros and the one-minute
+  feed cost by `chain-proportions`.)
 
 ### 3.4 Lebenshof and rescue
 
@@ -190,7 +195,7 @@ Exact numbers are tuned in play; the spec fixes the order of unlocks and the tar
 | 0–2 min | Manual harvest and pressing; sell Tofu-Wurst to 10 curious neighbours (starting customers) | Clicking, selling |
 | 2–10 min | First soybean field and tofu press; demand can't keep up → first chicken rescued | Automation, rescue, awareness |
 | 10–20 min | Oat chain and Hafer-Cappuccino; pigs; first Aktion (flyers); first MegaMeat counter-event | Second chain, campaigns, villain |
-| 20–35 min | Wheat field and seitan kitchen; ⭐ Leverkas unlocked; cows; barn expansions | Premium product, space |
+| 18–35 min (Leverkas up to 55) | Wheat field and seitan kitchen; ⭐ Leverkas unlocked (the simulation buys the first oven at about 52 min, a guideline the user playtests); cows from about 18 min; barn expansions | Premium product, space |
 | 35–60 min | Push toward 80% town conversion; lawyer's letter arrives; Neustart | Prestige, Rezepte tree |
 
 ## 6. Presentation

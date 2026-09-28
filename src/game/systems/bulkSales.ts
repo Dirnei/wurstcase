@@ -54,22 +54,22 @@ function floodOf(state: Pick<GameState, 'megaMeatFlood'>, resource: ResourceId):
 
 /** MegaMeat's current price as a share of its full price: K ÷ (K + flood); 1 at a fresh market. */
 export function marketLevel(state: Pick<GameState, 'megaMeatFlood'>, resource: ResourceId): number {
-  const { halfPriceUnits: k } = getBuyer('megaMeat').flood!
+  const { halfPriceEuros: k } = getBuyer('megaMeat').flood!
   return k / (k + floodOf(state, resource))
 }
 
 /**
  * What selling this many units to MegaMeat pays now, paid unit by unit along the falling price:
- * full × K × ln((K + F + n) ÷ (K + F)), in whole euros.
+ * K × ln((K + F + n × full) ÷ (K + F)), in whole euros, with the flood F in euros of full price.
  */
 export function floodedValue(state: Flooded, resource: ResourceId, units: Decimal): Decimal {
   const full = fullPrice(state, resource)
   if (full === undefined || units.lte(0)) {
     return new Decimal(0)
   }
-  const { halfPriceUnits: k } = getBuyer('megaMeat').flood!
+  const { halfPriceEuros: k } = getBuyer('megaMeat').flood!
   const base = k + floodOf(state, resource)
-  return new Decimal(Math.floor(full * k * Math.log1p(units.toNumber() / base) + EURO_EPSILON))
+  return new Decimal(Math.floor(k * Math.log1p((units.toNumber() * full) / base) + EURO_EPSILON))
 }
 
 /** What one more unit pays right now: the buyer's lot price per unit, or MegaMeat's flooded price. */
@@ -84,7 +84,7 @@ export function unitPrice(state: Flooded, buyer: BuyerId, resource: ResourceId):
 
 /** Seconds of game time until MegaMeat's market for a resource is back at the given level; 0 if it is. */
 export function timeToRecover(state: Pick<GameState, 'megaMeatFlood'>, resource: ResourceId, level: number): number {
-  const { halfPriceUnits: k, halfLifeSeconds: h } = getBuyer('megaMeat').flood!
+  const { halfPriceEuros: k, halfLifeSeconds: h } = getBuyer('megaMeat').flood!
   const flood = floodOf(state, resource)
   const allowed = k * (1 / level - 1)
   return flood <= allowed ? 0 : h * Math.log2(flood / allowed)
@@ -196,7 +196,9 @@ export function bulkSell(state: GameState, buyer: BuyerId, resource: ResourceId,
   state.totalEarned = state.totalEarned.add(earned)
   state.unitsSold[buyer] = state.unitsSold[buyer].add(units)
   if (getBuyer(buyer).flood) {
-    state.megaMeatFlood[resource] = (state.megaMeatFlood[resource] ?? new Decimal(0)).add(units)
+    // The flood counts the sale at full price, in euros.
+    const full = new Decimal(fullPrice(state, resource) ?? 0)
+    state.megaMeatFlood[resource] = (state.megaMeatFlood[resource] ?? new Decimal(0)).add(units.mul(full))
   }
   // The starting neighbours never leave, and awareness never goes negative.
   const floor = Decimal.min(state.customers, STARTING_CUSTOMERS)

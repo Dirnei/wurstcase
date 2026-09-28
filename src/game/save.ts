@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 13
+export const CURRENT_FORMAT = 14
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -90,6 +90,9 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   },
   // 12 → 13 (megameat-outbids): MegaMeat's markets start fresh.
   12: (state) => (isRecord(state) ? { megaMeatFlood: {}, ...state } : state),
+  // 13 → 14 (chain-proportions): floods are counted in euros now, not units; markets start fresh.
+  // A flood halves every 20 s, so nothing of value is lost.
+  13: (state) => (isRecord(state) ? { ...state, megaMeatFlood: {} } : state),
 }
 
 export type DecodeResult =

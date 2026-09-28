@@ -32,12 +32,13 @@ export interface PeggedPricing {
 }
 
 /**
- * A market that floods: at a flood of F units the price per unit is the full price × K ÷ (K + F),
- * and the flood halves every H seconds of game time.
+ * A market that floods: at a flood of F the price per unit is the full price × K ÷ (K + F), and the
+ * flood halves every H seconds of game time. Floods count euros of full price, so every market
+ * caps at the same K × ln 2 ÷ H per second, whatever its resource costs.
  */
 export interface Flood {
-  /** K: the flood, in units, at which the price is half the full price. */
-  halfPriceUnits: number
+  /** K: the flood, in euros of full-price sales, at which the price is half the full price. */
+  halfPriceEuros: number
   /** H: seconds of game time in which the flood halves. */
   halfLifeSeconds: number
 }
@@ -71,8 +72,8 @@ export const BUYERS: readonly BuyerDef[] = [
   {
     id: 'megaMeat',
     pegged: { lotUnits: 20, raw: 1.05, intermediate: 0.5 },
-    flood: { halfPriceUnits: 500, halfLifeSeconds: 20 },
-    feedCost: { horizonSeconds: 480, eurosPerAwareness: 10 },
+    flood: { halfPriceEuros: 1_575, halfLifeSeconds: 20 },
+    feedCost: { horizonSeconds: 60, eurosPerAwareness: 10 },
   },
   {
     id: 'biogas',

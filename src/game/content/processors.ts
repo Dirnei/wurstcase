@@ -8,7 +8,7 @@ export const PROCESSORS: readonly BuildingDef[] = [
     output: 'tofu',
     rate: 0.5,
     basePrice: 25,
-    priceGrowth: 1.13,
+   
     unlockAt: 0,
   },
   {
@@ -16,9 +16,9 @@ export const PROCESSORS: readonly BuildingDef[] = [
     chain: 'oat',
     input: { resource: 'oats', ratio: 2 },
     output: 'oatDrink',
-    rate: 1,
-    basePrice: 1000,
-    priceGrowth: 1.11,
+    rate: 1 / 3,
+    basePrice: 500,
+   
     unlockAt: 30_000,
   },
   {
@@ -26,9 +26,9 @@ export const PROCESSORS: readonly BuildingDef[] = [
     chain: 'wheat',
     input: { resource: 'wheat', ratio: 2 },
     output: 'seitan',
-    rate: 0.5,
-    basePrice: 1600,
-    priceGrowth: 1.09,
+    rate: 1 / 3,
+    basePrice: 600,
+   
     unlockAt: 140_000,
   },
 ]

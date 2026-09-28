@@ -7,8 +7,8 @@ describe('costCurve', () => {
     const curve = costCurve('soybeanField')
     expect(curve).toHaveLength(51)
     expect(curve[0]).toEqual({ owned: 0, nextPrice: 10, spent: 0, income: 0 })
-    expect(curve[1]).toEqual({ owned: 1, nextPrice: 12, spent: 10, income: 1 })
-    expect(curve[2].spent).toBe(22)
+    expect(curve[1]).toEqual({ owned: 1, nextPrice: 11, spent: 10, income: 1 })
+    expect(curve[2].spent).toBe(21)
     for (let n = 1; n < curve.length; n++) {
       expect(curve[n].spent).toBeGreaterThan(curve[n - 1].spent)
     }
@@ -30,7 +30,7 @@ describe('paybackCurves', () => {
     expect(field.seconds).toHaveLength(50)
     expect(field.seconds[0]).toBe(10)
     expect(press.seconds[0]).toBeCloseTo(16.7, 1)
-    expect(field.seconds[1]).toBe(12)
+    expect(field.seconds[1]).toBe(11)
   })
 
   it('makes every copy pay back more slowly than the one before', () => {
@@ -81,9 +81,9 @@ describe('chainSetPayback', () => {
   it('prices the first balanced soy set and what it earns', () => {
     const soy = chainSetPayback().find((c) => c.chain === 'soy')!
     expect(soy.sets).toHaveLength(25)
-    expect(soy.sets[0].price).toBe(175)
+    expect(soy.sets[0].price).toBe(173)
     expect(soy.sets[0].income).toBeCloseTo(3, 10)
-    expect(soy.sets[0].seconds).toBeCloseTo(58.3, 1)
+    expect(soy.sets[0].seconds).toBeCloseTo(57.7, 1)
   })
 
   it('gets slower for later sets, except where a set reaches a milestone', () => {
@@ -96,7 +96,7 @@ describe('chainSetPayback', () => {
   it('adds the chain milestone a set completes to its price', () => {
     // The 13th soy set takes the soy chain to 39 fields, 26 presses and 26 kitchens: 25 of each.
     const soy = chainSetPayback().find((c) => c.chain === 'soy')!
-    expect(soy.sets[12].price - soy.sets[11].price).toBeGreaterThan(14_000)
+    expect(soy.sets[12].price - soy.sets[11].price).toBeGreaterThan(13_000)
   })
 
   it('lets each later chain start behind the one before and end ahead of it', () => {

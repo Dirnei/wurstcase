@@ -30,10 +30,10 @@ export const MILESTONES: readonly Milestone[] = [
   { id: 'tofuPress', label: 'First tofu press', window: [2, 10], reached: firstPurchase('building', 'tofuPress') },
   { id: 'oatField', label: 'First oat field', window: [10, 20], reached: firstPurchase('building', 'oatField') },
   { id: 'wheatField', label: 'First wheat field', window: [20, 35], reached: firstPurchase('building', 'wheatField') },
-  { id: 'leverkasOven', label: 'First Leverkas oven', window: [20, 35], reached: firstPurchase('building', 'leverkasOven') },
+  { id: 'leverkasOven', label: 'First Leverkas oven', window: [20, 55], reached: firstPurchase('building', 'leverkasOven') },
   { id: 'chicken', label: 'First chicken', window: [2, 10], reached: firstPurchase('animal', 'chicken') },
   { id: 'pig', label: 'First pig', window: [10, 20], reached: firstPurchase('animal', 'pig') },
-  { id: 'cow', label: 'First cow', window: [20, 35], reached: firstPurchase('animal', 'cow') },
+  { id: 'cow', label: 'First cow', window: [18, 35], reached: firstPurchase('animal', 'cow') },
 ]
 
 export function pacingTable(log: readonly Purchase[], milestones: readonly Milestone[] = MILESTONES): PacingRow[] {

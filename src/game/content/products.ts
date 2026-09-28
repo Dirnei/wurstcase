@@ -21,7 +21,7 @@ export const KITCHENS: readonly BuildingDef[] = [
     output: 'tofuWurst',
     rate: 0.5,
     basePrice: 40,
-    priceGrowth: 1.13,
+   
     unlockAt: 0,
   },
   {
@@ -30,8 +30,8 @@ export const KITCHENS: readonly BuildingDef[] = [
     input: { resource: 'oatDrink', ratio: 1 },
     output: 'haferCappuccino',
     rate: 0.5,
-    basePrice: 1000,
-    priceGrowth: 1.11,
+    basePrice: 700,
+   
     unlockAt: 30_000,
   },
   {
@@ -40,8 +40,8 @@ export const KITCHENS: readonly BuildingDef[] = [
     input: { resource: 'seitan', ratio: 2 },
     output: 'leverkas',
     rate: 0.25,
-    basePrice: 800,
-    priceGrowth: 1.09,
+    basePrice: 900,
+   
     unlockAt: 200_000,
   },
 ]

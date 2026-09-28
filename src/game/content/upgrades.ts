@@ -1,6 +1,6 @@
 import type { AktionId } from './aktionen'
 import type { SpeciesId } from './animals'
-import { BUILDINGS, CHAINS, type BuildingId, type ChainId } from './buildings'
+import { BUILDINGS, CHAINS, SET_GROWTH, setShare, type BuildingId, type ChainId } from './buildings'
 import type { ProductId } from './resources'
 import type { ShelterId } from './shelters'
 
@@ -91,7 +91,9 @@ export const CHAIN_MILESTONES: readonly { chain: ChainId; at: number; upgrade: U
     upgrade: {
       id: `${chain}Chain${at}` as ChainMilestoneId,
       price: roundTwoDigits(
-        MILESTONE_PRICE_MULTIPLE * buildings.reduce((sum, b) => sum + b.basePrice * b.priceGrowth ** (at - 1), 0),
+        // The multiple of what the milestone's last copies cost: base × set growth ^ ((at − 1) ÷ share).
+        MILESTONE_PRICE_MULTIPLE *
+          buildings.reduce((sum, b) => sum + b.basePrice * SET_GROWTH[chain] ** ((at - 1) / setShare(b.id)), 0),
       ),
       when: buildings.map((building) => ({ owned: building.id, atLeast: at })),
       effect: { kind: 'rate', buildings: buildings.map((building) => building.id), factor: MILESTONE_FACTOR },

@@ -5,7 +5,7 @@ import { AKTION_IDS, AKTIONEN } from './aktionen'
 import { NAME_POOL_SIZE, SPECIES, SPECIES_IDS } from './animals'
 import { createInitialState } from '../state'
 import { hasLot, lotFor } from '../systems/bulkSales'
-import { BUILDINGS, BUILDING_IDS, CHAIN_RESOURCES, CHAINS } from './buildings'
+import { BUILDINGS, BUILDING_IDS, CHAIN_RESOURCES, CHAINS, SET_GROWTH } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
 import { ALL_HEADLINE_KEYS, HINTS, SATIRE } from './headlines'
 import { MANUAL_ACTIONS } from './manual'
@@ -54,12 +54,8 @@ describe('content', () => {
   })
 
   it('makes every later chain and species grow more slowly in price', () => {
-    const chainGrowth = CHAINS.map((chain) => {
-      const growths = BUILDINGS.filter((building) => building.chain === chain).map((b) => b.priceGrowth)
-      return { min: Math.min(...growths), max: Math.max(...growths) }
-    })
-    for (let i = 1; i < chainGrowth.length; i++) {
-      expect(chainGrowth[i].max, CHAINS[i]).toBeLessThan(chainGrowth[i - 1].min)
+    for (let i = 1; i < CHAINS.length; i++) {
+      expect(SET_GROWTH[CHAINS[i]], CHAINS[i]).toBeLessThan(SET_GROWTH[CHAINS[i - 1]])
     }
     for (let i = 1; i < SPECIES.length; i++) {
       expect(SPECIES[i].priceGrowth, SPECIES[i].id).toBeLessThan(SPECIES[i - 1].priceGrowth)
@@ -167,6 +163,25 @@ describe('content', () => {
     for (const { input, output } of BUILDINGS) {
       if (input) {
         expect(perUnit(output), output).toBeGreaterThan(input.ratio * perUnit(input.resource))
+      }
+    }
+  })
+
+  it('needs more of each early step than of the next, and prices them lower, in every chain', () => {
+    for (const { chain, resources } of CHAIN_RESOURCES) {
+      const steps = resources.map((resource) => BUILDINGS.find((b) => b.output === resource)!)
+      // Walk back from one product building: each step must supply what the next one takes.
+      const counts = [1]
+      for (let i = steps.length - 1; i > 0; i--) {
+        const { input, rate } = steps[i]
+        counts.unshift((counts[0] * rate * input!.ratio) / steps[i - 1].rate)
+      }
+      const [field, processing, product] = counts
+      expect(field, `${chain} field vs processing`).toBeGreaterThanOrEqual(processing)
+      expect(processing, `${chain} processing vs product`).toBeGreaterThanOrEqual(product)
+      expect(field, `${chain} field vs product`).toBeGreaterThan(product)
+      for (let i = 1; i < steps.length; i++) {
+        expect(steps[i].basePrice, `${chain} ${steps[i].id} price`).toBeGreaterThan(steps[i - 1].basePrice)
       }
     }
   })

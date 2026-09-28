@@ -29,10 +29,20 @@ describe('pacingTable', () => {
       ['tofuPress', [2, 10]],
       ['oatField', [10, 20]],
       ['wheatField', [20, 35]],
-      ['leverkasOven', [20, 35]],
+      ['leverkasOven', [20, 55]],
       ['chicken', [2, 10]],
       ['pig', [10, 20]],
-      ['cow', [20, 35]],
+      ['cow', [18, 35]],
     ])
+  })
+
+  it('counts a first Leverkas oven at 38 minutes and a first cow at 18.5 minutes as in their windows', () => {
+    const log = [
+      { time: 38 * 60, kind: 'building' as const, id: 'leverkasOven', price: 450 },
+      { time: 18.5 * 60, kind: 'animal' as const, id: 'cow', price: 4000 },
+    ]
+    const rows = pacingTable(log)
+    expect(rows.find((r) => r.id === 'leverkasOven')!.status).toBe('in window')
+    expect(rows.find((r) => r.id === 'cow')!.status).toBe('in window')
   })
 })

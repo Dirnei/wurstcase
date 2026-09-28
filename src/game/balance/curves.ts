@@ -147,8 +147,8 @@ export function bulkTable(): BulkRow[] {
       if (lot) {
         const full = buyer.flood ? fullPrice(base, resource) : undefined
         const perUnit = full ?? lot.price / lot.units
-        // A flooded market pays at most full × K ÷ τ per second, with τ = H ÷ ln 2.
-        const capPerSecond = buyer.flood && (perUnit * buyer.flood.halfPriceUnits * Math.LN2) / buyer.flood.halfLifeSeconds
+        // A flooded market pays at most K ÷ τ per second, with τ = H ÷ ln 2 and K in euros.
+        const capPerSecond = buyer.flood && (buyer.flood.halfPriceEuros * Math.LN2) / buyer.flood.halfLifeSeconds
         buyers[buyer.id] = { perUnit, share: perUnit / value, ...(capPerSecond ? { capPerSecond } : {}) }
       }
     }

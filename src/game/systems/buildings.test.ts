@@ -1,6 +1,7 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { decodeSave, encodeSave } from '../save'
+import { CHAINS, SET_GROWTH, setShare } from '../content/buildings'
 import { createInitialState, type GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isResourceShown, isUnlocked, nextLockedBuildings } from './buildings'
 
@@ -13,20 +14,30 @@ describe('buildingPrice', () => {
     expect(buildingPrice(createInitialState(), 'soybeanField').toNumber()).toBe(10)
   })
 
-  it("rises by the building's own growth per copy owned, rounded up to whole euros", () => {
+  it('rises by the chain set growth per share of a balanced set owned, rounded up to whole euros', () => {
     const state = createInitialState()
     state.buildings.soybeanField = 1
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(12)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(11)
     state.buildings.soybeanField = 2
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(13)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(12)
     state.buildings.soybeanField = 24
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(188)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(71)
+    state.buildings.tofuPress = 1
+    expect(buildingPrice(state, 'tofuPress').toNumber()).toBe(29)
+    state.buildings.wheatField = 1
+    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(412)
   })
 
-  it('grows more slowly in a later chain', () => {
+  it('multiplies every price in a chain by its set growth once per whole set owned', () => {
     const state = createInitialState()
-    state.buildings.wheatField = 1
-    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(654)
+    state.buildings.wheatField = 2
+    state.buildings.leverkasOven = 1
+    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(424)
+    expect(buildingPrice(state, 'leverkasOven').toNumber()).toBe(954)
+  })
+
+  it('grows more slowly per set in a later chain', () => {
+    expect(CHAINS.map((chain) => SET_GROWTH[chain])).toEqual([1.13, 1.07, 1.06])
   })
 
   it('prices the buildings of a loaded save at the current rate', () => {
@@ -36,7 +47,7 @@ describe('buildingPrice', () => {
     if (!result.ok) throw new Error('save did not load')
     expect(result.state.money.toNumber()).toBe(100)
     expect(result.state.buildings.soybeanField).toBe(2)
-    expect(buildingPrice(result.state, 'soybeanField').toNumber()).toBe(13)
+    expect(buildingPrice(result.state, 'soybeanField').toNumber()).toBe(12)
   })
 
   it('stays finite for very many copies', () => {
@@ -135,5 +146,13 @@ describe('nextLockedBuildings', () => {
 
   it('is empty once everything is unlocked', () => {
     expect(nextLockedBuildings(withMoney(0, 1e9))).toEqual([])
+  })
+})
+
+describe('setShare', () => {
+  it('derives each building’s share of a balanced set from the rates and recipes', () => {
+    expect(['soybeanField', 'tofuPress', 'tofuWurstKitchen'].map((id) => setShare(id as never))).toEqual([1.5, 1, 1])
+    expect(['oatField', 'oatMill', 'cafeBar'].map((id) => setShare(id as never))).toEqual([2, 1.5, 1])
+    expect(['wheatField', 'seitanKitchen', 'leverkasOven'].map((id) => setShare(id as never))).toEqual([2, 1.5, 1])
   })
 })

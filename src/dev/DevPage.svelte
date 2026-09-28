@@ -1,7 +1,7 @@
 <script lang="ts">
   // The developer page is a tool for the author, so its text is plain English (no i18n).
   import { SPECIES } from '../game/content/animals'
-  import { BUILDINGS, CHAINS, type BuildingId } from '../game/content/buildings'
+  import { BUILDINGS, CHAINS, SET_GROWTH, setShare, type BuildingId } from '../game/content/buildings'
   import { BUYERS, getBuyer, STEP_MARKUP, type BuyerId } from '../game/content/buyers'
   import { PRODUCTS } from '../game/content/resources'
   import { SHELTERS } from '../game/content/shelters'
@@ -107,8 +107,16 @@
       {POPULATION.toLocaleString('en')}
     </p>
     <p class="muted">
+      Price growth per balanced set:
+      {CHAINS.map(
+        (chain) =>
+          `${chain} ×${SET_GROWTH[chain]} (${BUILDINGS.filter((b) => b.chain === chain)
+            .map((b) => `${buildingName(b.id)} ×${(SET_GROWTH[chain] ** (1 / setShare(b.id))).toFixed(3)}`)
+            .join(', ')})`,
+      ).join(' · ')}
+    </p>
+    <p class="muted">
       Price growth per copy:
-      {BUILDINGS.map((b) => `${buildingName(b.id)} ×${b.priceGrowth}`).join(' · ')} ·
       {SHELTERS.map((s) => `${name(`shelter.${s.id}`)} ×${s.priceGrowth}`).join(' · ')} ·
       {SPECIES.map((s) => `${name(`animal.${s.id}`)} ×${s.priceGrowth}`).join(' · ')}
     </p>
@@ -365,9 +373,9 @@
     <p class="muted">
       Market value: the product's price, less {percent(STEP_MARKUP)} per processing step still to come. All
       prices at base product prices; MegaMeat's follow the products' upgraded prices in the game.
-      MegaMeat's are at a fresh market: its price halves at a flood of {megaMeatFlood.halfPriceUnits} units
-      (K), the flood halves every {megaMeatFlood.halfLifeSeconds} s (H), and it pays at most the rate shown
-      per second.
+      MegaMeat's are at a fresh market: its price halves at a flood of {euro(megaMeatFlood.halfPriceEuros)} of
+      full-price sales (K), the flood halves every {megaMeatFlood.halfLifeSeconds} s (H), and it pays at most
+      the rate shown per second.
     </p>
     <table>
       <thead>

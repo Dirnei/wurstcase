@@ -35,8 +35,9 @@ function surplusIncome(owned: { upgrades: UpgradeId[] }, buyer: BuyerId, resourc
   const { flood } = getBuyer(buyer)
   const full = flood ? fullPrice(owned, resource) : undefined
   if (flood && full !== undefined) {
-    const settled = rate * (flood.halfLifeSeconds / Math.LN2)
-    return rate * full * (flood.halfPriceUnits / (flood.halfPriceUnits + settled))
+    // The flood settles at the euros sold per second × τ.
+    const settled = rate * full * (flood.halfLifeSeconds / Math.LN2)
+    return rate * full * (flood.halfPriceEuros / (flood.halfPriceEuros + settled))
   }
   const lot = lotFor(owned, buyer, resource)
   return rate * (lot ? lot.price / lot.units : (bestBuyer(owned, resource, { withoutFeedCost: true })?.perUnit ?? 0))
