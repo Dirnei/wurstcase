@@ -40,6 +40,10 @@ export interface GameState {
   progress: Record<BuildingId, number>
   /** Buildings that ran short of input in the last tick, and the input they lack. Not saved. */
   waiting: Partial<Record<BuildingId, ResourceId>>
+  /** Buildings whose next run did not fit the storeroom in the last tick, and their output. Not saved. */
+  blocked: Partial<Record<BuildingId, ResourceId>>
+  /** Storeroom level, 1 in a new game; the room per good grows with it. */
+  storeroom: number
   /** Whole number of customers; a Decimal because awareness grows it towards town sizes and beyond. */
   customers: Decimal
   /** Whole number of orders waiting to be filled. */
@@ -77,6 +81,8 @@ export interface GameState {
   sales: Bucket<ProductId>[]
   /** Seconds left to show a resource as short, held after the last wait so it does not flicker. Not saved. */
   shortage: Partial<Record<ResourceId, number>>
+  /** Seconds left to show a resource as full, held after it was last full so it does not flicker. Not saved. */
+  full: Partial<Record<ResourceId, number>>
 }
 
 export function createInitialState(): GameState {
@@ -105,7 +111,10 @@ export function createInitialState(): GameState {
     customerIncome: new Decimal(0),
     upgrades: [],
     waiting: {},
+    blocked: {},
+    storeroom: 1,
     shortage: {},
+    full: {},
     trend: [],
     sales: [],
   }

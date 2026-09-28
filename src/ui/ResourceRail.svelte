@@ -3,6 +3,7 @@
   import { POPULATION } from '../game/content/town'
   import { isResourceShown } from '../game/systems/buildings'
   import { canSell, isOverstocked, orderCap, saleValue, sell } from '../game/systems/sales'
+  import { canExpand, expandStoreroom, expansionPrice, storeroomRoom } from '../game/systems/storeroom'
   import { stockTrend, type Trend } from '../game/systems/trend'
   import { amount, euros } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
@@ -28,11 +29,16 @@
             resource,
             stock: amount(state.stock[resource]),
             short: state.shortage[resource] !== undefined,
+            full: state.full[resource] !== undefined,
             trend: stockTrend(state, resource),
           })),
       })).filter((group) => group.items.length > 0),
     ),
   )
+  const level = $derived(readGame((state) => state.storeroom))
+  const room = $derived(amount(readGame(storeroomRoom)))
+  const expansion = $derived(euros(readGame(expansionPrice)))
+  const expandable = $derived(readGame(canExpand))
   const money = $derived(euros(readGame((state) => state.money)))
   const customers = $derived(
     t('rail.ofTotal', { count: amount(readGame((state) => state.customers)), total: amount(POPULATION) }),
@@ -62,6 +68,10 @@
     setTimeout(() => (floats = expire(floats, performance.now())), FLOAT_MS + 50)
   }
 
+  function onExpand() {
+    act(expandStoreroom)
+  }
+
   function onKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && stockOpen) {
       stockOpen = false
@@ -73,13 +83,20 @@
 
 <aside class="rail" aria-label={t('rail.label')}>
   <section class="stock" class:open={stockOpen} id="rail-stock">
-    <h2>{t('stock.title')}</h2>
+    <div class="storeroom">
+      <ArtSlot kind="stat" id="storeroom" size="sm" />
+      <h2>{t('storeroom.title')} · {t('storeroom.level', { level })}</h2>
+      <p class="room">{t('storeroom.room', { amount: room })}</p>
+      <button type="button" class="game-button expand" disabled={!expandable} onclick={onExpand}>
+        {t('storeroom.expand', { price: expansion })}
+      </button>
+    </div>
     {#each groups as group (group.chain)}
       <div class="group" role="group" aria-labelledby="stock-chain-{group.chain}">
         <h3 id="stock-chain-{group.chain}">{t(`chain.${group.chain}`)}</h3>
         <dl>
           {#each group.items as item (item.resource)}
-            <div class="row" class:short={item.short}>
+            <div class="row" class:short={item.short} class:full={item.full}>
               <dt>
                 <ArtSlot kind="resource" id={item.resource} size="sm" />
                 <span class="name">{t(`resource.${item.resource}`)}</span>
@@ -87,6 +104,13 @@
               <dd class="amount" title={item.short ? t('stock.short') : undefined}>
                 {item.stock}
                 {#if item.short}<span class="visually-hidden">({t('stock.short')})</span>{/if}
+                {#if item.full}
+                  <span class="badge" title={t('stock.full')}>
+                    <span class="badge-text" aria-hidden="true">{t('stock.fullBadge')}</span>
+                    <span class="badge-mark" aria-hidden="true">■</span>
+                  </span>
+                  <span class="visually-hidden">({t('stock.full')})</span>
+                {/if}
               </dd>
               <dd class="trend {item.trend}" title={t(`stock.trend.${item.trend}`)}>
                 <span aria-hidden="true">{MARKS[item.trend]}</span>
@@ -166,6 +190,29 @@
     gap: 8px;
   }
 
+  .storeroom {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 2px 8px;
+  }
+
+  .storeroom h2 {
+    margin: 0;
+  }
+
+  .room {
+    grid-column: 2;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+  }
+
+  .expand {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    font-size: 0.875rem;
+  }
+
   h3 {
     margin: 0 0 2px;
     color: var(--ink-muted);
@@ -208,6 +255,23 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     text-align: right;
+  }
+
+  .badge {
+    margin-left: 4px;
+    padding: 0 4px;
+    border: 1.2px solid currentColor;
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+
+  .badge-mark {
+    display: none;
   }
 
   .trend {
@@ -279,6 +343,24 @@
     .group + .group {
       padding-top: 8px;
       border-top: 1.4px solid var(--line);
+    }
+
+    .room {
+      display: none;
+    }
+
+    /* Too narrow for the word: a mark with the same tooltip and hidden text. */
+    .badge {
+      padding: 0;
+      border: none;
+    }
+
+    .badge-text {
+      display: none;
+    }
+
+    .badge-mark {
+      display: inline;
     }
 
     .name,

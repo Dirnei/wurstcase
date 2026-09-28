@@ -134,3 +134,27 @@ describe('upgrade effects on manual actions', () => {
     expect(state.stock.soybeans.toNumber()).toBe(2)
   })
 })
+
+describe('manual actions and the storeroom', () => {
+  it('is unavailable and changes nothing when the output is full', () => {
+    const state = createInitialState()
+    state.stock.soybeans = new Decimal(500)
+    expect(canPerform(state, 'harvestSoybeans')).toBe(false)
+    expect(performManual(state, 'harvestSoybeans')).toBe(false)
+    expect(state.stock.soybeans.toNumber()).toBe(500)
+  })
+
+  it('makes only what fits and uses input only for that', () => {
+    const state = createInitialState()
+    state.upgrades = ['strongHands']
+    state.stock.soybeans = new Decimal(499)
+    expect(performManual(state, 'harvestSoybeans')).toBe(true)
+    expect(state.stock.soybeans.toNumber()).toBe(500)
+
+    state.stock.soybeans = new Decimal(6)
+    state.stock.tofu = new Decimal(499)
+    expect(performManual(state, 'pressTofu')).toBe(true)
+    expect(state.stock.tofu.toNumber()).toBe(500)
+    expect(state.stock.soybeans.toNumber()).toBe(3)
+  })
+})

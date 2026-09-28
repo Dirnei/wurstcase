@@ -38,6 +38,10 @@ manual action SHALL be available only once the building for the same step is unl
 be hidden while it is locked. A manual action that is locked or lacks its input SHALL change
 nothing. Manual actions SHALL be shown grouped by chain.
 
+A manual action SHALL make only as many units as fit in the storeroom's room for its output, and
+SHALL use input only for those units. A manual action whose output is full SHALL be unavailable
+and SHALL change nothing.
+
 #### Scenario: Harvesting
 - **WHEN** the player clicks "harvest soybeans" 3 times
 - **THEN** the soybean stock is 3
@@ -71,6 +75,14 @@ nothing. Manual actions SHALL be shown grouped by chain.
 #### Scenario: Locked action changes nothing
 - **WHEN** the oat field is still locked and the player somehow triggers "harvest oats"
 - **THEN** the oat stock is unchanged
+
+#### Scenario: Full output
+- **WHEN** the storeroom holds 500 of each good and there are 500 soybeans
+- **THEN** "harvest soybeans" is unavailable and clicking it changes no stock
+
+#### Scenario: Click fills the last room
+- **WHEN** a click makes 2 soybeans, the storeroom holds 500 and there are 499 soybeans
+- **THEN** the click makes 1 soybean and the stock is 500
 
 ### Requirement: Buildings
 The game SHALL offer three chains of buildings: soybean field → tofu press → Tofu-Wurst kitchen,
@@ -185,6 +197,12 @@ it as soon as the input is there. While any building waits for an input, the gam
 that input's stock as short (shown in red). The mark SHALL stay until no building has waited for
 that input for 3 seconds of game time, so a brief or recurring shortage does not flicker.
 
+Every building, fields included, SHALL complete a run only when the run's whole output fits in the
+storeroom's room for that resource. A building whose next run does not fit SHALL wait in the same
+way: with the unit ready, without building up further progress and without using input, and SHALL
+complete it as soon as there is room. Its output SHALL then be marked as full as the storeroom
+requires.
+
 #### Scenario: Input runs out
 - **WHEN** the player owns 1 tofu press and no soybean field, and the soybean stock is 0
 - **THEN** no tofu is produced and the soybean stock is marked as short
@@ -205,6 +223,19 @@ that input for 3 seconds of game time, so a brief or recurring shortage does not
 #### Scenario: Supply returns
 - **WHEN** a waiting tofu press receives enough soybeans for its full rate again
 - **THEN** the soybean stock stops being marked as short 3 seconds after the press last waited
+
+#### Scenario: Output full
+- **WHEN** the storeroom holds 500 of each good, there are 500 tofu and 30 soybeans, and a tofu
+  press has its next tofu ready
+- **THEN** no tofu is made, the 30 soybeans stay in stock, and tofu is marked as full
+
+#### Scenario: Run does not overshoot
+- **WHEN** a tofu press makes 2 tofu per run, the storeroom holds 500 and there are 499 tofu
+- **THEN** the press waits and the tofu stock stays 499
+
+#### Scenario: Field stops at the room
+- **WHEN** 3 soybean fields run for 1,000 seconds with nothing using soybeans at storeroom level 1
+- **THEN** the soybean stock is 500
 
 ### Requirement: Unlocks
 The soy chain SHALL be available from the start. Every other building SHALL become available

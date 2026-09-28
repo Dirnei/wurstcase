@@ -213,6 +213,8 @@
                         ? 'Shop assistant'
                         : purchase.kind === 'upgrade'
                         ? `Upgrade: ${name(`upgrade.${purchase.id}.name`)}`
+                        : purchase.kind === 'storeroom'
+                        ? 'Storeroom expansion'
                         : `${purchase.kind === 'shelter' ? 'Shelter' : 'Animal'}: ${purchase.id}`}
                   </td>
                   <td class="num">{euro(purchase.price)}</td>

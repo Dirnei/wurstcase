@@ -49,6 +49,7 @@ import Wheat from './resources/Wheat.svelte'
 import Pasture from './shelters/Pasture.svelte'
 import Stable from './shelters/Stable.svelte'
 import Coins from './stats/Coins.svelte'
+import Crates from './stats/Crates.svelte'
 import Hourglass from './stats/Hourglass.svelte'
 import Income from './stats/Income.svelte'
 import OrderSlip from './stats/OrderSlip.svelte'
@@ -120,7 +121,7 @@ export const TAB_ART: Record<TabId, Component> = {
   einstellungen: Gear,
 }
 
-export type StatId = 'money' | 'income' | 'awareness' | 'playTime' | 'customers' | 'orders'
+export type StatId = 'money' | 'income' | 'awareness' | 'playTime' | 'customers' | 'orders' | 'storeroom'
 
 export const STAT_ART: Record<StatId, Component> = {
   money: Coins,
@@ -129,6 +130,7 @@ export const STAT_ART: Record<StatId, Component> = {
   playTime: Hourglass,
   customers: Person,
   orders: OrderSlip,
+  storeroom: Crates,
 }
 
 export type MiscId = 'newspaper' | 'megaMeatMark'

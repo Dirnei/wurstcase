@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 9
+export const CURRENT_FORMAT = 10
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -65,6 +65,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   },
   // 8 → 9 (megameat-temptation): no customer income yet; it catches up within minutes of play.
   8: (state) => (isRecord(state) ? { customerIncome: '0', ...state } : state),
+  // 9 → 10 (storeroom): the first storeroom level; stock above its room is kept.
+  9: (state) => (isRecord(state) ? { storeroom: 1, ...state } : state),
 }
 
 export type DecodeResult =
@@ -136,7 +138,7 @@ export function importSave(text: string, options?: DecodeOptions): DecodeResult 
   }
 }
 
-// `waiting` is left out: production recomputes it on the next tick.
+// `waiting`, `blocked` and `full` are left out: production recomputes them on the next tick.
 function writeState(state: GameState): Record<string, unknown> {
   return {
     playTime: state.playTime,
@@ -159,6 +161,7 @@ function writeState(state: GameState): Record<string, unknown> {
     megaMeat: { ...state.megaMeat, active: state.megaMeat.active && { ...state.megaMeat.active } },
     upgrades: [...state.upgrades],
     customerIncome: state.customerIncome.toString(),
+    storeroom: state.storeroom,
   }
 }
 
@@ -178,7 +181,7 @@ function readState(value: unknown): GameState | null {
   ) {
     return null
   }
-  const { playTime, orderProgress, assistant, conversionProgress, awarenessProgress } = value
+  const { playTime, orderProgress, assistant, conversionProgress, awarenessProgress, storeroom } = value
   const awareness = readAmount(value.awareness)
   const megaMeat = readMegaMeat(value.megaMeat)
   const money = readAmount(value.money)
@@ -202,7 +205,9 @@ function readState(value: unknown): GameState | null {
     !awareness ||
     !isFiniteNumber(awarenessProgress) ||
     awarenessProgress < 0 ||
-    !megaMeat
+    !megaMeat ||
+    !Number.isSafeInteger(storeroom) ||
+    (storeroom as number) < 1
   ) {
     return null
   }
@@ -277,6 +282,7 @@ function readState(value: unknown): GameState | null {
     orderProgress,
     assistant,
     customerIncome,
+    storeroom: storeroom as number,
   }
 }
 

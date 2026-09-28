@@ -37,6 +37,7 @@ describe('produce', () => {
       const state = stateWith((s) => {
         s.buildings.soybeanField = owned
         s.upgrades = upgrades
+        s.storeroom = 10
       })
       produce(state, 1)
       expect(stock(state, 'soybeans'), `${owned} fields`).toBe(made)
@@ -252,5 +253,84 @@ describe('upgrade effects on production', () => {
     state.upgrades = ['betterSeeds']
     produce(state, 1)
     expect(state.stock.soybeans.toNumber()).toBe(10)
+  })
+})
+
+describe('storeroom room', () => {
+  it('waits without using input when the output is full', () => {
+    const state = stateWith((s) => {
+      s.buildings.tofuPress = 1
+      s.progress.tofuPress = 0.99
+      s.stock.tofu = new Decimal(500)
+      s.stock.soybeans = new Decimal(30)
+    })
+    produce(state, 1)
+    expect(stock(state, 'tofu')).toBe(500)
+    expect(stock(state, 'soybeans')).toBe(30)
+    expect(state.progress.tofuPress).toBe(1)
+    expect(state.blocked.tofuPress).toBe('tofu')
+    expect(state.full.tofu).toBeDefined()
+    expect(state.shortage.soybeans).toBeUndefined()
+  })
+
+  it('does not run when the whole run would overshoot the room', () => {
+    const state = stateWith((s) => {
+      s.buildings.tofuPress = 1
+      s.upgrades = ['hydraulicPress']
+      s.progress.tofuPress = 0.99
+      s.stock.tofu = new Decimal(499)
+      s.stock.soybeans = new Decimal(30)
+    })
+    produce(state, 1)
+    expect(stock(state, 'tofu')).toBe(499)
+    expect(stock(state, 'soybeans')).toBe(30)
+    expect(state.blocked.tofuPress).toBe('tofu')
+  })
+
+  it('stops fields at the room', () => {
+    const state = stateWith((s) => (s.buildings.soybeanField = 3))
+    for (let second = 0; second < 1000; second++) {
+      produce(state, 1)
+    }
+    expect(stock(state, 'soybeans')).toBe(500)
+    expect(state.progress.soybeanField).toBe(1)
+  })
+
+  it('marks a good full at the room and clears it 3 seconds after it was last full', () => {
+    const state = stateWith((s) => {
+      s.buildings.soybeanField = 1
+      s.stock.soybeans = new Decimal(499)
+    })
+    produce(state, 1)
+    expect(stock(state, 'soybeans')).toBe(500)
+    expect(state.full.soybeans).toBeDefined()
+
+    produce(state, 1) // the field waits
+    state.stock.soybeans = new Decimal(400) // sold
+    produce(state, 1)
+    produce(state, 1)
+    expect(state.full.soybeans, 'held for 3 s after the last wait').toBeDefined()
+    produce(state, 1)
+    expect(state.full.soybeans).toBeUndefined()
+  })
+
+  it('marks stock above the room as full without anything waiting on it', () => {
+    const state = stateWith((s) => (s.stock.tofuWurst = new Decimal(2000)))
+    produce(state, 1)
+    expect(state.full.tofuWurst).toBeDefined()
+  })
+
+  it('keeps stock above the room and lets its buildings wait until it drops below', () => {
+    const state = stateWith((s) => {
+      s.buildings.tofuWurstKitchen = 1
+      s.stock.tofu = new Decimal(100)
+      s.stock.tofuWurst = new Decimal(2000)
+    })
+    produce(state, 10)
+    expect(stock(state, 'tofuWurst')).toBe(2000)
+    expect(stock(state, 'tofu')).toBe(100)
+    state.stock.tofuWurst = new Decimal(400)
+    produce(state, 1)
+    expect(stock(state, 'tofuWurst')).toBeGreaterThan(400)
   })
 })

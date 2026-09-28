@@ -1,6 +1,7 @@
 import { MANUAL_ACTIONS, type ManualActionDef, type ManualActionId } from '../content/manual'
 import type { GameState } from '../state'
 import { isUnlocked } from './buildings'
+import { roomFor } from './storeroom'
 import { manualFactor } from './upgrades'
 
 const BY_ID = new Map<ManualActionId, ManualActionDef>(MANUAL_ACTIONS.map((action) => [action.id, action]))
@@ -10,10 +11,11 @@ export function isManualUnlocked(state: Readonly<GameState>, id: ManualActionId)
   return isUnlocked(state, BY_ID.get(id)!.building)
 }
 
-/** Units one click makes: the upgraded amount, or as many whole units as the input covers. */
+/** Units one click makes: the upgraded amount, limited by the input it covers and the room left. */
 export function manualUnits(state: Readonly<GameState>, id: ManualActionId): number {
-  const { input } = BY_ID.get(id)!
-  const units = manualFactor(state)
+  const { input, output } = BY_ID.get(id)!
+  const fit = roomFor(state, output.resource).div(output.amount).floor().toNumber()
+  const units = Math.min(manualFactor(state), fit)
   return input ? Math.min(units, state.stock[input.resource].div(input.amount).floor().toNumber()) : units
 }
 

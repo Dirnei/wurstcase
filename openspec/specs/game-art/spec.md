@@ -10,8 +10,8 @@ the rescued animals live.
 ### Requirement: An illustration for every item
 Every building, resource, animal species, shelter type, Aktion, bulk buyer, upgrade effect type
 and tab SHALL have its own illustration. The top-bar stats (money, income, awareness), the play
-time and the rail's customers and open orders SHALL have one too. The illustrations SHALL be shown
-wherever the item is shown:
+time, the rail's customers and open orders, and the storeroom SHALL have one too. The
+illustrations SHALL be shown wherever the item is shown:
 - building cards
 - the rail
 - the sales figures
@@ -36,6 +36,10 @@ content has no illustration.
 #### Scenario: Play-time art
 - **WHEN** the player opens Einstellungen
 - **THEN** the play time is shown with the hourglass illustration
+
+#### Scenario: Storeroom art
+- **WHEN** the rail shows the storeroom
+- **THEN** it shows the storeroom illustration next to the storeroom's name
 
 ### Requirement: Upgrade art
 Each upgrade card SHALL show the illustration of its effect type. For effects that name

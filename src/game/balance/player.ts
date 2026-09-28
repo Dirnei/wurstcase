@@ -23,6 +23,7 @@ import {
   usedSpace,
 } from '../systems/rescue'
 import { canHireAssistant, canSell, hireAssistant, orderRate, sell } from '../systems/sales'
+import { canExpand, expandStoreroom, expansionPrice } from '../systems/storeroom'
 import {
   awarenessFactor,
   buyUpgrade,
@@ -42,7 +43,7 @@ import { chainBuildings, manualPass } from './value'
 export interface Purchase {
   /** Game time in seconds. */
   time: number
-  kind: 'building' | 'assistant' | 'shelter' | 'animal' | 'upgrade'
+  kind: 'building' | 'assistant' | 'shelter' | 'animal' | 'upgrade' | 'storeroom'
   id: string
   price: number
 }
@@ -71,7 +72,7 @@ const NO_RANDOM = () => 0
 /** Upgrades that change income, and so are scored like buildings. */
 const INCOME_EFFECTS: readonly UpgradeEffect['kind'][] = ['rate', 'yield', 'price', 'orders']
 
-/** Other upgrades are bought when they cost at most this many seconds of income. */
+/** Other upgrades, and storeroom expansions while a good is full, are bought when they cost at most this many seconds of income. */
 const CHEAP_UPGRADE_SECONDS = 300
 
 /** A rescue is scored by what the customers it converts within this many seconds add to income. */
@@ -95,6 +96,7 @@ export function playerStep(player: Player, state: GameState, seconds: number, lo
   if (player.sinceBulkSale >= BULK_SALE_EVERY_SECONDS - 1e-9) {
     player.sinceBulkSale = 0
     sellSurplus(state, player.surplusBuyer)
+    expandWhenFull(state, log, player.surplusBuyer)
   }
   if (canHireAssistant(state)) {
     hireAssistant(state)
@@ -197,6 +199,18 @@ function buyCheapUpgrades(state: GameState, log: (p: Purchase) => void, surplusB
       buyUpgrade(state, upgrade.id)
       log({ time: state.playTime, kind: 'upgrade', id: upgrade.id, price: upgrade.price })
     }
+  }
+}
+
+function expandWhenFull(state: GameState, log: (p: Purchase) => void, surplusBuyer: BuyerId): void {
+  // Runs right after the surplus sale, so a good still marked full is one the sale did not relieve.
+  if (Object.keys(state.full).length === 0 || !canExpand(state)) {
+    return
+  }
+  const price = expansionPrice(state)
+  if (price.toNumber() <= incomeEstimate(state, surplusBuyer) * CHEAP_UPGRADE_SECONDS) {
+    expandStoreroom(state)
+    log({ time: state.playTime, kind: 'storeroom', id: 'storeroom', price: price.toNumber() })
   }
 }
 

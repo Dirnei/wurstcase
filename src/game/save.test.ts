@@ -251,6 +251,36 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.customers.toNumber()).toBe(40)
   })
 
+  it('restores the storeroom level exactly', () => {
+    const state = createInitialState()
+    state.storeroom = 5
+    expect(decodedState(encodeSave(state, NOW)).storeroom).toBe(5)
+  })
+
+  it('migrates a format 9 save to storeroom level 1 and keeps every stock, even above the room', () => {
+    const format9 = savedState()
+    delete format9.storeroom
+    format9.stock.tofuWurst = '2000'
+    format9.stock.soybeans = '120'
+    const restored = decodedState(envelope(9, format9))
+    expect(restored.storeroom).toBe(1)
+    expect(restored.stock.tofuWurst.toNumber()).toBe(2000)
+    expect(restored.stock.soybeans.toNumber()).toBe(120)
+  })
+
+  it.each([[0], [1.5], [-2], ['3'], [null]])('rejects a storeroom level of %j', (level) => {
+    const state = savedState()
+    state.storeroom = level
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
+  })
+
+  it('saves a new game at storeroom level 1 and does not save the full mark', () => {
+    const saved = savedState()
+    expect(saved.storeroom).toBe(1)
+    expect(saved).not.toHaveProperty('full')
+    expect(saved).not.toHaveProperty('blocked')
+  })
+
   it.each([['-1'], ['abc'], [3]])('rejects a customer income of %s', (income) => {
     const state = savedState()
     state.customerIncome = income

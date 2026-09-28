@@ -136,8 +136,10 @@ reload no tab shows a badge.
 
 ### Requirement: Resource rail
 The game view SHALL show a resource rail on every tab. It SHALL show:
-- every resource that is shown in the stock, with its amount, trend mark and short-supply mark as
-  the stock panel requires
+- the storeroom: its illustration, name and level, the room per good, and an Expand button with
+  the price of the next level, as the storeroom requires
+- every resource that is shown in the stock, with its amount, trend mark, short-supply mark and
+  full mark as the stock panel and the storeroom require
 - customers of the population
 - open orders of the cap
 - the Sell button with what the sale would earn or, once the shop assistant is hired, the note
@@ -150,6 +152,10 @@ SHALL list its resources in production order: raw ingredient, intermediate, prod
 SHALL be shown only while at least one of its resources is shown. Where the rail hides resource
 names, the group label MAY be hidden too, but the groups SHALL stay visibly separated and the
 label SHALL stay available to screen readers.
+
+The full mark SHALL have a text label in the selected language that screen readers announce and
+that shows as a tooltip; colour SHALL NOT be the only way it is shown. The short overproduction
+note in the rail SHALL NOT say that the storeroom is full.
 
 #### Scenario: Sell from any tab
 - **WHEN** the player is on the Lebenshof tab with 10 Tofu-Wurst in stock and open orders
@@ -176,7 +182,21 @@ label SHALL stay available to screen readers.
 
 #### Scenario: Phone drawer
 - **WHEN** the viewport is 375 px wide and the player opens the stock
-- **THEN** the drawer shows the same groups with their chain names
+- **THEN** the drawer shows the storeroom and the same groups with their chain names
+
+#### Scenario: Storeroom at the start
+- **WHEN** a new game starts
+- **THEN** the rail shows the storeroom at level 1 with room for 500 per good and an Expand
+  button for €100
+
+#### Scenario: Full good in the rail
+- **WHEN** soybeans are full
+- **THEN** the soybean row shows the full mark, with the label "full" as tooltip and for screen
+  readers
+
+#### Scenario: Expand from the rail
+- **WHEN** the player has €150 and chooses Expand in the rail
+- **THEN** the rail shows level 2 with room for 1,000 per good, and the money drops by €100
 
 ### Requirement: Production tab
 The Produktion tab SHALL show the buildings in one row per chain, in chain order (soy, wheat,
