@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getBuilding } from '../game/content/buildings'
   import { getUpgrade, type UpgradeEffect, type UpgradeId } from '../game/content/upgrades'
   import { buyUpgrade, canBuyUpgrade, offeredUpgrades } from '../game/systems/upgrades'
   import { amount, euros } from './amounts'
@@ -23,6 +24,8 @@
     switch (effect.kind) {
       case 'rate':
         return { kind: 'building', id: effect.buildings[0] }
+      case 'yield':
+        return { kind: 'building', id: effect.building }
       case 'price':
         return { kind: 'resource', id: effect.product }
       case 'awareness':
@@ -40,6 +43,12 @@
         return t('upgrade.effect.rate', {
           buildings: effect.buildings.map((id) => t(`building.${id}`)).join(', '),
           factor: factor(effect.factor),
+        })
+      case 'yield':
+        return t('upgrade.effect.yield', {
+          building: t(`building.${effect.building}`),
+          amount: amount(effect.add),
+          resource: t(`resource.${getBuilding(effect.building).output}`),
         })
       case 'price':
         return t('upgrade.effect.price', { product: t(`resource.${effect.product}`), euros: euros(effect.add) })

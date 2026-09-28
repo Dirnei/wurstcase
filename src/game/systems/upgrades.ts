@@ -72,17 +72,36 @@ export function buyUpgrade(state: GameState, id: UpgradeId): boolean {
   return true
 }
 
+/**
+ * Effects of an owned-upgrades list, cached per list: every building asks every tick. The list only
+ * ever grows by push, so a changed length means a stale entry.
+ */
+const effectsCache = new WeakMap<readonly UpgradeId[], { length: number; effects: UpgradeEffect[] }>()
+
+function ownedEffects(state: Owned): UpgradeEffect[] {
+  const list = state.upgrades
+  let cached = effectsCache.get(list)
+  if (!cached || cached.length !== list.length) {
+    cached = { length: list.length, effects: list.map((id) => getUpgrade(id).effect) }
+    effectsCache.set(list, cached)
+  }
+  return cached.effects
+}
+
 /** Effects of the owned upgrades of one kind. */
 function owned<K extends UpgradeEffect['kind']>(state: Owned, kind: K): Extract<UpgradeEffect, { kind: K }>[] {
-  return state.upgrades
-    .map((id) => getUpgrade(id).effect)
-    .filter((effect): effect is Extract<UpgradeEffect, { kind: K }> => effect.kind === kind)
+  return ownedEffects(state).filter((effect): effect is Extract<UpgradeEffect, { kind: K }> => effect.kind === kind)
 }
 
 const product = (factors: readonly number[]) => factors.reduce((total, factor) => total * factor, 1)
 
 export function rateFactor(state: Owned, building: BuildingId): number {
   return product(owned(state, 'rate').filter((e) => e.buildings.includes(building)).map((e) => e.factor))
+}
+
+/** Whole units each run of a building makes: 1, plus what yield upgrades add. */
+export function yieldPerRun(state: Owned, building: BuildingId): number {
+  return 1 + owned(state, 'yield').filter((e) => e.building === building).reduce((total, e) => total + e.add, 0)
 }
 
 /** Units per manual click; a whole number. */

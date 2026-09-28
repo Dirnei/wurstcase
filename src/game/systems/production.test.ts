@@ -216,6 +216,36 @@ describe('shortage', () => {
 })
 
 describe('upgrade effects on production', () => {
+  it('makes more output from the same input with a yield upgrade', () => {
+    const state = createInitialState()
+    state.buildings.tofuPress = 1
+    state.upgrades = ['hydraulicPress']
+    state.stock.soybeans = new Decimal(100)
+    produce(state, 10)
+    expect(state.stock.tofu.toNumber()).toBe(10)
+    expect(state.stock.soybeans.toNumber()).toBe(85)
+  })
+
+  it('counts runs, not units, against the input', () => {
+    const state = createInitialState()
+    state.buildings.tofuPress = 2
+    state.upgrades = ['hydraulicPress']
+    state.stock.soybeans = new Decimal(30)
+    produce(state, 10)
+    expect(state.stock.soybeans.toNumber()).toBe(0)
+    expect(state.stock.tofu.toNumber()).toBe(20)
+  })
+
+  it('stacks yield with rate upgrades', () => {
+    const state = createInitialState()
+    state.buildings.tofuPress = 1
+    state.upgrades = ['hydraulicPress', 'soyChain25']
+    state.stock.soybeans = new Decimal(100)
+    produce(state, 1)
+    expect(state.stock.tofu.toNumber()).toBe(2)
+    expect(state.stock.soybeans.toNumber()).toBe(97)
+  })
+
   it('doubles soybean fields with better seeds', () => {
     const state = createInitialState()
     state.buildings.soybeanField = 5

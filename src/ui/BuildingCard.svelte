@@ -3,7 +3,7 @@
   import { MANUAL_ACTIONS } from '../game/content/manual'
   import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../game/systems/buildings'
   import { canPerform, performManual } from '../game/systems/manual'
-  import { rateFactor } from '../game/systems/upgrades'
+  import { rateFactor, yieldPerRun } from '../game/systems/upgrades'
   import { amount, euros } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
   import { act, readGame } from './game.svelte'
@@ -19,7 +19,8 @@
   const manual = $derived(MANUAL_ACTIONS.find((action) => action.building === id)!)
   const unlocked = $derived(readGame((state) => isUnlocked(state, id)))
   const owned = $derived(readGame((state) => state.buildings[id]))
-  const rate = $derived(building.rate * readGame((state) => rateFactor(state, id)))
+  const perRun = $derived(readGame((state) => yieldPerRun(state, id)))
+  const rate = $derived(building.rate * readGame((state) => rateFactor(state, id)) * perRun)
   const price = $derived(euros(readGame((state) => buildingPrice(state, id))))
   const affordable = $derived(readGame((state) => canBuy(state, id)))
   const performable = $derived(readGame((state) => canPerform(state, manual.id)))
@@ -53,7 +54,7 @@
         {t('recipe', {
           inAmount: amount(building.input.ratio),
           input: t(`resource.${building.input.resource}`),
-          outAmount: amount(1),
+          outAmount: amount(perRun),
           output: t(`resource.${building.output}`),
         })}
       </p>

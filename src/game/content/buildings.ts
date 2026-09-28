@@ -23,9 +23,9 @@ export interface BuildingDef {
   id: BuildingId
   chain: ChainId
   output: ResourceId
-  /** Units of input consumed per unit of output. Fields have no input. */
+  /** Units of input each run takes. Fields have no input. */
   input?: { resource: ResourceId; ratio: number }
-  /** Output per second per building at full speed. */
+  /** Runs per second per building at full speed; a run makes 1 unit, more with yield upgrades. */
   rate: number
   /** Price in euros of the first copy. */
   basePrice: number

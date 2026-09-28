@@ -18,6 +18,7 @@ import {
   productPrice,
   rateFactor,
   spaceBonus,
+  yieldPerRun,
 } from './upgrades'
 
 function withMoney(money: number, earned = money): GameState {
@@ -61,14 +62,14 @@ describe('offers', () => {
     expect(offeredUpgrades(state).map((u) => u.id)).toEqual(['strongHands', 'betterSeeds', 'mustard'])
   })
 
-  it('offers all 26 when every condition is met', () => {
+  it('offers all 28 when every condition is met', () => {
     const state = withMoney(0, 1e6)
     for (const id of Object.keys(state.buildings) as (keyof typeof state.buildings)[]) state.buildings[id] = 100
     state.shelters.stable = 5
     state.aktionen.runs.flyer = 5
     for (let i = 0; i < 5; i++) state.residents.push({ species: 'chicken', name: i }, { species: 'pig', name: i })
-    expect(offeredUpgrades(state)).toHaveLength(26)
-    expect(UPGRADES).toHaveLength(26)
+    expect(offeredUpgrades(state)).toHaveLength(28)
+    expect(UPGRADES).toHaveLength(28)
   })
 })
 
@@ -123,6 +124,19 @@ describe('buyUpgrade', () => {
     expect(canBuyUpgrade(state, 'strongHands')).toBe(false)
     expect(buyUpgrade(state, 'strongHands')).toBe(false)
     expect(state.money.toNumber()).toBe(39)
+  })
+})
+
+describe('yieldPerRun', () => {
+  it('makes 1 unit per run without upgrades', () => {
+    expect(yieldPerRun(createInitialState(), 'tofuPress')).toBe(1)
+  })
+
+  it('adds a unit per run with a yield upgrade, only for its building', () => {
+    const state = owning('hydraulicPress')
+    expect(yieldPerRun(state, 'tofuPress')).toBe(2)
+    expect(yieldPerRun(state, 'oatMill')).toBe(1)
+    expect(rateFactor(state, 'tofuPress')).toBe(1)
   })
 })
 

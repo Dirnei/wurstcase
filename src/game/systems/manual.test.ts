@@ -99,6 +99,15 @@ function clicks(state: GameState, id: ManualActionId, times: number) {
 }
 
 describe('upgrade effects on manual actions', () => {
+  it('ignores yield upgrades', () => {
+    const state = createInitialState()
+    state.upgrades = ['hydraulicPress']
+    state.stock.soybeans = new Decimal(3)
+    performManual(state, 'pressTofu')
+    expect(state.stock.soybeans.toNumber()).toBe(0)
+    expect(state.stock.tofu.toNumber()).toBe(1)
+  })
+
   it('presses two tofu per click with strong hands', () => {
     const state = createInitialState()
     state.upgrades = ['strongHands']

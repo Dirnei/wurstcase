@@ -22,6 +22,8 @@ export type UpgradeId =
   | 'steamOven'
   | 'baristaCourse'
   | 'newMillstones'
+  | 'sausageFiller'
+  | 'oatFoamNozzle'
   | ChainMilestoneId
 
 /** Copies of every building of a chain at which its chain milestone upgrade comes on offer. */
@@ -46,6 +48,8 @@ export type UnlockClause =
 /** What an upgrade changes, on top of the base values in the other content. */
 export type UpgradeEffect =
   | { kind: 'rate'; buildings: readonly BuildingId[]; factor: number }
+  /** Whole units added to each run of a building that has an input; same input, same runs per second. */
+  | { kind: 'yield'; building: BuildingId; add: number }
   /** Units per manual click; a whole number. */
   | { kind: 'manual'; factor: number }
   /** Whole euros added to a product's price. */
@@ -109,7 +113,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'hydraulicPress',
     price: 300,
     when: [{ owned: 'tofuPress', atLeast: 5 }],
-    effect: { kind: 'rate', buildings: ['tofuPress'], factor: 2 },
+    effect: { kind: 'yield', building: 'tofuPress', add: 1 },
   },
   { id: 'moreStraw', price: 500, when: [{ shelters: 'stable', atLeast: 3 }], effect: { kind: 'space', shelter: 'stable', add: 2 } },
   {
@@ -125,7 +129,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'kneadingMachine',
     price: 12_000,
     when: [{ owned: 'seitanKitchen', atLeast: 5 }],
-    effect: { kind: 'rate', buildings: ['seitanKitchen'], factor: 2 },
+    effect: { kind: 'yield', building: 'seitanKitchen', add: 1 },
   },
   {
     id: 'leverkasRecipe',
@@ -145,7 +149,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'steamOven',
     price: 40_000,
     when: [{ owned: 'leverkasOven', atLeast: 5 }],
-    effect: { kind: 'rate', buildings: ['leverkasOven'], factor: 2 },
+    effect: { kind: 'yield', building: 'leverkasOven', add: 1 },
   },
   {
     id: 'baristaCourse',
@@ -157,7 +161,19 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'newMillstones',
     price: 6_000,
     when: [{ owned: 'oatMill', atLeast: 5 }],
-    effect: { kind: 'rate', buildings: ['oatMill'], factor: 2 },
+    effect: { kind: 'yield', building: 'oatMill', add: 1 },
+  },
+  {
+    id: 'sausageFiller',
+    price: 400,
+    when: [{ owned: 'tofuWurstKitchen', atLeast: 5 }],
+    effect: { kind: 'yield', building: 'tofuWurstKitchen', add: 1 },
+  },
+  {
+    id: 'oatFoamNozzle',
+    price: 8_000,
+    when: [{ owned: 'cafeBar', atLeast: 5 }],
+    effect: { kind: 'yield', building: 'cafeBar', add: 1 },
   },
   ...CHAIN_MILESTONES.map((milestone) => milestone.upgrade),
 ]

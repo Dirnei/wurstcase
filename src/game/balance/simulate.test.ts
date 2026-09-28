@@ -49,6 +49,11 @@ describe('simulate', () => {
     expect(run.final.customers.toNumber()).toBeGreaterThan(10)
   })
 
+  it('buys the hydraulic press, a yield upgrade', () => {
+    const { log } = simulate({ minutes: 60, clicksPerSecond: 2 })
+    expect(log.some((p) => p.kind === 'upgrade' && p.id === 'hydraulicPress')).toBe(true)
+  })
+
   it('buys better seeds once the fifth soybean field makes them pay', () => {
     const { log } = simulate({ minutes: 60, clicksPerSecond: 2 })
     const seeds = log.findIndex((p) => p.kind === 'upgrade' && p.id === 'betterSeeds')

@@ -1,15 +1,16 @@
 import { BUILDINGS } from '../content/buildings'
 import type { ResourceId } from '../content/resources'
 import type { GameState } from '../state'
-import { rateFactor } from './upgrades'
+import { rateFactor, yieldPerRun } from './upgrades'
 
 /** How long an input stays marked as short after a building last waited for it. */
 export const SHORTAGE_HOLD_SECONDS = 3
 
 /**
- * Runs every building for the given seconds, in whole units only. All copies of a building type
- * work towards the next unit together; a finished unit takes its whole input at once. Buildings
- * run in chain order, so output made earlier in the tick is available to later stages.
+ * Runs every building for the given seconds, in whole runs only. All copies of a building type
+ * work towards the next run together; a finished run takes its whole input at once and makes its
+ * yield. Buildings run in chain order, so output made earlier in the tick is available to later
+ * stages.
  */
 export function produce(state: GameState, seconds: number): void {
   state.waiting = {}
@@ -26,7 +27,7 @@ export function produce(state: GameState, seconds: number): void {
       units = Math.min(ready, state.stock[resource].div(ratio).floor().toNumber())
       state.stock[resource] = state.stock[resource].sub(units * ratio)
     }
-    state.stock[building.output] = state.stock[building.output].add(units)
+    state.stock[building.output] = state.stock[building.output].add(units * yieldPerRun(state, building.id))
 
     if (units < ready) {
       // Short of input: keep one unit ready for when it arrives, but bank nothing more.

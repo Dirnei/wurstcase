@@ -99,6 +99,8 @@ export const BUYER_ART: Record<BuyerId, Component> = { megaMeat: MegaMeatSack, b
 
 export const EFFECT_ART: Record<UpgradeEffect['kind'], Component> = {
   rate: FasterProduction,
+  // More per run is still faster production to the eye; no separate picture yet.
+  yield: FasterProduction,
   manual: HandWork,
   price: PriceTag,
   orders: Basket,

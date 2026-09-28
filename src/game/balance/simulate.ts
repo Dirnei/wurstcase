@@ -74,7 +74,7 @@ export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): Simul
   return { samples, log, offers, final: state }
 }
 
-const INCOME_EFFECTS = new Set(['rate', 'price', 'orders'])
+const INCOME_EFFECTS = new Set(['rate', 'yield', 'price', 'orders'])
 
 function recordOffers(state: GameState, offers: UpgradeOffer[]): void {
   for (const upgrade of UPGRADES) {

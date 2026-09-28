@@ -33,6 +33,7 @@ import {
   productsByPrice,
   rateFactor,
   spaceBonus,
+  yieldPerRun,
 } from '../systems/upgrades'
 import { steadyIncome, steadyOutput, usedOutput } from './steady'
 import { chainBuildings, manualPass } from './value'
@@ -65,7 +66,7 @@ const MIN_GAIN = 1e-9
 const NO_RANDOM = () => 0
 
 /** Upgrades that change income, and so are scored like buildings. */
-const INCOME_EFFECTS: readonly UpgradeEffect['kind'][] = ['rate', 'price', 'orders']
+const INCOME_EFFECTS: readonly UpgradeEffect['kind'][] = ['rate', 'yield', 'price', 'orders']
 
 /** Other upgrades are bought when they cost at most this many seconds of income. */
 const CHEAP_UPGRADE_SECONDS = 300
@@ -271,17 +272,18 @@ function servingChain(
       continue
     }
     const flow = steadyOutput(state.buildings, state.upgrades)
-    const used = usedOutput(flow)
+    const used = usedOutput(flow, state.upgrades)
     let need = units
     let cost = 0
     for (const building of [...stages].reverse()) {
-      cost += (need / (building.rate * rateFactor(state, building.id))) * buildingPrice(state, building.id).toNumber()
+      const runs = need / yieldPerRun(state, building.id)
+      cost += (runs / (building.rate * rateFactor(state, building.id))) * buildingPrice(state, building.id).toNumber()
       if (!building.input) {
         break
       }
       const { resource, ratio } = building.input
       const spare = Math.max(0, (flow[resource] ?? 0) - (used[resource] ?? 0))
-      need = Math.max(0, need * ratio - spare)
+      need = Math.max(0, runs * ratio - spare)
       if (need === 0) {
         break
       }

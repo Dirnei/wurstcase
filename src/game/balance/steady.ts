@@ -3,7 +3,7 @@ import { RESOURCES, type ResourceId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import type { UpgradeId } from '../content/upgrades'
 import { bestBuyer } from '../systems/bulkSales'
-import { ordersFactor, productPrice, productsByPrice, rateFactor } from '../systems/upgrades'
+import { ordersFactor, productPrice, productsByPrice, rateFactor, yieldPerRun } from '../systems/upgrades'
 
 /** Products per second the owned buildings turn out at steady state, each stage capped by its input. */
 export function steadyOutput(
@@ -16,9 +16,10 @@ export function steadyOutput(
   for (const building of BUILDINGS) {
     const count = buildings[building.id]
     const capacity = count * building.rate * rateFactor(owned, building.id)
-    flow[building.output] = building.input
+    const runs = building.input
       ? Math.min(capacity, (flow[building.input.resource] ?? 0) / building.input.ratio)
       : capacity
+    flow[building.output] = runs * yieldPerRun(owned, building.id)
   }
   return flow
 }
@@ -29,12 +30,17 @@ const SURPLUS_PRICE: ReadonlyMap<ResourceId, number> = new Map(
 )
 
 /** Units per second of each resource that the next stage of its chain takes, at steady state. */
-export function usedOutput(flow: Partial<Record<ResourceId, number>>): Partial<Record<ResourceId, number>> {
+export function usedOutput(
+  flow: Partial<Record<ResourceId, number>>,
+  upgrades: readonly UpgradeId[] = [],
+): Partial<Record<ResourceId, number>> {
+  const owned = { upgrades: [...upgrades] }
   const used: Partial<Record<ResourceId, number>> = {}
   for (const building of BUILDINGS) {
     if (building.input) {
       const { resource, ratio } = building.input
-      used[resource] = (used[resource] ?? 0) + (flow[building.output] ?? 0) * ratio
+      const runs = (flow[building.output] ?? 0) / yieldPerRun(owned, building.id)
+      used[resource] = (used[resource] ?? 0) + runs * ratio
     }
   }
   return used
@@ -52,7 +58,7 @@ export function steadyIncome(
 ): number {
   const owned = { upgrades: [...upgrades] }
   const flow = steadyOutput(buildings, upgrades)
-  const taken = usedOutput(flow)
+  const taken = usedOutput(flow, upgrades)
   let demand = customers * ORDERS_PER_CUSTOMER * ordersFactor(owned)
   let income = 0
   for (const product of productsByPrice(owned)) {

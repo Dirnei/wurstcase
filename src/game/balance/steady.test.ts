@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { BUILDING_IDS, type BuildingId } from '../content/buildings'
-import { steadyIncome, steadyOutput } from './steady'
+import { steadyIncome, steadyOutput, usedOutput } from './steady'
 
 function owned(counts: Partial<Record<BuildingId, number>>): Record<BuildingId, number> {
   return { ...Object.fromEntries(BUILDING_IDS.map((id) => [id, 0])), ...counts } as Record<BuildingId, number>
@@ -50,6 +50,18 @@ describe('steadyIncome', () => {
 })
 
 describe('steadyOutput', () => {
+  it('makes more from the same input with a yield upgrade', () => {
+    const short = steadyOutput(owned({ soybeanField: 1, tofuPress: 1 }), ['hydraulicPress'])
+    expect(short.tofu).toBeCloseTo(2 / 3, 10)
+    const full = steadyOutput(owned({ soybeanField: 3, tofuPress: 1 }), ['hydraulicPress'])
+    expect(full.tofu).toBeCloseTo(1, 10)
+  })
+
+  it('counts input per run, not per unit, as used', () => {
+    const flow = steadyOutput(owned({ soybeanField: 3, tofuPress: 1 }), ['hydraulicPress'])
+    expect(usedOutput(flow, ['hydraulicPress']).soybeans).toBeCloseTo(1.5, 10)
+  })
+
   it('gives no bonus for the count alone', () => {
     expect(steadyOutput(owned({ soybeanField: 25 })).soybeans).toBe(25)
   })

@@ -77,6 +77,9 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
 - A chain grows as a whole: once every building of a chain is owned 25, 50 and 100 times, a chain
   milestone upgrade comes on offer that doubles the whole chain. Owning more of one building alone
   gives no bonus.
+- **Efficiency upgrades** make a processing building or kitchen get more out of the same input:
+  each run makes one more unit ("3 Sojabohnen → 2 Tofu"). The next stage then becomes the
+  bottleneck, so the player grows the line further down.
 - **Manual start:** the player clicks "Sojabohnen ernten" (harvest soybeans) and "Tofu pressen"
   (press tofu) until they can afford the first field and press.
 

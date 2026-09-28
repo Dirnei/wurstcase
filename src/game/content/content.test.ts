@@ -254,7 +254,7 @@ describe('content', () => {
 
   it('has valid upgrades', () => {
     expect(new Set(UPGRADE_IDS).size).toBe(UPGRADE_IDS.length)
-    expect(UPGRADES).toHaveLength(26)
+    expect(UPGRADES).toHaveLength(28)
     for (const upgrade of UPGRADES) {
       expect(Number.isInteger(upgrade.price) && upgrade.price > 0, upgrade.id).toBe(true)
       expect(upgrade.when.length, upgrade.id).toBeGreaterThan(0)
@@ -269,6 +269,7 @@ describe('content', () => {
       if (effect.kind === 'manual') expect(Number.isInteger(effect.factor), upgrade.id).toBe(true)
       if ('add' in effect) expect(Number.isInteger(effect.add) && effect.add > 0, upgrade.id).toBe(true)
       if (effect.kind === 'rate') for (const id of effect.buildings) expect(BUILDING_IDS, upgrade.id).toContain(id)
+      if (effect.kind === 'yield') expect(BUILDINGS.find((b) => b.id === effect.building)?.input, upgrade.id).toBeDefined()
     }
   })
 
