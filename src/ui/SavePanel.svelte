@@ -1,6 +1,6 @@
 <script lang="ts">
   import { importSave } from '../game/save'
-  import { exportCurrentSave, replaceState } from './game.svelte'
+  import { exportCurrentSave, replaceState, startNewGame } from './game.svelte'
   import { t } from './i18n.svelte'
 
   let mode = $state<'closed' | 'export' | 'import'>('closed')
@@ -8,7 +8,17 @@
   let importText = $state('')
   let importMessage = $state<'invalid' | 'done' | null>(null)
   let copied = $state(false)
+  let newGameStarted = $state(false)
   let exportField = $state<HTMLTextAreaElement>()
+
+  function newGame() {
+    if (!confirm(t('save.newGameConfirm'))) {
+      return
+    }
+    startNewGame()
+    mode = 'closed'
+    newGameStarted = true
+  }
 
   function openExport() {
     exportText = exportCurrentSave()
@@ -53,8 +63,13 @@
     <div class="actions">
       <button type="button" class="game-button" onclick={openExport}>{t('save.export')}</button>
       <button type="button" class="game-button" onclick={openImport}>{t('save.import')}</button>
+      <button type="button" class="game-button" onclick={newGame}>{t('save.newGame')}</button>
     </div>
   </div>
+
+  {#if newGameStarted && mode === 'closed'}
+    <p role="status">{t('save.newGameDone')}</p>
+  {/if}
 
   {#if mode === 'export'}
     <label for="save-export">{t('save.exportHint')}</label>

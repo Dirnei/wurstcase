@@ -61,4 +61,10 @@ describe('availability and hasNew', () => {
     expect(hasNew(seen.upgrades, availability(state).upgrades)).toBe(false)
   })
 
+  it('badges an unlock again when the seen state is taken from a new game', () => {
+    const oldGame = availability(earned(1_000))
+    const newGame = availability(earned(0))
+    expect(hasNew(oldGame.lebenshof, availability(earned(100)).lebenshof)).toBe(false)
+    expect(hasNew(newGame.lebenshof, availability(earned(100)).lebenshof)).toBe(true)
+  })
 })

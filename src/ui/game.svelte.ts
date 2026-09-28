@@ -41,10 +41,26 @@ export function exportCurrentSave(): string {
   return exportSave(encodeSave(state, Date.now()))
 }
 
+const replaceListeners: (() => void)[] = []
+
+/** Runs the listener whenever the whole game is replaced; lets UI stores reset without a circular import. */
+export function onReplace(listener: () => void): void {
+  replaceListeners.push(listener)
+}
+
 /** Continues from an imported state and saves it right away. */
 export function replaceState(next: GameState): void {
   Object.assign(state, next)
   version++
+  for (const listener of replaceListeners) {
+    listener()
+  }
+  saveNow()
+}
+
+/** Replaces the game with a new one and writes it into both slots, so no old save remains. */
+export function startNewGame(): void {
+  replaceState(createInitialState())
   saveNow()
 }
 

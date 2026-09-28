@@ -35,6 +35,21 @@ describe('createSaveSlots', () => {
     expect(data.get('vegle.save.latest')).toBe('0')
   })
 
+  it('keeps no old save after two writes, even when the newest is damaged', () => {
+    const { storage, data } = memoryStorage()
+    const slots = createSaveSlots(() => storage)
+    slots.load()
+    slots.write(save(500))
+    slots.write(save(600))
+    // A new game is written twice, so both slots hold it.
+    slots.write(save(0))
+    slots.write(save(0))
+    expect(data.get('vegle.save.0')).toBe(save(0))
+    expect(data.get('vegle.save.1')).toBe(save(0))
+    data.set(`vegle.save.${data.get('vegle.save.latest')}`, '{broken')
+    expect(createSaveSlots(() => storage).load()).toMatchObject({ status: 'loaded', state: { playTime: 0 } })
+  })
+
   it('loads the slot the pointer names', () => {
     const { storage } = memoryStorage({
       'vegle.save.0': save(10, T + 5),
