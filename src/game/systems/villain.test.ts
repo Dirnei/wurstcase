@@ -81,13 +81,13 @@ describe('advanceVillain', () => {
 
 describe('activeFactors', () => {
   it('is neutral without an event', () => {
-    expect(activeFactors(createInitialState())).toEqual({ awareness: 1, conversion: 1, aktionCost: 1 })
+    expect(activeFactors(createInitialState())).toEqual({ awareness: 1, reach: 1, aktionCost: 1 })
   })
 
   it.each([
-    ['adCampaign', { awareness: 0.5, conversion: 1, aktionCost: 1 }],
-    ['study', { awareness: 1, conversion: 0, aktionCost: 1 }],
-    ['billboards', { awareness: 1, conversion: 1, aktionCost: 2 }],
+    ['adCampaign', { awareness: 0.5, reach: 1, aktionCost: 1 }],
+    ['study', { awareness: 1, reach: 0.5, aktionCost: 1 }],
+    ['billboards', { awareness: 1, reach: 1, aktionCost: 2 }],
   ] as const)('applies the %s factors', (event, factors) => {
     const state = createInitialState()
     state.megaMeat.active = { event, remaining: 10 }

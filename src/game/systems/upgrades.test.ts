@@ -8,7 +8,7 @@ import {
   awarenessFactor,
   buyUpgrade,
   canBuyUpgrade,
-  conversionFactor,
+  reachFactor,
   firstUpgradeAt,
   isUpgradeOffered,
   manualFactor,
@@ -149,7 +149,7 @@ describe('effect lookups', () => {
     expect(productPrice(state, 'leverkas')).toBe(25)
     expect(ordersFactor(state)).toBe(1)
     expect(awarenessFactor(state, 'chicken')).toBe(1)
-    expect(conversionFactor(state)).toBe(1)
+    expect(reachFactor(state)).toBe(1)
     expect(spaceBonus(state, 'stable')).toBe(0)
     expect(animalPriceFactor(state)).toBe(1)
     expect(aktionCostFactor(state)).toBe(1)
@@ -168,7 +168,7 @@ describe('effect lookups', () => {
     expect(aktionCostFactor(owning('instagram'))).toBe(0.75)
     expect(awarenessFactor(owning('henPhotoShoot'), 'chicken')).toBe(2)
     expect(awarenessFactor(owning('henPhotoShoot'), 'pig')).toBe(1)
-    expect(conversionFactor(owning('localNewspaper'))).toBe(1.5)
+    expect(reachFactor(owning('localNewspaper'))).toBe(1.5)
     expect(manualFactor(owning('strongHands'))).toBe(2)
   })
 })

@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 10
+export const CURRENT_FORMAT = 11
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -67,6 +67,15 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   8: (state) => (isRecord(state) ? { customerIncome: '0', ...state } : state),
   // 9 → 10 (storeroom): the first storeroom level; stock above its room is kept.
   9: (state) => (isRecord(state) ? { storeroom: 1, ...state } : state),
+  // 10 → 11 (campaign-growth): passive conversion is gone, and so is its progress; campaign run
+  // counts, which now set each campaign's size, are kept.
+  10: (state) => {
+    if (!isRecord(state)) {
+      return state
+    }
+    const { conversionProgress: _dropped, ...rest } = state
+    return rest
+  },
 }
 
 export type DecodeResult =
@@ -154,7 +163,6 @@ function writeState(state: GameState): Record<string, unknown> {
     unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, state.unitsSold[id].toString()])),
     residents: state.residents.map(({ species, name }) => ({ species, name })),
     shelters: { ...state.shelters },
-    conversionProgress: state.conversionProgress,
     awareness: state.awareness.toString(),
     awarenessProgress: state.awarenessProgress,
     aktionen: { cooldown: { ...state.aktionen.cooldown }, runs: { ...state.aktionen.runs } },
@@ -181,7 +189,7 @@ function readState(value: unknown): GameState | null {
   ) {
     return null
   }
-  const { playTime, orderProgress, assistant, conversionProgress, awarenessProgress, storeroom } = value
+  const { playTime, orderProgress, assistant, awarenessProgress, storeroom } = value
   const awareness = readAmount(value.awareness)
   const megaMeat = readMegaMeat(value.megaMeat)
   const money = readAmount(value.money)
@@ -200,8 +208,6 @@ function readState(value: unknown): GameState | null {
     !isFiniteNumber(orderProgress) ||
     orderProgress < 0 ||
     typeof assistant !== 'boolean' ||
-    !isFiniteNumber(conversionProgress) ||
-    conversionProgress < 0 ||
     !awareness ||
     !isFiniteNumber(awarenessProgress) ||
     awarenessProgress < 0 ||
@@ -271,7 +277,6 @@ function readState(value: unknown): GameState | null {
   return {
     ...state,
     playTime,
-    conversionProgress,
     awareness,
     awarenessProgress,
     megaMeat,

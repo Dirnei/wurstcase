@@ -4,10 +4,12 @@ import { MANUAL_ACTIONS } from '../content/manual'
 import { PRODUCTS, RESOURCES } from '../content/resources'
 import { SHELTERS, type ShelterId } from '../content/shelters'
 import { getUpgrade, type UpgradeEffect, type UpgradeId } from '../content/upgrades'
-import { ASSISTANT, CONVERSION_PER_AWARENESS, ORDERS_PER_CUSTOMER, POPULATION } from '../content/town'
+import { AKTIONEN } from '../content/aktionen'
+import { ASSISTANT, ORDERS_PER_CUSTOMER, POPULATION } from '../content/town'
 import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
 import type { BuyerId } from '../content/buyers'
+import { aktionCost, aktionEstimate, canRun, isAktionOffered, runAktion } from '../systems/aktionen'
 import { bestBuyer, bulkSell, hasLot } from '../systems/bulkSales'
 import { canPerform, isManualUnlocked, performManual } from '../systems/manual'
 import {
@@ -28,7 +30,6 @@ import {
   awarenessFactor,
   buyUpgrade,
   canBuyUpgrade,
-  conversionFactor,
   offeredUpgrades,
   ordersFactor,
   productPrice,
@@ -43,7 +44,8 @@ import { chainBuildings, manualPass } from './value'
 export interface Purchase {
   /** Game time in seconds. */
   time: number
-  kind: 'building' | 'assistant' | 'shelter' | 'animal' | 'upgrade' | 'storeroom'
+  /** For an `aktion`, the price is in awareness points, not euros. */
+  kind: 'building' | 'assistant' | 'shelter' | 'animal' | 'upgrade' | 'storeroom' | 'aktion'
   id: string
   price: number
 }
@@ -75,7 +77,7 @@ const INCOME_EFFECTS: readonly UpgradeEffect['kind'][] = ['rate', 'yield', 'pric
 /** Other upgrades, and storeroom expansions while a good is full, are bought when they cost at most this many seconds of income. */
 const CHEAP_UPGRADE_SECONDS = 300
 
-/** A rescue is scored by what the customers it converts within this many seconds add to income. */
+/** A rescue is scored by what the customers its awareness wins through campaigns within this many seconds add to income. */
 const RESCUE_HORIZON_SECONDS = 600
 
 /** How often the player sells surplus in bulk, and how many seconds of use or orders it keeps. */
@@ -98,6 +100,7 @@ export function playerStep(player: Player, state: GameState, seconds: number, lo
     sellSurplus(state, player.surplusBuyer)
     expandWhenFull(state, log, player.surplusBuyer)
   }
+  runBestCampaign(state, log)
   if (canHireAssistant(state)) {
     hireAssistant(state)
     log({ time: state.playTime, kind: 'assistant', id: 'assistant', price: ASSISTANT.price })
@@ -200,6 +203,32 @@ function buyCheapUpgrades(state: GameState, log: (p: Purchase) => void, surplusB
       log({ time: state.playTime, kind: 'upgrade', id: upgrade.id, price: upgrade.price })
     }
   }
+}
+
+/** Campaigns that win customers, as opposed to the fact check. */
+const CAMPAIGNS = AKTIONEN.filter((aktion) => !aktion.endsEvent).map((aktion) => aktion.id)
+
+/** Customers a campaign wins per awareness point right now. */
+function customersPerPoint(state: Readonly<GameState>, id: (typeof CAMPAIGNS)[number]): number {
+  return aktionEstimate(state, id) / aktionCost(state, id)
+}
+
+/** Of the campaigns that can run now, runs the one winning the most customers per awareness point. */
+function runBestCampaign(state: GameState, log: (p: Purchase) => void): void {
+  const ready = CAMPAIGNS.filter((id) => canRun(state, id) === 'ok' && aktionEstimate(state, id) > 0)
+  if (ready.length === 0) {
+    return
+  }
+  const best = ready.reduce((a, b) => (customersPerPoint(state, b) > customersPerPoint(state, a) ? b : a))
+  const cost = aktionCost(state, best)
+  runAktion(state, best)
+  log({ time: state.playTime, kind: 'aktion', id: best, price: cost })
+}
+
+/** The best customers per awareness point among the offered campaigns, ready or not; 0 with none. */
+function bestCustomersPerPoint(state: Readonly<GameState>): number {
+  const offered = CAMPAIGNS.filter((id) => isAktionOffered(state, id))
+  return Math.max(0, ...offered.map((id) => customersPerPoint(state, id)))
 }
 
 function expandWhenFull(state: GameState, log: (p: Purchase) => void, surplusBuyer: BuyerId): void {
@@ -312,7 +341,8 @@ function servingChain(
 
 /**
  * Payback of the best rescue, bought together with the production its new customers need. The
- * customers it converts within the horizon first take the products now going to the biogas plant;
+ * customers its awareness wins through campaigns within the horizon first take the products now
+ * going to the biogas plant;
  * orders beyond that need new chain capacity, which is added to the price.
  */
 function rescueScore(state: Readonly<GameState>, surplusBuyer: BuyerId): { species: SpeciesId; score: number } | null {
@@ -321,14 +351,16 @@ function rescueScore(state: Readonly<GameState>, surplusBuyer: BuyerId): { speci
     return null
   }
   const customers = state.customers.toNumber()
-  const share = Math.max(0, 1 - customers / POPULATION)
-  const converted =
-    CONVERSION_PER_AWARENESS *
-    conversionFactor(state) *
-    getSpecies(species).awareness *
-    awarenessFactor(state, species) *
-    share *
-    RESCUE_HORIZON_SECONDS
+  // Awareness wins customers only through campaigns, so the rescue is worth what its awareness of
+  // the horizon buys at the best campaign's current rate; with no campaign offered, nothing.
+  const perPoint = bestCustomersPerPoint(state)
+  if (perPoint === 0) {
+    return null
+  }
+  const converted = Math.min(
+    getSpecies(species).awareness * awarenessFactor(state, species) * RESCUE_HORIZON_SECONDS * perPoint,
+    POPULATION - customers,
+  )
   const orders = converted * ORDERS_PER_CUSTOMER * ordersFactor(state)
   const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer)
   const fromSurplus = steadyIncome(state.buildings, customers + converted, state.upgrades, surplusBuyer) - before

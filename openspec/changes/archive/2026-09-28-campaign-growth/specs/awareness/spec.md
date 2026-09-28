@@ -1,11 +1,4 @@
-# awareness Specification
-
-## Purpose
-
-Turns the Lebenshof's residents into the currency of customer growth. Animals produce awareness
-into a pool, and the player spends it on campaigns, the only way townspeople become customers.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Awareness production
 Each resident SHALL produce awareness at its species' rate (chicken 1, pig 5, cow 20 per second).
@@ -43,18 +36,18 @@ awareness, the rate SHALL be marked as reduced.
   campaign being run
 - **THEN** there are still 10 customers, and the pool has grown by 600,000
 
-### Requirement: Town population
-Act 1's town SHALL have a population of 20,000. The sales panel SHALL show the customers
-together with the population, both in the game's number format ("12 of 20K townspeople").
-
-#### Scenario: New game
-- **WHEN** a new game starts
-- **THEN** the sales panel shows "Customers: 10 of 20K townspeople" in English and
-  "Kundschaft: 10 von 20 Tsd. Einwohnern" in German
-
 ### Requirement: More customers, more orders
 Converted customers SHALL place orders in the same way as the starting neighbours.
 
 #### Scenario: Orders follow customers
 - **WHEN** campaigns have raised the customers from 10 to 40
 - **THEN** open orders build up four times as fast as with 10 customers
+
+## REMOVED Requirements
+
+### Requirement: Passive conversion
+**Reason**: Customers now grow only through campaigns that cost awareness, so every new customer
+is the result of a player decision and the awareness pool is the currency of growth.
+**Migration**: Run campaigns on the Aktionen tab; their reach grows with every run. The saved
+passive conversion progress is dropped by the save migration. Automated campaigns for idle play
+are planned for a later change.

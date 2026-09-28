@@ -79,7 +79,7 @@ The buy button SHALL be unavailable while money is short.
 
 ### Requirement: Upgrade effects
 Values that other capabilities define (building output rates, output per run, units per manual
-click, product prices, orders per customer, species awareness, passive conversion, shelter space,
+click, product prices, orders per customer, species awareness, campaign reach, shelter space,
 animal prices and Aktion awareness costs) SHALL be the values without upgrades. Owned upgrades
 SHALL change them as follows:
 
@@ -94,7 +94,8 @@ SHALL change them as follows:
   everywhere a product's price counts, including the most-expensive-first order.
 - An **orders** effect SHALL multiply the orders each customer places per second.
 - An **awareness** effect SHALL multiply a species' awareness per second.
-- A **conversion** effect SHALL multiply the passive conversion rate.
+- A **conversion** effect SHALL multiply the customers each campaign wins, together with any
+  counter-event factor, before rounding down.
 - A **space** effect SHALL add whole space to each shelter of a type, including shelters already
   built.
 - An **animal price** effect SHALL multiply MegaMeat's animal prices, rounded up to whole euros.
@@ -158,8 +159,14 @@ building, the added units and the output resource per run.
 - **THEN** the next chicken costs €40
 
 #### Scenario: Instagram under billboards
-- **WHEN** the player owns the Instagram account and MegaMeat's billboards event is active
-- **THEN** the flyers cost 150 awareness
+- **WHEN** the player owns the Instagram account, the flyers have been run 3 times and MegaMeat's
+  billboards event is active
+- **THEN** the flyers cost 293 awareness
+
+#### Scenario: Local newspaper
+- **WHEN** the player owns the local newspaper, the flyers have not been run yet, there are 10
+  customers and the player runs the flyers
+- **THEN** there are 39 customers
 
 ### Requirement: Act 1 upgrades
 The game SHALL offer these upgrades (starting values), plus the chain milestone upgrades:
@@ -180,7 +187,7 @@ The game SHALL offer these upgrades (starting values), plus the chain milestone 
 | Leverkas secret recipe | 1 Leverkas oven | €20,000 | Leverkas +€10 |
 | Tough negotiator | 10 residents | €5,000 | animal prices ×0.8 |
 | Pig influencer | 3 pigs | €6,000 | pigs' awareness ×2 |
-| Local newspaper | €10,000 earned | €8,000 | passive conversion ×1.5 |
+| Local newspaper | €10,000 earned | €8,000 | campaigns win ×1.5 customers |
 | Steam oven | 5 Leverkas ovens | €40,000 | Leverkas ovens +1 Leverkas per run |
 | Barista course | 3 café bars | €4,000 | Hafer-Cappuccino +€4 |
 | New millstones | 5 oat mills | €6,000 | oat mills +1 oat drink per run |

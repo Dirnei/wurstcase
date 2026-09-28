@@ -50,7 +50,7 @@ sell food ──▶ € ──▶ rescue animals ──▶ Lebenshof creates awa
 | Intermediates | Tofu, seitan, oat drink — produced by processing buildings |
 | Products | Tofu-Wurst, Leverkas, Hafer-Cappuccino — sold to customers |
 | 👥 Customers | Townspeople who buy vegan; they determine demand |
-| 📣 Awareness | Produced by animals; converts townspeople into customers; spendable on Aktionen |
+| 📣 Awareness | Produced by animals; spent on Aktionen, which win townspeople as customers |
 | 🐔🐷🐄 Animals | Individually named residents of the Lebenshof |
 | 🏠 Space | Lebenshof capacity (barns, pastures); limits how many animals you can house |
 
@@ -112,11 +112,17 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
 
 - Each animal produces awareness per second, larger animals more. Starting values:
   chicken 1, pig 5, cow 20 (tuned in play).
-- **Passive conversion:** awareness steadily converts townspeople into customers. Conversion slows
-  as the town saturates (it is proportional to the unconverted share of the population).
-- **Aktionen (campaigns):** awareness is also spent on campaigns that convert much faster —
-  e.g. "Flyer am Wochenmarkt" (market flyers), "Tag der offenen Hoftür" (open farm day), "Viral
-  reel: pig on a slide". Rewards active play; idle play still progresses.
+- **No passive conversion:** awareness only fills a pool. Townspeople become customers only when
+  the player spends awareness on **Aktionen (campaigns)** — e.g. "Flyer am Wochenmarkt" (market
+  flyers), "Tag der offenen Hoftür" (open farm day), "Viral reel: pig on a slide" — so every new
+  customer is the result of a choice. (Changed by `campaign-growth`; the earlier design converted
+  passively and let campaigns only speed it up.)
+- **Campaigns grow with each run:** every run makes a campaign's next run cost more (×1.25) and
+  reach more people (×1.1). Cost outgrows reach, so a campaign wins fewer customers per awareness
+  point run by run and the bigger campaigns take over. Reach slows as the town saturates (it is
+  proportional to the unconverted share of the population). The flyers unlock with the Lebenshof.
+- **Idle play:** customers do not grow while the player is away. A way to automate campaigns (for
+  example a hireable campaign manager) is planned for a later change, after playtesting.
 - Act 1 population: one small town (Kleinstadt) of **20,000** people.
 
 ### 3.6 MegaMeat Corp (villain)
@@ -215,7 +221,7 @@ src/
     systems/             one file per mechanic:
       production.ts      fields → processing → products, with stalls
       sales.ts           demand, most-expensive-first selling
-      awareness.ts       passive conversion, Aktionen
+      awareness.ts       awareness production, Aktionen
       rescue.ts          buying animals, space, names
       villain.ts         MegaMeat counter-events
       prestige.ts        Neustart, Rezepte, act progression

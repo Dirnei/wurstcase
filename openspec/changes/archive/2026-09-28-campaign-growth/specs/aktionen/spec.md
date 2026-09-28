@@ -1,11 +1,4 @@
-# aktionen Specification
-
-## Purpose
-
-Lets the player spend collected awareness on campaigns, which are the only way to win customers
-and grow with every run, and on a fact check that ends MegaMeat's current counter-event.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Aktionen panel
 The Aktionen tab SHALL be locked until the first Aktion is unlocked, and SHALL stay unlocked after
@@ -97,29 +90,3 @@ or how long the cooldown still runs.
 #### Scenario: Never beyond the town
 - **WHEN** there are 19,990 customers and the player runs a campaign that would win 50
 - **THEN** there are at most 20,000 customers
-
-### Requirement: Fact check
-Running the fact check SHALL end the active counter-event at once. It SHALL be unavailable while no
-counter-event is active.
-
-#### Scenario: Ending the ad campaign
-- **WHEN** the ad campaign has 90 seconds left, the pool holds 400 and the player runs the fact
-  check
-- **THEN** the campaign ends, awareness counts fully again and the pool holds 100
-
-#### Scenario: Nothing to check
-- **WHEN** no counter-event is active
-- **THEN** the fact check button is unavailable
-
-### Requirement: Aktionen are saved
-The awareness pool, the fraction towards its next point, each Aktion's remaining cooldown and how
-often each Aktion has been run SHALL be part of the save. A save from before this change SHALL
-load with an empty pool, no cooldowns and no Aktion run.
-
-#### Scenario: Reload during a cooldown
-- **WHEN** the open farm day has 100 seconds of cooldown left and the page is reloaded
-- **THEN** it still has about 100 seconds left
-
-#### Scenario: Older save
-- **WHEN** a save from before this change with 3 chickens and 40 customers is loaded
-- **THEN** the game continues with 3 chickens, 40 customers and an empty pool

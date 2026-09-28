@@ -118,6 +118,8 @@ switched to MegaMeat on the page. The scripted player SHALL:
 - every 10 seconds of game time, sell to the surplus buyer whatever stock is more than its
   buildings use, or for products more than the customers order, in the next 30 seconds; when the
   surplus buyer is MegaMeat, resources MegaMeat does not buy go to the biogas plant
+- run a campaign whenever one is ready and the pool can pay for it, choosing the one that wins
+  the most customers per awareness point right now
 - expand the storeroom when any resource is marked as full and the expansion costs at most 300
   seconds of its current income, before choosing its next purchase
 - otherwise buy the purchase with the shortest payback in the current state, and save up for it
@@ -125,11 +127,12 @@ switched to MegaMeat on the page. The scripted player SHALL:
   purchase together with the rest of that chain. Income from a purchase SHALL count what
   customers pay for the products they order and what the surplus buyer pays for the rest. A
   rescue counts as a purchase together with the shelter it needs when space is short; its income
-  is what the customers it converts in the next 10 minutes add.
+  is what the customers add that its awareness of the next 10 minutes would win through the
+  campaign with the most customers per awareness point right now.
 
 The same content and settings SHALL always give the same result. The page SHALL plot money, total
 earned, income per second and customers over time, and SHALL list every purchase, storeroom
-expansions included, with its game time.
+expansions and campaign runs included, with its game time.
 
 #### Scenario: Deterministic
 - **WHEN** the simulation is run twice with the same settings
@@ -150,7 +153,12 @@ expansions included, with its game time.
 
 #### Scenario: Customers grow
 - **WHEN** a default simulation has run
-- **THEN** it has rescued animals and ends with more than the 10 starting customers
+- **THEN** it has rescued animals, has run campaigns, and ends with more than the 10 starting
+  customers
+
+#### Scenario: Campaigns in the log
+- **WHEN** a default simulation has run
+- **THEN** the log lists the first flyer run with the game time at which it happened
 
 #### Scenario: Feeding the industry
 - **WHEN** the simulation runs with MegaMeat as the surplus buyer and otherwise default settings

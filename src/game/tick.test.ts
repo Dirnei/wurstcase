@@ -38,7 +38,6 @@ describe('tick', () => {
     expect(state.unitsSold.biogas.toNumber()).toBe(0)
     expect(state.residents).toEqual([])
     expect(state.shelters).toEqual({ stable: 0, pasture: 0 })
-    expect(state.conversionProgress).toBe(0)
     expect(state.awareness.toNumber()).toBe(0)
     expect(state.awarenessProgress).toBe(0)
     expect(state.aktionen.cooldown).toEqual({ flyer: 0, openFarmDay: 0, viralReel: 0, factCheck: 0 })
@@ -75,11 +74,12 @@ describe('tick', () => {
     expect(forty.openOrders.toNumber()).toBe(20)
   })
 
-  it('converts townspeople through the Lebenshof while time passes', () => {
+  it('wins no customers through the Lebenshof alone while time passes', () => {
     const state = createInitialState()
     state.residents.push({ species: 'cow', name: 0 })
     tick(state, 60)
-    expect(state.customers.toNumber()).toBeGreaterThan(10)
+    expect(state.customers.toNumber()).toBe(10)
+    expect(state.awareness.toNumber()).toBe(1_200)
   })
 
   it('never loses a resident over 12 hours', () => {

@@ -59,7 +59,7 @@ describe('tabUnlockAt', () => {
   it('gives the earnings shown in the lock hints', () => {
     expect(tabUnlockAt('upgrades')).toBe(30)
     expect(tabUnlockAt('lebenshof')).toBe(100)
-    expect(tabUnlockAt('aktionen')).toBe(1_000)
+    expect(tabUnlockAt('aktionen')).toBe(100)
   })
 
   it('gives nothing for tabs that are never locked', () => {

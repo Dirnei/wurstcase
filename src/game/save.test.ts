@@ -153,11 +153,9 @@ describe('encodeSave / decodeSave', () => {
     ]
     state.shelters.stable = 2
     state.shelters.pasture = 1
-    state.conversionProgress = 0.375
     const restored = decodedState(encodeSave(state, NOW))
     expect(restored.residents).toEqual(state.residents)
     expect(restored.shelters).toEqual({ stable: 2, pasture: 1 })
-    expect(restored.conversionProgress).toBe(0.375)
   })
 
   it('migrates a format 4 save to an empty Lebenshof', () => {
@@ -174,7 +172,6 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.customers.toNumber()).toBe(40)
     expect(restored.residents).toEqual([])
     expect(restored.shelters).toEqual({ stable: 0, pasture: 0 })
-    expect(restored.conversionProgress).toBe(0)
   })
 
   it('restores the awareness pool, Aktionen and MegaMeat', () => {
@@ -249,6 +246,21 @@ describe('encodeSave / decodeSave', () => {
     const restored = decodedState(envelope(8, format8))
     expect(restored.customerIncome.toNumber()).toBe(0)
     expect(restored.customers.toNumber()).toBe(40)
+  })
+
+  it('migrates a format 10 save and drops the passive conversion progress', () => {
+    const format10 = savedState()
+    format10.conversionProgress = 0.7
+    format10.customers = '1234'
+    format10.awareness = '567'
+    format10.aktionen.runs.flyer = 6
+    const restored = decodedState(envelope(10, format10))
+    expect(restored).not.toHaveProperty('conversionProgress')
+    expect(restored.customers.toNumber()).toBe(1234)
+    expect(restored.awareness.toNumber()).toBe(567)
+    expect(restored.aktionen.runs.flyer).toBe(6)
+    expect(JSON.parse(encodeSave(restored, NOW))).toMatchObject({ format: 11 })
+    expect(JSON.parse(encodeSave(restored, NOW)).state).not.toHaveProperty('conversionProgress')
   })
 
   it('restores the storeroom level exactly', () => {
@@ -431,8 +443,6 @@ describe('encodeSave / decodeSave', () => {
     ['fractional shelter count', (s: Record<string, any>) => (s.shelters.stable = 1.5)],
     ['missing shelter count', (s: Record<string, any>) => delete s.shelters.pasture],
     ['missing shelters', (s: Record<string, any>) => delete s.shelters],
-    ['negative conversion progress', (s: Record<string, any>) => (s.conversionProgress = -0.1)],
-    ['conversion progress as text', (s: Record<string, any>) => (s.conversionProgress = '0.5')],
     ['fractional awareness pool', (s: Record<string, any>) => (s.awareness = '2.5')],
     ['missing awareness pool', (s: Record<string, any>) => delete s.awareness],
     ['negative awareness progress', (s: Record<string, any>) => (s.awarenessProgress = -1)],

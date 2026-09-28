@@ -19,5 +19,3 @@ export const CUSTOMER_INCOME_SECONDS = 300
 /** Act 1's town: customers never exceed it. */
 export const POPULATION = 20_000
 
-/** Townspeople converted per second for each awareness per second, before saturation. */
-export const CONVERSION_PER_AWARENESS = 0.02

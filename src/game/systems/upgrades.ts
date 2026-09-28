@@ -133,7 +133,8 @@ export function awarenessFactor(state: Owned, species: SpeciesId): number {
   return product(owned(state, 'awareness').filter((e) => e.species === species).map((e) => e.factor))
 }
 
-export function conversionFactor(state: Owned): number {
+/** Multiplies the customers each campaign wins; the effect kind keeps its old name, `conversion`. */
+export function reachFactor(state: Owned): number {
   return product(owned(state, 'conversion').map((e) => e.factor))
 }
 

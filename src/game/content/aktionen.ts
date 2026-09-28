@@ -1,4 +1,5 @@
 import type { SpeciesId } from './animals'
+import { LEBENSHOF_UNLOCK_AT } from './shelters'
 
 export type AktionId = 'flyer' | 'openFarmDay' | 'viralReel' | 'factCheck'
 
@@ -14,14 +15,22 @@ export interface AktionDef {
   customers?: number
   /** Seconds of game time before it can run again. */
   cooldown: number
+  /**
+   * Campaigns only: the cost is multiplied by this for every run so far. It outgrows the reach, so
+   * each campaign wins fewer customers per point run by run and the bigger ones take over.
+   */
+  costGrowth?: number
+  /** Campaigns only: the customers won are multiplied by this for every run so far. */
+  reachGrowth?: number
   /** Ends MegaMeat's active counter-event instead of converting anyone; offered once one has started. */
   endsEvent?: boolean
 }
 
 export const AKTIONEN: readonly AktionDef[] = [
-  { id: 'flyer', unlockAt: 1_000, cost: 100, customers: 20, cooldown: 30 },
-  { id: 'openFarmDay', unlockAt: 5_000, cost: 1_500, customers: 300, cooldown: 120 },
-  { id: 'viralReel', unlockAt: 15_000, requiresSpecies: 'pig', cost: 6_000, customers: 1_500, cooldown: 300 },
+  // The flyers unlock with the Lebenshof, so the first residents' awareness has a use at once.
+  { id: 'flyer', unlockAt: LEBENSHOF_UNLOCK_AT, cost: 100, customers: 20, cooldown: 30, costGrowth: 1.25, reachGrowth: 1.1 },
+  { id: 'openFarmDay', unlockAt: 5_000, cost: 1_500, customers: 300, cooldown: 120, costGrowth: 1.25, reachGrowth: 1.1 },
+  { id: 'viralReel', unlockAt: 15_000, requiresSpecies: 'pig', cost: 6_000, customers: 1_500, cooldown: 300, costGrowth: 1.25, reachGrowth: 1.1 },
   { id: 'factCheck', unlockAt: 0, endsEvent: true, cost: 300, cooldown: 60 },
 ]
 

@@ -63,6 +63,12 @@ describe('simulate', () => {
     expect(fed.final.customers.toNumber()).toBeLessThanOrEqual(fair.final.customers.toNumber() / 2)
   })
 
+  it('runs the flyers and grows its customers only through campaigns', () => {
+    const { log, final } = simulate({ minutes: 60, clicksPerSecond: 2 })
+    expect(log.some((p) => p.kind === 'aktion' && p.id === 'flyer')).toBe(true)
+    expect(final.customers.toNumber()).toBeGreaterThan(10)
+  })
+
   it('expands the storeroom when goods fill up', () => {
     const { log, final } = simulate({ minutes: 60, clicksPerSecond: 2 })
     const expansions = log.filter((p) => p.kind === 'storeroom')

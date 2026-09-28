@@ -22,6 +22,7 @@
   import { chainBalance, manualPass } from '../game/balance/value'
   import { translate } from '../i18n/translate'
   import { backToGame } from '../ui/route.svelte'
+  import ArtSlot from '../ui/ArtSlot.svelte'
   import ArtSheet from './ArtSheet.svelte'
   import Chart from './Chart.svelte'
 
@@ -215,9 +216,18 @@
                         ? `Upgrade: ${name(`upgrade.${purchase.id}.name`)}`
                         : purchase.kind === 'storeroom'
                         ? 'Storeroom expansion'
+                        : purchase.kind === 'aktion'
+                        ? `Campaign: ${name(`aktion.${purchase.id}.name`)}`
                         : `${purchase.kind === 'shelter' ? 'Shelter' : 'Animal'}: ${purchase.id}`}
                   </td>
-                  <td class="num">{euro(purchase.price)}</td>
+                  <td class="num">
+                    {#if purchase.kind === 'aktion'}
+                      <!-- Campaigns are paid in awareness, not euros. -->
+                      <span class="points"><ArtSlot kind="stat" id="awareness" size="sm" />{purchase.price.toLocaleString('en')}</span>
+                    {:else}
+                      {euro(purchase.price)}
+                    {/if}
+                  </td>
                 </tr>
               {/each}
             </tbody>
@@ -454,6 +464,12 @@
   .num {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+  }
+
+  .points {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .status[data-status='in window'] {

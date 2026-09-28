@@ -21,10 +21,10 @@ function withPool(pool: number, customers = 10, earned = 1_000): GameState {
 }
 
 describe('isAktionenUnlocked', () => {
-  it('shows the panel from €1,000 earned', () => {
-    expect(isAktionenUnlocked(withPool(0, 10, 999))).toBe(false)
-    expect(isAktionenUnlocked(withPool(0, 10, 1_000))).toBe(true)
-    expect(isAktionOffered(withPool(0, 10, 1_000), 'flyer')).toBe(true)
+  it('shows the panel from €100 earned', () => {
+    expect(isAktionenUnlocked(withPool(0, 10, 99))).toBe(false)
+    expect(isAktionenUnlocked(withPool(0, 10, 100))).toBe(true)
+    expect(isAktionOffered(withPool(0, 10, 100), 'flyer')).toBe(true)
   })
 })
 
@@ -125,7 +125,7 @@ describe('runAktion', () => {
   })
 
   it('refuses an Aktion that is not offered', () => {
-    const state = withPool(10_000, 10, 999)
+    const state = withPool(10_000, 10, 99)
     expect(canRun(state, 'flyer')).toBe('locked')
     expect(runAktion(state, 'flyer')).toBe(false)
   })
@@ -143,11 +143,73 @@ describe('upgrade effects on Aktionen', () => {
 
 describe('firstAktionAt', () => {
   it('is the flyer threshold, ignoring the fact check and the viral video', () => {
-    expect(firstAktionAt()).toBe(1_000)
+    expect(firstAktionAt()).toBe(100)
   })
 
   it('matches the moment the Aktionen unlock in a game without counter-events', () => {
     expect(isAktionenUnlocked(withPool(0, 10, firstAktionAt() - 1))).toBe(false)
     expect(isAktionenUnlocked(withPool(0, 10, firstAktionAt()))).toBe(true)
+  })
+})
+
+describe('campaigns grow with each run', () => {
+  it('offers the flyers from €100 earned', () => {
+    expect(isAktionOffered(withPool(0, 10, 99), 'flyer')).toBe(false)
+    expect(isAktionOffered(withPool(0, 10, 100), 'flyer')).toBe(true)
+    expect(firstAktionAt()).toBe(100)
+  })
+
+  it('costs 125 and wins 21 on the second flyer run', () => {
+    const state = withPool(200)
+    state.aktionen.runs.flyer = 1
+    expect(aktionCost(state, 'flyer')).toBe(125)
+    expect(aktionEstimate(state, 'flyer')).toBe(21)
+    expect(runAktion(state, 'flyer')).toBe(true)
+    expect(state.awareness.toNumber()).toBe(75)
+    expect(state.customers.toNumber()).toBe(31)
+    expect(state.aktionen.runs.flyer).toBe(2)
+  })
+
+  it('costs 477 and wins 38 on the eighth flyer run', () => {
+    const state = withPool(0)
+    state.aktionen.runs.flyer = 7
+    expect(aktionCost(state, 'flyer')).toBe(477)
+    expect(aktionEstimate(state, 'flyer')).toBe(38)
+  })
+
+  it('keeps the fact check at the same cost', () => {
+    const state = withPool(0)
+    state.aktionen.runs.factCheck = 5
+    expect(aktionCost(state, 'factCheck')).toBe(300)
+  })
+
+  it('wins half as many while the study runs', () => {
+    const state = withPool(150)
+    state.megaMeat.active = { event: 'study', remaining: 60 }
+    expect(runAktion(state, 'flyer')).toBe(true)
+    expect(state.customers.toNumber()).toBe(19)
+  })
+
+  it('wins ×1.5 with the local newspaper', () => {
+    const state = withPool(150)
+    state.upgrades = ['localNewspaper']
+    expect(runAktion(state, 'flyer')).toBe(true)
+    expect(state.customers.toNumber()).toBe(39)
+  })
+
+  it('stacks growth, billboards and Instagram in the cost', () => {
+    const state = withPool(0)
+    state.upgrades = ['instagram']
+    state.aktionen.runs.flyer = 3
+    state.megaMeat.active = { event: 'billboards', remaining: 90 }
+    expect(aktionCost(state, 'flyer')).toBe(293)
+  })
+
+  it('doubles the grown cost under billboards', () => {
+    const state = withPool(0)
+    state.aktionen.runs.flyer = 1
+    state.megaMeat.active = { event: 'billboards', remaining: 90 }
+    expect(aktionCost(state, 'flyer')).toBe(250)
+    expect(aktionCost(state, 'factCheck')).toBe(600)
   })
 })

@@ -3,7 +3,8 @@ export type MegaMeatEventId = 'adCampaign' | 'study' | 'billboards'
 /** Multipliers a counter-event applies; 1 means unaffected. */
 export interface EventFactors {
   awareness: number
-  conversion: number
+  /** Multiplies the customers a campaign wins. */
+  reach: number
   aktionCost: number
 }
 
@@ -17,7 +18,7 @@ export interface MegaMeatEventDef {
 /** MegaMeat's counter-events in the order they start; after the last comes the first again. */
 export const MEGAMEAT_EVENTS: readonly MegaMeatEventDef[] = [
   { id: 'adCampaign', duration: 120, factors: { awareness: 0.5 } },
-  { id: 'study', duration: 60, factors: { conversion: 0 } },
+  { id: 'study', duration: 60, factors: { reach: 0.5 } },
   { id: 'billboards', duration: 90, factors: { aktionCost: 2 } },
 ]
 

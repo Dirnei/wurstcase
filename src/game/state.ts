@@ -58,8 +58,6 @@ export interface GameState {
   residents: Resident[]
   /** How many of each shelter type the Lebenshof has. */
   shelters: Record<ShelterId, number>
-  /** Fraction towards the next customer converted by awareness. */
-  conversionProgress: number
   /** Awareness pool in whole points, spent on Aktionen. */
   awareness: Decimal
   /** Fraction towards the next awareness point. */
@@ -100,7 +98,6 @@ export function createInitialState(): GameState {
     unitsSold: Object.fromEntries(BUYER_IDS.map((id) => [id, new Decimal(0)])) as Record<BuyerId, Decimal>,
     residents: [],
     shelters: Object.fromEntries(SHELTER_IDS.map((id) => [id, 0])) as Record<ShelterId, number>,
-    conversionProgress: 0,
     awareness: new Decimal(0),
     awarenessProgress: 0,
     aktionen: {

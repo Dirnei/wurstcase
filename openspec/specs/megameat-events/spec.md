@@ -32,7 +32,7 @@ Counter-events SHALL start in this order, starting again from the top after the 
 | Counter-event | Effect | Duration |
 |---|---|---|
 | Ad campaign "Echte Männer essen Fleisch" | awareness counts half | 120 s |
-| A MegaMeat-funded "study" | passive conversion stops | 60 s |
+| A MegaMeat-funded "study" | campaigns win half as many customers | 60 s |
 | MegaMeat books every billboard in town | Aktionen cost double | 90 s |
 
 An event SHALL end by itself when its duration has passed.
@@ -43,12 +43,17 @@ An event SHALL end by itself when its duration has passed.
   is the ad campaign again
 
 #### Scenario: Billboards
-- **WHEN** the billboards event is active
-- **THEN** the flyers cost 200 awareness and the fact check costs 600
+- **WHEN** the flyers have been run once and the billboards event is active
+- **THEN** the flyers cost 250 awareness and the fact check costs 600
+
+#### Scenario: Study halves campaigns
+- **WHEN** the study is active, the flyers have not been run yet, there are 10 customers and the
+  player runs the flyers
+- **THEN** there are 19 customers
 
 #### Scenario: Runs out
 - **WHEN** the study started 60 seconds ago
-- **THEN** it has ended and passive conversion runs again
+- **THEN** it has ended and campaigns win their full number of customers again
 
 ### Requirement: Counter-event banner
 While a counter-event is active, the game view SHALL show a banner above the tabs, visible on

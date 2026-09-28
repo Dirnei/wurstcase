@@ -7,7 +7,7 @@ import {
 } from '../content/megaMeatEvents'
 import type { GameState } from '../state'
 
-const NEUTRAL: EventFactors = { awareness: 1, conversion: 1, aktionCost: 1 }
+const NEUTRAL: EventFactors = { awareness: 1, reach: 1, aktionCost: 1 }
 
 /** Timers count down in float steps; this much left counts as run out, so 600 × 0.1 s is 60 s. */
 const TIME_EPSILON = 1e-9

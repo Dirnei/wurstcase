@@ -1,7 +1,7 @@
 import { AKTION_IDS, AKTIONEN, getAktion, type AktionId } from '../content/aktionen'
 import { POPULATION } from '../content/town'
 import type { GameState } from '../state'
-import { aktionCostFactor } from './upgrades'
+import { aktionCostFactor, reachFactor } from './upgrades'
 import { activeFactors, endEvent, onFirstAktion } from './villain'
 
 /** Why an Aktion can run or not. */
@@ -28,14 +28,22 @@ export function isAktionenUnlocked(state: Readonly<GameState>): boolean {
   return AKTIONEN.some((aktion) => isAktionOffered(state, aktion.id))
 }
 
-/** Awareness cost right now: raised while MegaMeat has booked the billboards, lowered by upgrades. */
-export function aktionCost(state: Readonly<GameState>, id: AktionId): number {
-  return Math.ceil(getAktion(id).cost * activeFactors(state).aktionCost * aktionCostFactor(state))
+/**
+ * How much bigger a campaign has grown from its runs so far; 1 for the fact check. Plain numbers
+ * suffice: even 200 runs at ×1.15 are about 1.4e12, and the town caps the reach anyway.
+ */
+function growthFor(state: Readonly<GameState>, id: AktionId, of: 'costGrowth' | 'reachGrowth'): number {
+  return (getAktion(id)[of] ?? 1) ** state.aktionen.runs[id]
 }
 
-/** Customers a campaign would convert now: fewer as the town fills up, never beyond it. */
+/** Awareness cost right now: grown with the runs so far, raised by the billboards, lowered by upgrades. */
+export function aktionCost(state: Readonly<GameState>, id: AktionId): number {
+  return Math.ceil(getAktion(id).cost * growthFor(state, id, 'costGrowth') * activeFactors(state).aktionCost * aktionCostFactor(state))
+}
+
+/** Customers a campaign would win now: grown with its runs, fewer as the town fills up, never beyond it. */
 export function aktionEstimate(state: Readonly<GameState>, id: AktionId): number {
-  const base = getAktion(id).customers ?? 0
+  const base = (getAktion(id).customers ?? 0) * growthFor(state, id, 'reachGrowth') * activeFactors(state).reach * reachFactor(state)
   const customers = state.customers.toNumber()
   const share = Math.max(0, 1 - customers / POPULATION)
   return Math.max(0, Math.min(Math.floor(base * share), POPULATION - customers))
