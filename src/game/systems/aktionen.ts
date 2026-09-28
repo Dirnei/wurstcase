@@ -1,4 +1,4 @@
-import { AKTION_IDS, AKTIONEN, getAktion, type AktionId } from '../content/aktionen'
+import { AKTION_IDS, AKTIONEN_UNLOCK_AWARENESS, getAktion, type AktionId } from '../content/aktionen'
 import { POPULATION } from '../content/town'
 import type { GameState } from '../state'
 import { aktionCostFactor, reachFactor } from './upgrades'
@@ -7,30 +7,31 @@ import { activeFactors, endEvent, onFirstAktion } from './villain'
 /** Why an Aktion can run or not. */
 export type AktionCheck = 'ok' | 'locked' | 'cooldown' | 'noEvent' | 'awareness'
 
+/** Unlocks the Aktionen tab the first time the pool holds enough awareness; it never locks again. */
+export function unlockAktionen(state: GameState): void {
+  if (!state.aktionen.unlocked && state.awareness.gte(AKTIONEN_UNLOCK_AWARENESS)) {
+    state.aktionen.unlocked = true
+  }
+}
+
+/** The panel shows once the pool first held enough awareness, and stays even when the pool drops. */
+export function isAktionenUnlocked(state: Readonly<GameState>): boolean {
+  return state.aktionen.unlocked
+}
+
 export function isAktionOffered(state: Readonly<GameState>, id: AktionId): boolean {
   const aktion = getAktion(id)
   return (
+    state.aktionen.unlocked &&
     state.totalEarned.gte(aktion.unlockAt) &&
     (!aktion.requiresSpecies || state.residents.some((r) => r.species === aktion.requiresSpecies)) &&
     (!aktion.endsEvent || state.megaMeat.started > 0)
   )
 }
 
-/** Earnings at which the first Aktion unlocks, from Aktionen that depend on earnings alone. */
-export function firstAktionAt(): number {
-  return Math.min(
-    ...AKTIONEN.filter((aktion) => !aktion.requiresSpecies && !aktion.endsEvent).map((aktion) => aktion.unlockAt),
-  )
-}
-
-/** The panel shows once any Aktion is offered; offers only ever grow, so it stays. */
-export function isAktionenUnlocked(state: Readonly<GameState>): boolean {
-  return AKTIONEN.some((aktion) => isAktionOffered(state, aktion.id))
-}
-
 /**
  * How much bigger a campaign has grown from its runs so far; 1 for the fact check. Plain numbers
- * suffice: even 200 runs at ×1.15 are about 1.4e12, and the town caps the reach anyway.
+ * suffice: even 200 runs at ×1.25 are about 3e19, far from float limits, and the town caps reach.
  */
 function growthFor(state: Readonly<GameState>, id: AktionId, of: 'costGrowth' | 'reachGrowth'): number {
   return (getAktion(id)[of] ?? 1) ** state.aktionen.runs[id]

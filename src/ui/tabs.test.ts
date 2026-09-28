@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js'
 import { describe, expect, it } from 'vitest'
 import { createInitialState, type GameState } from '../game/state'
-import { isTabUnlocked, resolveTab, TABS, tabFromHash, tabUnlockAt, type TabId } from './tabs'
+import { isTabUnlocked, resolveTab, TABS, tabFromHash, tabUnlockHint, type TabId } from './tabs'
 
 function earned(amount: number): GameState {
   return { ...createInitialState(), totalEarned: new Decimal(amount) }
@@ -46,25 +46,32 @@ describe('isTabUnlocked', () => {
     }
   })
 
-  it('unlocks each tab at its threshold', () => {
-    for (const tab of ['upgrades', 'lebenshof', 'aktionen'] as TabId[]) {
-      const at = tabUnlockAt(tab)!
+  it('unlocks the money tabs at their threshold', () => {
+    for (const tab of ['upgrades', 'lebenshof'] as TabId[]) {
+      const at = tabUnlockHint(tab)!.amount
       expect(isTabUnlocked(earned(at - 1), tab)).toBe(false)
       expect(isTabUnlocked(earned(at), tab)).toBe(true)
     }
   })
+
+  it('unlocks the Aktionen tab with its saved flag, not with money', () => {
+    const state = earned(1_000_000)
+    expect(isTabUnlocked(state, 'aktionen')).toBe(false)
+    state.aktionen.unlocked = true
+    expect(isTabUnlocked(state, 'aktionen')).toBe(true)
+  })
 })
 
-describe('tabUnlockAt', () => {
-  it('gives the earnings shown in the lock hints', () => {
-    expect(tabUnlockAt('upgrades')).toBe(30)
-    expect(tabUnlockAt('lebenshof')).toBe(100)
-    expect(tabUnlockAt('aktionen')).toBe(100)
+describe('tabUnlockHint', () => {
+  it('names money for Upgrades and Lebenshof and awareness for Aktionen', () => {
+    expect(tabUnlockHint('upgrades')).toEqual({ kind: 'earned', amount: 30 })
+    expect(tabUnlockHint('lebenshof')).toEqual({ kind: 'earned', amount: 100 })
+    expect(tabUnlockHint('aktionen')).toEqual({ kind: 'awareness', amount: 50 })
   })
 
   it('gives nothing for tabs that are never locked', () => {
-    expect(tabUnlockAt('produktion')).toBeNull()
-    expect(tabUnlockAt('einstellungen')).toBeNull()
+    expect(tabUnlockHint('produktion')).toBeNull()
+    expect(tabUnlockHint('einstellungen')).toBeNull()
   })
 })
 

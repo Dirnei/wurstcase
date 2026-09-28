@@ -119,7 +119,7 @@ describe('hintApplies', () => {
   it('checks for an offered Aktion that was never run', () => {
     const state = createInitialState()
     expect(hintApplies(state, hint('flyer'))).toBe(false)
-    state.totalEarned = new Decimal(1_000)
+    state.aktionen.unlocked = true
     expect(hintApplies(state, hint('flyer'))).toBe(true)
     state.aktionen.runs.flyer = 1
     expect(hintApplies(state, hint('flyer'))).toBe(false)
@@ -138,6 +138,7 @@ describe('hintApplies', () => {
   it('checks whether a fact check can run', () => {
     const state = createInitialState()
     state.awareness = new Decimal(1_000)
+    state.aktionen.unlocked = true
     state.megaMeat = { active: { event: 'study', remaining: 30 }, nextIn: null, nextIndex: 2, started: 2 }
     expect(hintApplies(state, hint('factCheck'))).toBe(true)
     state.awareness = new Decimal(10)

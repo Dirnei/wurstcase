@@ -298,6 +298,7 @@
   "tab.new": "neu",
   "tab.lockedLabel": "gesperrt",
   "locked.at": "ab {amount} verdient",
+  "locked.atAwareness": "ab {amount} Aufmerksamkeit",
   "topbar.income": "Einnahmen / min",
   "topbar.incomeValue": "+{amount}",
   "topbar.awareness": "Aufmerksamkeit",

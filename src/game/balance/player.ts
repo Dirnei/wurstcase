@@ -225,9 +225,13 @@ function runBestCampaign(state: GameState, log: (p: Purchase) => void): void {
   log({ time: state.playTime, kind: 'aktion', id: best, price: cost })
 }
 
-/** The best customers per awareness point among the offered campaigns, ready or not; 0 with none. */
+/**
+ * The best customers per awareness point among the campaigns on offer, ready or not; 0 with none.
+ * The Aktionen tab's awareness unlock is taken as met: the first rescue is what fills the pool.
+ */
 function bestCustomersPerPoint(state: Readonly<GameState>): number {
-  const offered = CAMPAIGNS.filter((id) => isAktionOffered(state, id))
+  const unlocked = { ...state, aktionen: { ...state.aktionen, unlocked: true } }
+  const offered = CAMPAIGNS.filter((id) => isAktionOffered(unlocked, id))
   return Math.max(0, ...offered.map((id) => customersPerPoint(state, id)))
 }
 

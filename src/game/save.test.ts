@@ -259,8 +259,36 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.customers.toNumber()).toBe(1234)
     expect(restored.awareness.toNumber()).toBe(567)
     expect(restored.aktionen.runs.flyer).toBe(6)
-    expect(JSON.parse(encodeSave(restored, NOW))).toMatchObject({ format: 11 })
+    expect(JSON.parse(encodeSave(restored, NOW))).toMatchObject({ format: CURRENT_FORMAT })
     expect(JSON.parse(encodeSave(restored, NOW)).state).not.toHaveProperty('conversionProgress')
+  })
+
+  it('restores whether the Aktionen tab was unlocked', () => {
+    const state = createInitialState()
+    state.aktionen.unlocked = true
+    state.awareness = new Decimal(10)
+    expect(decodedState(encodeSave(state, NOW)).aktionen.unlocked).toBe(true)
+    expect(decodedState(encodeSave(createInitialState(), NOW)).aktionen.unlocked).toBe(false)
+  })
+
+  it.each<[string, { totalEarned: string; awareness: string; runs?: number }, boolean]>([
+    ['€2,000 earned and an empty pool', { totalEarned: '2000', awareness: '0' }, true],
+    ['a pool of 50', { totalEarned: '0', awareness: '50' }, true],
+    ['a flyer run', { totalEarned: '0', awareness: '0', runs: 1 }, true],
+    ['€50 earned, a pool of 10 and no runs', { totalEarned: '50', awareness: '10' }, false],
+  ])('migrates a format 11 save with %s', (_, setup, unlocked) => {
+    const format11 = savedState()
+    delete format11.aktionen.unlocked
+    format11.totalEarned = setup.totalEarned
+    format11.awareness = setup.awareness
+    format11.aktionen.runs.flyer = setup.runs ?? 0
+    expect(decodedState(envelope(11, format11)).aktionen.unlocked).toBe(unlocked)
+  })
+
+  it.each([['yes'], [1], [null]])('rejects an Aktionen unlock flag of %j', (flag) => {
+    const state = savedState()
+    state.aktionen.unlocked = flag
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
   })
 
   it('restores the storeroom level exactly', () => {

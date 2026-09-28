@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 11
+export const CURRENT_FORMAT = 12
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -75,6 +75,18 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     }
     const { conversionProgress: _dropped, ...rest } = state
     return rest
+  },
+  // 11 → 12 (campaigns-unlock-by-awareness): the Aktionen tab now unlocks at 50 awareness and
+  // remembers it. Games that already had it (a run, a full enough pool, or the flyers' old €100)
+  // keep it.
+  11: (state) => {
+    if (!isRecord(state) || !isRecord(state.aktionen) || !isRecord(state.aktionen.runs)) {
+      return state
+    }
+    const runs = Object.values(state.aktionen.runs).some((count) => typeof count === 'number' && count > 0)
+    const pool = readAmount(state.awareness)?.gte(50) ?? false
+    const earned = readAmount(state.totalEarned)?.gte(100) ?? false
+    return { ...state, aktionen: { ...state.aktionen, unlocked: runs || pool || earned } }
   },
 }
 
@@ -165,7 +177,11 @@ function writeState(state: GameState): Record<string, unknown> {
     shelters: { ...state.shelters },
     awareness: state.awareness.toString(),
     awarenessProgress: state.awarenessProgress,
-    aktionen: { cooldown: { ...state.aktionen.cooldown }, runs: { ...state.aktionen.runs } },
+    aktionen: {
+      cooldown: { ...state.aktionen.cooldown },
+      runs: { ...state.aktionen.runs },
+      unlocked: state.aktionen.unlocked,
+    },
     megaMeat: { ...state.megaMeat, active: state.megaMeat.active && { ...state.megaMeat.active } },
     upgrades: [...state.upgrades],
     customerIncome: state.customerIncome.toString(),
@@ -185,6 +201,7 @@ function readState(value: unknown): GameState | null {
     !isRecord(value.aktionen) ||
     !isRecord(value.aktionen.cooldown) ||
     !isRecord(value.aktionen.runs) ||
+    typeof value.aktionen.unlocked !== 'boolean' ||
     !Array.isArray(value.upgrades)
   ) {
     return null
@@ -263,6 +280,7 @@ function readState(value: unknown): GameState | null {
     state.aktionen.cooldown[id] = cooldown
     state.aktionen.runs[id] = runs as number
   }
+  state.aktionen.unlocked = value.aktionen.unlocked
   // Unknown ids (content removed) and repeats are dropped; the purchase order is kept.
   state.upgrades = [...new Set(value.upgrades.filter(isUpgradeId))] as UpgradeId[]
   for (const entry of value.residents) {

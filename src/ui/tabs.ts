@@ -1,5 +1,6 @@
 import type { GameState } from '../game/state'
-import { firstAktionAt, isAktionenUnlocked } from '../game/systems/aktionen'
+import { AKTIONEN_UNLOCK_AWARENESS } from '../game/content/aktionen'
+import { isAktionenUnlocked } from '../game/systems/aktionen'
 import { LEBENSHOF_UNLOCK_AT } from '../game/content/shelters'
 import { isLebenshofUnlocked } from '../game/systems/rescue'
 import { firstUpgradeAt, isUpgradesUnlocked } from '../game/systems/upgrades'
@@ -27,15 +28,18 @@ export function isTabUnlocked(state: Readonly<GameState>, tab: TabId): boolean {
   }
 }
 
-/** Total earnings named in a locked tab's hint; null for tabs that are never locked. */
-export function tabUnlockAt(tab: TabId): number | null {
+/** What a locked tab's hint names: the total money earned, or the awareness it needs. */
+export type TabUnlockHint = { kind: 'earned'; amount: number } | { kind: 'awareness'; amount: number }
+
+/** The hint for a locked tab; null for tabs that are never locked. */
+export function tabUnlockHint(tab: TabId): TabUnlockHint | null {
   switch (tab) {
     case 'upgrades':
-      return firstUpgradeAt()
+      return { kind: 'earned', amount: firstUpgradeAt() }
     case 'lebenshof':
-      return LEBENSHOF_UNLOCK_AT
+      return { kind: 'earned', amount: LEBENSHOF_UNLOCK_AT }
     case 'aktionen':
-      return firstAktionAt()
+      return { kind: 'awareness', amount: AKTIONEN_UNLOCK_AWARENESS }
     default:
       return null
   }

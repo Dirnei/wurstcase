@@ -102,6 +102,7 @@ describe('tick', () => {
     const state = createInitialState()
     state.totalEarned = new Decimal(1_000)
     state.awareness = new Decimal(100)
+    state.aktionen.unlocked = true
     for (let i = 0; i < 10; i++) {
       state.residents.push({ species: 'chicken', name: i })
     }

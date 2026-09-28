@@ -298,6 +298,7 @@
   "tab.new": "new",
   "tab.lockedLabel": "locked",
   "locked.at": "unlocks at {amount} earned",
+  "locked.atAwareness": "unlocks at {amount} awareness",
   "topbar.income": "Income / min",
   "topbar.incomeValue": "+{amount}",
   "topbar.awareness": "Awareness",

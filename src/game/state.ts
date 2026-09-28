@@ -67,6 +67,8 @@ export interface GameState {
     cooldown: Record<AktionId, number>
     /** Times each Aktion was run in this game. */
     runs: Record<AktionId, number>
+    /** Whether the pool has held enough awareness once to unlock the Aktionen tab; never goes back. */
+    unlocked: boolean
   }
   megaMeat: MegaMeatState
   /** Euros per second customers pay, smoothed over a few minutes; what feeding MegaMeat is measured against. */
@@ -103,6 +105,7 @@ export function createInitialState(): GameState {
     aktionen: {
       cooldown: Object.fromEntries(AKTION_IDS.map((id) => [id, 0])) as Record<AktionId, number>,
       runs: Object.fromEntries(AKTION_IDS.map((id) => [id, 0])) as Record<AktionId, number>,
+      unlocked: false,
     },
     megaMeat: { active: null, nextIn: null, nextIndex: 0, started: 0 },
     customerIncome: new Decimal(0),

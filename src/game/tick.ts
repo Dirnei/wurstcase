@@ -1,5 +1,5 @@
 import type { GameState } from './state'
-import { coolDown } from './systems/aktionen'
+import { coolDown, unlockAktionen } from './systems/aktionen'
 import { gatherAwareness } from './systems/awareness'
 import { advanceCustomerIncome } from './systems/customerIncome'
 import { produce } from './systems/production'
@@ -18,6 +18,8 @@ export function tick(state: GameState, seconds: number): void {
   produce(state, seconds)
   advanceVillain(state, seconds)
   gatherAwareness(state, seconds)
+  // The pool only grows here, so this is the one place the Aktionen tab can unlock.
+  unlockAktionen(state)
   takeOrders(state, seconds)
   coolDown(state, seconds)
   recordTrend(state, before, seconds)

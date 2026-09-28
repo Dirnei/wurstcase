@@ -1,11 +1,10 @@
 import type { SpeciesId } from './animals'
-import { LEBENSHOF_UNLOCK_AT } from './shelters'
 
 export type AktionId = 'flyer' | 'openFarmDay' | 'viralReel' | 'factCheck'
 
 export interface AktionDef {
   id: AktionId
-  /** Total euros earned in this game from which the Aktion is offered. */
+  /** Total euros earned in this game from which the Aktion is offered, once the Aktionen tab is unlocked. */
   unlockAt: number
   /** A species that must live in the Lebenshof before the Aktion is offered. */
   requiresSpecies?: SpeciesId
@@ -26,9 +25,12 @@ export interface AktionDef {
   endsEvent?: boolean
 }
 
+/** Awareness the pool must hold once before the Aktionen tab, and with it the flyers, unlocks. */
+export const AKTIONEN_UNLOCK_AWARENESS = 50
+
 export const AKTIONEN: readonly AktionDef[] = [
-  // The flyers unlock with the Lebenshof, so the first residents' awareness has a use at once.
-  { id: 'flyer', unlockAt: LEBENSHOF_UNLOCK_AT, cost: 100, customers: 20, cooldown: 30, costGrowth: 1.25, reachGrowth: 1.1 },
+  // The flyers come with the Aktionen tab, which the first 50 awareness unlocks.
+  { id: 'flyer', unlockAt: 0, cost: 100, customers: 20, cooldown: 30, costGrowth: 1.25, reachGrowth: 1.1 },
   { id: 'openFarmDay', unlockAt: 5_000, cost: 1_500, customers: 300, cooldown: 120, costGrowth: 1.25, reachGrowth: 1.1 },
   { id: 'viralReel', unlockAt: 15_000, requiresSpecies: 'pig', cost: 6_000, customers: 1_500, cooldown: 300, costGrowth: 1.25, reachGrowth: 1.1 },
   { id: 'factCheck', unlockAt: 0, endsEvent: true, cost: 300, cooldown: 60 },

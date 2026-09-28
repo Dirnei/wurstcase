@@ -6,27 +6,21 @@ import {
   aktionEstimate,
   canRun,
   coolDown,
-  firstAktionAt,
   isAktionenUnlocked,
   isAktionOffered,
   runAktion,
+  unlockAktionen,
 } from './aktionen'
+import { tick } from '../tick'
 
 function withPool(pool: number, customers = 10, earned = 1_000): GameState {
   const state = createInitialState()
   state.awareness = new Decimal(pool)
   state.customers = new Decimal(customers)
   state.totalEarned = new Decimal(earned)
+  state.aktionen.unlocked = true
   return state
 }
-
-describe('isAktionenUnlocked', () => {
-  it('shows the panel from €100 earned', () => {
-    expect(isAktionenUnlocked(withPool(0, 10, 99))).toBe(false)
-    expect(isAktionenUnlocked(withPool(0, 10, 100))).toBe(true)
-    expect(isAktionOffered(withPool(0, 10, 100), 'flyer')).toBe(true)
-  })
-})
 
 describe('isAktionOffered', () => {
   it('offers the viral video only with €15,000 earned and a pig', () => {
@@ -126,6 +120,7 @@ describe('runAktion', () => {
 
   it('refuses an Aktion that is not offered', () => {
     const state = withPool(10_000, 10, 99)
+    state.aktionen.unlocked = false
     expect(canRun(state, 'flyer')).toBe('locked')
     expect(runAktion(state, 'flyer')).toBe(false)
   })
@@ -141,24 +136,7 @@ describe('upgrade effects on Aktionen', () => {
   })
 })
 
-describe('firstAktionAt', () => {
-  it('is the flyer threshold, ignoring the fact check and the viral video', () => {
-    expect(firstAktionAt()).toBe(100)
-  })
-
-  it('matches the moment the Aktionen unlock in a game without counter-events', () => {
-    expect(isAktionenUnlocked(withPool(0, 10, firstAktionAt() - 1))).toBe(false)
-    expect(isAktionenUnlocked(withPool(0, 10, firstAktionAt()))).toBe(true)
-  })
-})
-
 describe('campaigns grow with each run', () => {
-  it('offers the flyers from €100 earned', () => {
-    expect(isAktionOffered(withPool(0, 10, 99), 'flyer')).toBe(false)
-    expect(isAktionOffered(withPool(0, 10, 100), 'flyer')).toBe(true)
-    expect(firstAktionAt()).toBe(100)
-  })
-
   it('costs 125 and wins 21 on the second flyer run', () => {
     const state = withPool(200)
     state.aktionen.runs.flyer = 1
@@ -211,5 +189,42 @@ describe('campaigns grow with each run', () => {
     state.megaMeat.active = { event: 'billboards', remaining: 90 }
     expect(aktionCost(state, 'flyer')).toBe(250)
     expect(aktionCost(state, 'factCheck')).toBe(600)
+  })
+})
+
+describe('unlocking with awareness', () => {
+  it('stays locked at €500 earned with 49 awareness', () => {
+    const state = withPool(49, 10, 500)
+    state.aktionen.unlocked = false
+    expect(isAktionenUnlocked(state)).toBe(false)
+    expect(isAktionOffered(state, 'flyer')).toBe(false)
+  })
+
+  it('unlocks when the pool reaches 50 during a tick, and offers the flyers', () => {
+    const state = withPool(49, 10, 300)
+    state.aktionen.unlocked = false
+    state.residents.push({ species: 'chicken', name: 0 })
+    tick(state, 1)
+    expect(state.awareness.toNumber()).toBe(50)
+    expect(isAktionenUnlocked(state)).toBe(true)
+    expect(isAktionOffered(state, 'flyer')).toBe(true)
+  })
+
+  it('stays unlocked when the pool drops again', () => {
+    const state = withPool(50, 10, 300)
+    state.aktionen.unlocked = false
+    unlockAktionen(state)
+    state.awareness = new Decimal(20)
+    unlockAktionen(state)
+    expect(isAktionenUnlocked(state)).toBe(true)
+    expect(canRun(state, 'flyer')).toBe('awareness')
+  })
+
+  it('offers the open farm day only once the tab is unlocked', () => {
+    const state = withPool(0, 10, 6_000)
+    state.aktionen.unlocked = false
+    expect(isAktionOffered(state, 'openFarmDay')).toBe(false)
+    state.aktionen.unlocked = true
+    expect(isAktionOffered(state, 'openFarmDay')).toBe(true)
   })
 })

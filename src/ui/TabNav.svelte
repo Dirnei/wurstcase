@@ -1,27 +1,33 @@
 <script lang="ts">
-  import { euros } from './amounts'
+  import { amount, euros } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
   import { hasBadge, markSeen } from './badges.svelte'
   import { readGame } from './game.svelte'
   import { t } from './i18n.svelte'
   import { currentTab } from './route.svelte'
-  import { isTabUnlocked, TABS, tabUnlockAt } from './tabs'
+  import { isTabUnlocked, TABS, tabUnlockHint, type TabUnlockHint } from './tabs'
 
   const open = $derived(currentTab())
   const tabs = $derived(
     readGame((state) =>
       TABS.map((id) => {
         const unlocked = isTabUnlocked(state, id)
-        const at = tabUnlockAt(id)
+        const at = tabUnlockHint(id)
         return {
           id,
           unlocked,
-          hint: !unlocked && at !== null ? t('locked.at', { amount: euros(at) }) : null,
+          hint: !unlocked && at !== null ? hintText(at) : null,
           badge: unlocked && hasBadge(id, open),
         }
       }),
     ),
   )
+
+  function hintText(at: TabUnlockHint): string {
+    return at.kind === 'earned'
+      ? t('locked.at', { amount: euros(at.amount) })
+      : t('locked.atAwareness', { amount: amount(at.amount) })
+  }
 
   // What the open tab offers counts as seen, now and after every tick while it stays open.
   $effect(() => {

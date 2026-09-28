@@ -1,11 +1,4 @@
-# aktionen Specification
-
-## Purpose
-
-Lets the player spend collected awareness on campaigns, which are the only way to win customers
-and grow with every run, and on a fact check that ends MegaMeat's current counter-event.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Aktionen panel
 The Aktionen tab SHALL be locked until the awareness pool reaches 50 points for the first time in
@@ -73,57 +66,6 @@ with less than half its customers.
 #### Scenario: Fact check stays the same
 - **WHEN** the fact check has been run 5 times
 - **THEN** it still costs 300 awareness
-
-### Requirement: Running an Aktion
-The player SHALL be able to run an unlocked Aktion when it is not cooling down and the pool holds at
-least its current cost. An Aktion's current cost SHALL be its base cost × its growth for the runs
-so far × the counter-event and upgrade cost factors, rounded up to whole points. Running it SHALL
-take the current cost from the pool, SHALL start its cooldown, and SHALL add one to its runs. For a
-campaign, it SHALL at once convert its base customers × its growth for the runs before this one ×
-the counter-event and upgrade reach factors × (1 − customers ÷ population), rounded down, and never
-beyond the population. Campaigns SHALL be the only way townspeople become customers. Money SHALL
-NOT change. The button SHALL be unavailable otherwise, and SHALL show whether awareness is lacking
-or how long the cooldown still runs.
-
-#### Scenario: Flyers
-- **WHEN** the flyers have not been run yet, there are 10,000 customers, the pool holds 150 and the
-  player runs the flyers
-- **THEN** there are 10,010 customers, the pool holds 50, and the flyers cool down for 30 seconds
-
-#### Scenario: Second run
-- **WHEN** the flyers have been run once, there are 10 customers, the pool holds 200 and the
-  player runs the flyers
-- **THEN** the pool holds 75 and there are 31 customers
-
-#### Scenario: Cooldown
-- **WHEN** the flyers were run 10 seconds ago
-- **THEN** the flyer button is unavailable and shows 20 seconds left
-
-#### Scenario: Not enough awareness
-- **WHEN** the flyers have not been run yet and the pool holds 99
-- **THEN** the flyers cannot be run and the button shows that awareness is lacking
-
-#### Scenario: Nearly full town
-- **WHEN** the open farm day has not been run yet, there are 19,000 customers and the player runs
-  it
-- **THEN** there are 19,015 customers (300 × 5%)
-
-#### Scenario: Never beyond the town
-- **WHEN** there are 19,990 customers and the player runs a campaign that would win 50
-- **THEN** there are at most 20,000 customers
-
-### Requirement: Fact check
-Running the fact check SHALL end the active counter-event at once. It SHALL be unavailable while no
-counter-event is active.
-
-#### Scenario: Ending the ad campaign
-- **WHEN** the ad campaign has 90 seconds left, the pool holds 400 and the player runs the fact
-  check
-- **THEN** the campaign ends, awareness counts fully again and the pool holds 100
-
-#### Scenario: Nothing to check
-- **WHEN** no counter-event is active
-- **THEN** the fact check button is unavailable
 
 ### Requirement: Aktionen are saved
 The awareness pool, the fraction towards its next point, each Aktion's remaining cooldown, how
