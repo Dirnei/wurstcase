@@ -2,13 +2,17 @@
   import { getBuilding, type BuildingId } from '../game/content/buildings'
   import { MANUAL_ACTIONS } from '../game/content/manual'
   import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../game/systems/buildings'
-  import { canPerform, performManual } from '../game/systems/manual'
+  import { canPerform, manualUnits, performManual } from '../game/systems/manual'
+  import { storeroomRoom } from '../game/systems/storeroom'
   import { rateFactor, yieldPerRun } from '../game/systems/upgrades'
-  import { amount, euros } from './amounts'
+  import { amount, euros, liveCount } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
+  import FloatingAmount from './FloatingAmount.svelte'
   import { act, readGame } from './game.svelte'
   import { t } from './i18n.svelte'
-  import { pop } from './motion/pop'
+  import { expire, FLOAT_MS, push, type Float } from './motion/floats'
+  import { flash, pop } from './motion/pop'
+  import { prefersReducedMotion } from './motion/reducedMotion.svelte'
 
   let { id }: { id: BuildingId } = $props()
 
@@ -24,7 +28,34 @@
   const price = $derived(euros(readGame((state) => buildingPrice(state, id))))
   const affordable = $derived(readGame((state) => canBuy(state, id)))
   const performable = $derived(readGame((state) => canPerform(state, manual.id)))
+  const stockCount = $derived(readGame((state) => state.stock[building.output]))
+  const room = $derived(readGame(storeroomRoom))
+  const fill = $derived(Math.min(stockCount.div(room).toNumber(), 1))
+  const full = $derived(readGame((state) => state.full[building.output] !== undefined))
+  // Only a lack of input disables a processing step's by-hand button; a full output has its own mark.
+  const inputShort = $derived(
+    building.input !== undefined &&
+      readGame((state) => state.stock[building.input!.resource].lt(building.input!.ratio)),
+  )
   let pops = $state(0)
+  let floats = $state<Float[]>([])
+  // Counts clicks for the reduced-motion highlight of the stock figure.
+  let made = $state(0)
+
+  function byHand() {
+    let units = 0
+    act((state) => {
+      units = manualUnits(state, manual.id)
+      if (!performManual(state, manual.id)) units = 0
+    })
+    if (units <= 0) return
+    if (prefersReducedMotion()) {
+      made++
+      return
+    }
+    floats = push(floats, `+${amount(units)}`, performance.now())
+    setTimeout(() => (floats = expire(floats, performance.now())), FLOAT_MS + 50)
+  }
 
   function buy() {
     let bought = false
@@ -51,29 +82,46 @@
     </p>
     {#if building.input}
       <p class="recipe">
-        {t('recipe', {
-          inAmount: amount(building.input.ratio),
-          input: t(`resource.${building.input.resource}`),
-          outAmount: amount(perRun),
-          output: t(`resource.${building.output}`),
-        })}
+        <!-- The mark's slot is always there, so the line never reflows when the input runs short. -->
+        <span class="input" class:short={inputShort} title={inputShort ? t('recipe.short') : undefined}>
+          <span class="mark" aria-hidden="true">!</span>{amount(building.input.ratio)}
+          {t(`resource.${building.input.resource}`)}
+          {#if inputShort}<span class="visually-hidden">({t('recipe.short')})</span>{/if}
+        </span>
+        → {amount(perRun)} {t(`resource.${building.output}`)}
       </p>
     {:else}
       <!-- Fields have no recipe; the empty line keeps their buttons level with the rest of the row. -->
       <p class="recipe" aria-hidden="true">&nbsp;</p>
     {/if}
+    <p class="stock">
+      <span class="stock-label">{t('building.stock')}</span>
+      <span class="figure" use:flash={made}>{liveCount(stockCount)}</span>
+      <span aria-hidden="true">/</span>
+      <span class="figure">{liveCount(room)}</span>
+      <span class="meter" aria-hidden="true"><span style:width="{fill * 100}%"></span></span>
+      <span class="full-slot">
+        {#if full}
+          <span class="badge" title={t('stock.full')}><span aria-hidden="true">{t('stock.fullBadge')}</span></span>
+          <span class="visually-hidden">({t('stock.full')})</span>
+        {/if}
+      </span>
+    </p>
     <div class="bar" aria-hidden="true"><div style:width="{filled * 100}%"></div></div>
     <div class="actions">
-      <button
-        type="button"
-        class="game-button hand"
-        aria-label={t(`manual.${manual.id}`)}
-        title={t(`manual.${manual.id}`)}
-        disabled={!performable}
-        onclick={() => act((state) => performManual(state, manual.id))}
-      >
-        {t('building.byHand')}
-      </button>
+      <span class="hand-wrap">
+        <button
+          type="button"
+          class="game-button hand"
+          aria-label={t(`manual.${manual.id}`)}
+          title={t(`manual.${manual.id}`)}
+          disabled={!performable}
+          onclick={byHand}
+        >
+          {t(`manual.${manual.id}.verb`)}
+        </button>
+        <FloatingAmount {floats} art={{ kind: 'resource', id: building.output }} />
+      </span>
       <button
         type="button"
         class="game-button primary buy"
@@ -97,7 +145,7 @@
     column-gap: 10px;
     row-gap: 0;
     align-content: start;
-    padding: 6px 10px 8px;
+    padding: 4px 10px 6px;
     min-width: 0;
   }
 
@@ -135,9 +183,75 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .stock,
   .bar,
   .actions {
     grid-column: 1 / -1;
+  }
+
+  /* Fixed tracks: a figure that grows only changes digits inside its own slot. */
+  .stock {
+    display: grid;
+    grid-template-columns: auto 9ch auto 9ch 1fr 4.5em;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .figure {
+    text-align: right;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .meter {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--paper-2);
+    outline: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .meter > span {
+    display: block;
+    height: 100%;
+    background: var(--ink-muted);
+  }
+
+  .full-slot {
+    text-align: right;
+  }
+
+  .badge {
+    padding: 0 4px;
+    border: 1.2px solid currentColor;
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .input .mark {
+    display: inline-block;
+    width: 0.7em;
+    font-weight: 800;
+    visibility: hidden;
+  }
+
+  .input.short {
+    color: var(--danger);
+    font-weight: 700;
+  }
+
+  .input.short .mark {
+    visibility: visible;
+  }
+
+  .hand-wrap {
+    position: relative;
+    display: grid;
   }
 
   .bar {
@@ -165,6 +279,12 @@
     padding-block: 2px;
   }
 
+  /* Every verb gets the same width, so the Buy buttons start at the same place on every card;
+     sized for the longest one, "Schäumen". */
+  .hand {
+    min-width: 6.5em;
+  }
+
   .buy {
     flex: 1;
   }
@@ -182,11 +302,21 @@
   }
 
   @media (min-width: 768px) and (max-width: 1023px) {
+    /* Narrow cards: the label goes (screen readers keep it) so the meter stays visible. */
+    .stock-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
     .actions {
       flex-wrap: wrap;
     }
 
-    .actions .game-button {
+    .actions .game-button,
+    .hand-wrap {
       flex: 1 1 auto;
       text-align: center;
     }

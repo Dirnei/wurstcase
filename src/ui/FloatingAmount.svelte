@@ -1,13 +1,15 @@
 <script lang="ts">
+  import type { ArtKind } from './art'
+  import ArtSlot from './ArtSlot.svelte'
   import type { Float } from './motion/floats'
 
-  // Decorative: the money in the top bar already shows the new amount.
-  let { floats }: { floats: readonly Float[] } = $props()
+  // Decorative: the money in the top bar, or the stock on the card, already shows the new amount.
+  let { floats, art }: { floats: readonly Float[]; art?: { kind: ArtKind; id: string } } = $props()
 </script>
 
 <span class="floats" aria-hidden="true">
   {#each floats as float (float.id)}
-    <span class="float">{float.text}</span>
+    <span class="float">{float.text}{#if art}<ArtSlot kind={art.kind} id={art.id} size="sm" />{/if}</span>
   {/each}
 </span>
 
@@ -29,6 +31,9 @@
     color: var(--leaf-text);
     font-weight: 800;
     font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
     white-space: nowrap;
     opacity: 0;
     animation: float-up var(--motion-float) var(--ease-out);

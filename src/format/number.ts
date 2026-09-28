@@ -15,18 +15,24 @@ const RELATIVE_EPSILON = 4 * Number.EPSILON
 export interface FormatOptions {
   /** Keeps trailing zeros, so a live figure's width depends only on its magnitude: 37.0, 1.20K. */
   fixed?: boolean
+  /** With `fixed`: no decimals below 1,000, for counts of whole things such as stock: 37, 1.20K. */
+  whole?: boolean
 }
 
 /** Formats an amount for display; always rounds toward zero so the player never sees more than they have. */
-export function formatNumber(value: Decimal | number, lang: Lang, { fixed = false }: FormatOptions = {}): string {
+export function formatNumber(
+  value: Decimal | number,
+  lang: Lang,
+  { fixed = false, whole = false }: FormatOptions = {},
+): string {
   const decimal = new Decimal(value)
-  const body = formatAbs(decimal.abs(), lang, fixed)
+  const body = formatAbs(decimal.abs(), lang, fixed, whole)
   return decimal.sign < 0 && /[1-9]/.test(body) ? `-${body}` : body
 }
 
-function formatAbs(abs: Decimal, lang: Lang, fixed: boolean): string {
+function formatAbs(abs: Decimal, lang: Lang, fixed: boolean, whole: boolean): string {
   if (abs.lt(1000)) {
-    return withSeparator(truncate(abs.toNumber(), 1, fixed), lang)
+    return withSeparator(truncate(abs.toNumber(), whole ? 0 : 1, fixed), lang)
   }
   if (abs.layer >= 2) {
     return abs.toString()

@@ -16,6 +16,11 @@ export function liveAmount(value: Decimal | number): string {
   return formatNumber(value, currentLang(), { fixed: true })
 }
 
+/** A live count of whole things, such as stock: no decimals below 1,000, fixed digits above. */
+export function liveCount(value: Decimal | number): string {
+  return formatNumber(value, currentLang(), { fixed: true, whole: true })
+}
+
 export function liveEuros(value: Decimal | number): string {
   return t('money.amount', { amount: liveAmount(value) })
 }

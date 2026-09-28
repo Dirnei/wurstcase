@@ -97,3 +97,24 @@ describe('formatNumber in the fixed-decimal form', () => {
     expect(formatNumber(37, 'en')).toBe('37')
   })
 })
+
+describe('formatNumber in the whole-count form', () => {
+  it.each([
+    [7, 'en', '7'],
+    [37, 'en', '37'],
+    [999, 'de', '999'],
+    [0, 'en', '0'],
+    [1_000, 'en', '1.00K'],
+    [1_234, 'en', '1.23K'],
+    [2_500_000, 'de', '2,50 Mio.'],
+    [1.5e15, 'en', '1.50e15'],
+  ] as const)('formats %s in %s as %s', (value, lang, expected) => {
+    expect(formatNumber(value, lang, { fixed: true, whole: true })).toBe(expected)
+  })
+
+  it('leaves the fixed and regular forms unchanged', () => {
+    expect(formatNumber(37, 'en', { fixed: true })).toBe('37.0')
+    expect(formatNumber(37, 'en')).toBe('37')
+    expect(formatNumber(1_200, 'en')).toBe('1.2K')
+  })
+})

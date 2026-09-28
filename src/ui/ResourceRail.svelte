@@ -5,7 +5,7 @@
   import { canSell, isOverstocked, orderCap, saleValue, sell } from '../game/systems/sales'
   import { canExpand, expandStoreroom, expansionPrice, storeroomRoom } from '../game/systems/storeroom'
   import { stockTrend, type Trend } from '../game/systems/trend'
-  import { amount, euros } from './amounts'
+  import { amount, euros, liveCount } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
   import FloatingAmount from './FloatingAmount.svelte'
   import { act, readGame } from './game.svelte'
@@ -27,7 +27,7 @@
           .filter((resource) => isResourceShown(state, resource))
           .map((resource) => ({
             resource,
-            stock: amount(state.stock[resource]),
+            stock: liveCount(state.stock[resource]),
             short: state.shortage[resource] !== undefined,
             full: state.full[resource] !== undefined,
             trend: stockTrend(state, resource),
@@ -255,6 +255,11 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     text-align: right;
+  }
+
+  /* A fixed minimum, so the column no longer follows the widest value as stock ticks. */
+  .amount {
+    min-width: 9ch;
   }
 
   .badge {
