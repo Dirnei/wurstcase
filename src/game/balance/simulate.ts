@@ -1,3 +1,4 @@
+import type { BuyerId } from '../content/buyers'
 import { UPGRADES, type UpgradeId } from '../content/upgrades'
 import { createInitialState, type GameState } from '../state'
 import { isUpgradeOffered } from '../systems/upgrades'
@@ -8,6 +9,8 @@ import { steadyIncome } from './steady'
 export interface SimulationSettings {
   minutes: number
   clicksPerSecond: number
+  /** Where the scripted player sells its surplus; MegaMeat shows what feeding the industry costs. */
+  surplusBuyer?: BuyerId
 }
 
 export interface Sample {
@@ -45,7 +48,7 @@ const INCOME_WINDOW_SECONDS = 10
 /** Plays a new game with the scripted player through the real tick(). Deterministic. */
 export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): SimulationResult {
   const state = createInitialState()
-  const player = createPlayer(settings.clicksPerSecond)
+  const player = createPlayer(settings.clicksPerSecond, settings.surplusBuyer)
   const log: Purchase[] = []
   const samples: Sample[] = []
   const offers: UpgradeOffer[] = []
@@ -59,7 +62,7 @@ export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): Simul
       )
       tick(state, STEP_SECONDS)
     }
-    recordOffers(state, offers)
+    recordOffers(state, offers, player.surplusBuyer)
     const totalEarned = state.totalEarned.toNumber()
     earnedBySecond.push(totalEarned)
     const from = Math.max(0, second - INCOME_WINDOW_SECONDS)
@@ -76,7 +79,7 @@ export function simulate(settings: SimulationSettings = DEFAULT_SETTINGS): Simul
 
 const INCOME_EFFECTS = new Set(['rate', 'yield', 'price', 'orders'])
 
-function recordOffers(state: GameState, offers: UpgradeOffer[]): void {
+function recordOffers(state: GameState, offers: UpgradeOffer[], surplusBuyer: BuyerId): void {
   for (const upgrade of UPGRADES) {
     // An upgrade the player bought within the same second still counts as offered then.
     const owned = state.upgrades.includes(upgrade.id)
@@ -86,7 +89,8 @@ function recordOffers(state: GameState, offers: UpgradeOffer[]): void {
     const customers = state.customers.toNumber()
     const without = state.upgrades.filter((id) => id !== upgrade.id)
     const gain = INCOME_EFFECTS.has(upgrade.effect.kind)
-      ? steadyIncome(state.buildings, customers, [...without, upgrade.id]) - steadyIncome(state.buildings, customers, without)
+      ? steadyIncome(state.buildings, customers, [...without, upgrade.id], surplusBuyer) -
+        steadyIncome(state.buildings, customers, without, surplusBuyer)
       : null
     offers.push({ id: upgrade.id, time: state.playTime, gain })
   }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PRODUCT_PRICES } from '../content/products'
 import { PRODUCTS } from '../content/resources'
-import { buildingIncome, chainBalance, manualPass, veganValue } from './value'
+import { buildingIncome, chainBalance, manualPass, marketValue, veganValue } from './value'
 
 describe('veganValue', () => {
   it.each([
@@ -19,6 +19,20 @@ describe('veganValue', () => {
     for (const product of PRODUCTS) {
       expect(veganValue(product)).toBe(PRODUCT_PRICES[product])
     }
+  })
+})
+
+describe('marketValue', () => {
+  it.each([
+    ['tofuWurst', 3],
+    ['tofu', 2.4],
+    ['soybeans', 0.64],
+    ['seitan', 10],
+    ['wheat', 4],
+    ['oatDrink', 9.6],
+    ['oats', 3.84],
+  ] as const)('values %s working back from the product, 25%% less per step', (resource, value) => {
+    expect(marketValue(resource)).toBeCloseTo(value, 10)
   })
 })
 

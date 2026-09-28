@@ -9,9 +9,12 @@ export interface Lot {
   price: number
 }
 
-/** What feeding the industry costs the player: one customer and one awareness point per so many euros. */
+/**
+ * What feeding the industry costs the player. A sale drives away the share of customers that it is
+ * of what they spend with the player in horizonSeconds; awareness drops one point per so many euros.
+ */
 export interface FeedCost {
-  eurosPerCustomer: number
+  horizonSeconds: number
   eurosPerAwareness: number
 }
 
@@ -23,38 +26,42 @@ export interface BuyerDef {
 }
 
 /**
- * Bulk buyers for surplus the customers cannot take, paying a share of an ingredient's value as
- * vegan food that rises along the chain, so processing always pays. MegaMeat pays about 40% for raw
- * ingredients and 67% for intermediates (they become animal feed); the biogas plant about 30% for
- * raw ingredients and 50% for intermediates and finished products. Only the biogas plant also
- * takes finished products. Selling to MegaMeat costs customers and awareness; the biogas plant
- * costs nothing.
+ * Value one processing step adds. A resource's market value is what one unit becomes in the next
+ * stage, divided by one plus this, down from the product's price; bulk buyers pay a share of it.
+ */
+export const STEP_MARKUP = 0.25
+
+/**
+ * Bulk buyers for surplus the customers cannot take. MegaMeat pays about 90% of the market value
+ * for raw ingredients and intermediates (they become animal feed), which tempts; every sale costs
+ * customers and awareness. The biogas plant pays about 67% for everything, finished products
+ * included, and costs nothing. Each processing step adds value, so processing before selling pays.
  */
 export const BUYERS: readonly BuyerDef[] = [
   {
     id: 'megaMeat',
     lots: {
-      soybeans: { units: 5, price: 2 },
-      wheat: { units: 2, price: 5 },
-      oats: { units: 5, price: 12 },
-      tofu: { units: 1, price: 2 },
-      seitan: { units: 3, price: 25 },
-      oatDrink: { units: 1, price: 8 },
+      soybeans: { units: 7, price: 4 },
+      wheat: { units: 5, price: 18 },
+      oats: { units: 2, price: 7 },
+      tofu: { units: 6, price: 13 },
+      seitan: { units: 1, price: 9 },
+      oatDrink: { units: 2, price: 17 },
     },
-    feedCost: { eurosPerCustomer: 100, eurosPerAwareness: 10 },
+    feedCost: { horizonSeconds: 600, eurosPerAwareness: 10 },
   },
   {
     id: 'biogas',
     lots: {
-      soybeans: { units: 10, price: 3 },
-      wheat: { units: 8, price: 15 },
-      oats: { units: 5, price: 9 },
-      tofu: { units: 2, price: 3 },
-      seitan: { units: 4, price: 25 },
-      oatDrink: { units: 1, price: 6 },
-      tofuWurst: { units: 2, price: 3 },
-      leverkas: { units: 2, price: 25 },
-      haferCappuccino: { units: 1, price: 6 },
+      soybeans: { units: 7, price: 3 },
+      wheat: { units: 3, price: 8 },
+      oats: { units: 5, price: 13 },
+      tofu: { units: 5, price: 8 },
+      seitan: { units: 3, price: 20 },
+      oatDrink: { units: 2, price: 13 },
+      tofuWurst: { units: 1, price: 2 },
+      leverkas: { units: 1, price: 17 },
+      haferCappuccino: { units: 1, price: 8 },
     },
   },
 ]

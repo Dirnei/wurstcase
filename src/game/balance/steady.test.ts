@@ -19,19 +19,19 @@ describe('steadyIncome', () => {
 
   it('sells what the customers do not order to the biogas plant', () => {
     const soy = owned({ soybeanField: 3, tofuPress: 2, tofuWurstKitchen: 2 })
-    // 10 customers order 0.5 Tofu-Wurst per second (€3); the other 0.5 go for €1.50 each.
-    expect(steadyIncome(soy, 10)).toBeCloseTo(0.5 * 3 + 0.5 * 1.5, 10)
+    // 10 customers order 0.5 Tofu-Wurst per second (€3); the other 0.5 go for €2 each.
+    expect(steadyIncome(soy, 10)).toBeCloseTo(0.5 * 3 + 0.5 * 2, 10)
   })
 
   it('sells the output of a field without the rest of its chain to the biogas plant', () => {
-    expect(steadyIncome(owned({ soybeanField: 3 }), 100)).toBeCloseTo(3 * 0.3, 10)
+    expect(steadyIncome(owned({ soybeanField: 3 }), 100)).toBeCloseTo((3 * 3) / 7, 10)
   })
 
   it('sells only what the next stage does not use', () => {
     // 4 soybeans per second and the press uses 1.5; with no kitchen, its 0.5 tofu go to the biogas
-    // plant at €1.50 each. MegaMeat would pay more but costs customers.
+    // plant at €1.60 each. MegaMeat would pay more but costs customers.
     const state = owned({ soybeanField: 4, tofuPress: 1 })
-    expect(steadyIncome(state, 100)).toBeCloseTo(2.5 * 0.3 + 0.5 * 1.5, 10)
+    expect(steadyIncome(state, 100)).toBeCloseTo((2.5 * 3) / 7 + 0.5 * 1.6, 10)
   })
 
   it('serves Leverkas before Tofu-Wurst when demand is short', () => {
@@ -44,8 +44,8 @@ describe('steadyIncome', () => {
       leverkasOven: 1,
     })
     // 10 customers order 0.5 per second: 0.25 Leverkas (€25) and 0.25 Tofu-Wurst (€3); the other
-    // 0.75 Tofu-Wurst go to the biogas plant for €1.50 each.
-    expect(steadyIncome(both, 10)).toBeCloseTo(0.25 * 25 + 0.25 * 3 + 0.75 * 1.5, 10)
+    // 0.75 Tofu-Wurst go to the biogas plant for €2 each.
+    expect(steadyIncome(both, 10)).toBeCloseTo(0.25 * 25 + 0.25 * 3 + 0.75 * 2, 10)
   })
 })
 
@@ -80,13 +80,13 @@ describe('steadyIncome with upgrades', () => {
     const soy = owned({ soybeanField: 1, tofuPress: 1, tofuWurstKitchen: 1 })
     // Better seeds lift the field to 2 soybeans/s, so the press runs at its full 0.5 tofu/s and the
     // other 0.5 soybeans/s go to the biogas plant.
-    expect(steadyIncome(soy, 100, ['betterSeeds'])).toBeCloseTo(1.5 + 0.5 * 0.3, 10)
+    expect(steadyIncome(soy, 100, ['betterSeeds'])).toBeCloseTo(1.5 + (0.5 * 3) / 7, 10)
     const wheat = owned({ wheatField: 1, seitanKitchen: 1, leverkasOven: 1 })
     expect(steadyIncome(wheat, 100, ['leverkasRecipe'])).toBeCloseTo(0.25 * 35, 10)
   })
 
   it('raises the demand limit with the loyalty card', () => {
     const soy = owned({ soybeanField: 3, tofuPress: 2, tofuWurstKitchen: 2 })
-    expect(steadyIncome(soy, 10, ['loyaltyCard'])).toBeCloseTo(0.75 * 3 + 0.25 * 1.5, 10)
+    expect(steadyIncome(soy, 10, ['loyaltyCard'])).toBeCloseTo(0.75 * 3 + 0.25 * 2, 10)
   })
 })

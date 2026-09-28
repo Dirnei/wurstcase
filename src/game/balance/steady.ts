@@ -1,4 +1,5 @@
 import { BUILDINGS, type BuildingId } from '../content/buildings'
+import { BUYERS, type BuyerId } from '../content/buyers'
 import { RESOURCES, type ResourceId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import type { UpgradeId } from '../content/upgrades'
@@ -24,10 +25,19 @@ export function steadyOutput(
   return flow
 }
 
-/** What the best-paying bulk buyer without a feed cost pays per unit; content, so computed once. */
-const SURPLUS_PRICE: ReadonlyMap<ResourceId, number> = new Map(
-  RESOURCES.map((resource) => [resource, bestBuyer(resource, { withoutFeedCost: true })?.perUnit ?? 0]),
-)
+/**
+ * What surplus earns per unit when it goes to the given buyer: its own lot where it takes the
+ * resource, otherwise the best-paying buyer without a feed cost. Content, so computed once.
+ */
+const SURPLUS_PRICE = {} as Record<BuyerId, ReadonlyMap<ResourceId, number>>
+for (const buyer of BUYERS) {
+  SURPLUS_PRICE[buyer.id] = new Map(
+    RESOURCES.map((resource) => {
+      const lot = buyer.lots[resource]
+      return [resource, lot ? lot.price / lot.units : (bestBuyer(resource, { withoutFeedCost: true })?.perUnit ?? 0)]
+    }),
+  )
+}
 
 /** Units per second of each resource that the next stage of its chain takes, at steady state. */
 export function usedOutput(
@@ -55,6 +65,7 @@ export function steadyIncome(
   buildings: Readonly<Record<BuildingId, number>>,
   customers: number,
   upgrades: readonly UpgradeId[] = [],
+  surplusBuyer: BuyerId = 'biogas',
 ): number {
   const owned = { upgrades: [...upgrades] }
   const flow = steadyOutput(buildings, upgrades)
@@ -70,7 +81,7 @@ export function steadyIncome(
   for (const resource of RESOURCES) {
     const surplus = (flow[resource] ?? 0) - (taken[resource] ?? 0)
     if (surplus > 0) {
-      income += surplus * SURPLUS_PRICE.get(resource)!
+      income += surplus * SURPLUS_PRICE[surplusBuyer].get(resource)!
     }
   }
   return income

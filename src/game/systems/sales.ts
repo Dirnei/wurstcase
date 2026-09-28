@@ -9,6 +9,7 @@ import {
 import type { GameState } from '../state'
 import { recordSale } from './salesStats'
 import { ordersFactor, productPrice, productsByPrice } from './upgrades'
+import { recordCustomerSale } from './customerIncome'
 
 /** Orders per second from all customers. */
 export function orderRate(state: Readonly<GameState>): Decimal {
@@ -54,6 +55,7 @@ function fillOrders(state: GameState): void {
     state.openOrders = state.openOrders.sub(sold)
     state.money = state.money.add(earned)
     state.totalEarned = state.totalEarned.add(earned)
+    recordCustomerSale(state, earned)
     recordSale(state, product, sold)
   }
 }

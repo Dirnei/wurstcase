@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 8
+export const CURRENT_FORMAT = 9
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -63,6 +63,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     ).map(({ upgrade }) => upgrade.id)
     return { ...state, upgrades: [...new Set([...state.upgrades, ...reached])] }
   },
+  // 8 → 9 (megameat-temptation): no customer income yet; it catches up within minutes of play.
+  8: (state) => (isRecord(state) ? { customerIncome: '0', ...state } : state),
 }
 
 export type DecodeResult =
@@ -156,6 +158,7 @@ function writeState(state: GameState): Record<string, unknown> {
     aktionen: { cooldown: { ...state.aktionen.cooldown }, runs: { ...state.aktionen.runs } },
     megaMeat: { ...state.megaMeat, active: state.megaMeat.active && { ...state.megaMeat.active } },
     upgrades: [...state.upgrades],
+    customerIncome: state.customerIncome.toString(),
   }
 }
 
@@ -182,6 +185,7 @@ function readState(value: unknown): GameState | null {
   const totalEarned = readAmount(value.totalEarned)
   const customers = readAmount(value.customers)
   const openOrders = readAmount(value.openOrders)
+  const customerIncome = readRate(value.customerIncome)
   if (
     !isFiniteNumber(playTime) ||
     playTime < 0 ||
@@ -189,6 +193,7 @@ function readState(value: unknown): GameState | null {
     !totalEarned ||
     !customers ||
     !openOrders ||
+    !customerIncome ||
     !isFiniteNumber(orderProgress) ||
     orderProgress < 0 ||
     typeof assistant !== 'boolean' ||
@@ -271,6 +276,7 @@ function readState(value: unknown): GameState | null {
     openOrders,
     orderProgress,
     assistant,
+    customerIncome,
   }
 }
 
@@ -332,6 +338,15 @@ function readAmount(value: unknown): Decimal | null {
   const amount = new Decimal(value)
   const valid = !amount.isNan() && amount.isFinite() && amount.gte(0) && amount.floor().eq(amount)
   return valid ? amount : null
+}
+
+/** A non-negative amount that may have a fractional part, such as a rate per second. */
+function readRate(value: unknown): Decimal | null {
+  if (typeof value !== 'string' || !/^[0-9.eE+-]+$/.test(value)) {
+    return null
+  }
+  const rate = new Decimal(value)
+  return !rate.isNan() && rate.isFinite() && rate.gte(0) ? rate : null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

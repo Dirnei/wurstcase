@@ -1,6 +1,7 @@
 import type { GameState } from './state'
 import { coolDown } from './systems/aktionen'
 import { convert, gatherAwareness } from './systems/awareness'
+import { advanceCustomerIncome } from './systems/customerIncome'
 import { produce } from './systems/production'
 import { takeOrders } from './systems/sales'
 import { advanceSalesStats } from './systems/salesStats'
@@ -13,6 +14,7 @@ export function tick(state: GameState, seconds: number): void {
   const before = { ...state.stock }
   state.playTime += seconds
   advanceSalesStats(state, seconds)
+  advanceCustomerIncome(state, seconds)
   produce(state, seconds)
   advanceVillain(state, seconds)
   gatherAwareness(state, seconds)

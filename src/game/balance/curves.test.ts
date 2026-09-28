@@ -51,11 +51,13 @@ describe('demandCeiling', () => {
 })
 
 describe('bulkTable', () => {
-  it('compares bulk prices with the vegan value', () => {
+  it('compares bulk prices with the market value', () => {
     const soybeans = bulkTable().find((row) => row.resource === 'soybeans')!
-    expect(soybeans.veganValue).toBe(1)
-    expect(soybeans.buyers.megaMeat).toEqual({ perUnit: 0.4, share: 0.4 })
-    expect(soybeans.buyers.biogas).toEqual({ perUnit: 0.3, share: 0.3 })
+    expect(soybeans.marketValue).toBeCloseTo(0.64, 10)
+    expect(soybeans.buyers.megaMeat!.perUnit).toBeCloseTo(0.571, 3)
+    expect(soybeans.buyers.megaMeat!.share).toBeCloseTo(0.893, 3)
+    expect(soybeans.buyers.biogas!.perUnit).toBeCloseTo(0.429, 3)
+    expect(soybeans.buyers.biogas!.share).toBeCloseTo(0.67, 3)
   })
 
   it('leaves out what a buyer does not take', () => {

@@ -10,7 +10,7 @@ import { createInitialState } from '../state'
 import { buildingPrice } from '../systems/buildings'
 import { animalPrice } from '../systems/rescue'
 import { steadyOutput } from './steady'
-import { buildingIncome, chainBalance, veganValue } from './value'
+import { buildingIncome, chainBalance, marketValue, veganValue } from './value'
 
 export const MAX_COPIES = 50
 
@@ -127,14 +127,14 @@ export function demandCeiling(customerCounts: readonly number[]): DemandPoint[] 
 
 export interface BulkRow {
   resource: ResourceId
-  veganValue: number
-  /** Price per unit, and as a share of the vegan value; missing if the buyer does not take it. */
+  marketValue: number
+  /** Price per unit, and as a share of the market value; missing if the buyer does not take it. */
   buyers: Partial<Record<BuyerId, { perUnit: number; share: number }>>
 }
 
 export function bulkTable(): BulkRow[] {
   return RESOURCES.map((resource) => {
-    const value = veganValue(resource)
+    const value = marketValue(resource)
     const buyers: BulkRow['buyers'] = {}
     for (const buyer of BUYERS) {
       const lot = buyer.lots[resource]
@@ -143,7 +143,7 @@ export function bulkTable(): BulkRow[] {
         buyers[buyer.id] = { perUnit, share: perUnit / value }
       }
     }
-    return { resource, veganValue: value, buyers }
+    return { resource, marketValue: value, buyers }
   })
 }
 

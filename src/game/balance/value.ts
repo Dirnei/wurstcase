@@ -1,3 +1,4 @@
+import { STEP_MARKUP } from '../content/buyers'
 import { BUILDINGS, getBuilding, type BuildingDef, type BuildingId, type ChainId } from '../content/buildings'
 import { PRODUCT_PRICES } from '../content/products'
 import { PRODUCTS, type ProductId, type ResourceId } from '../content/resources'
@@ -17,6 +18,15 @@ export function veganValue(resource: ResourceId): number {
   }
   const consumer = consumerOf(resource)
   return veganValue(consumer.output) / consumer.input!.ratio
+}
+
+/** What one unit is worth on the market: its product's price, less the markup of each step still to come. */
+export function marketValue(resource: ResourceId): number {
+  if (isProduct(resource)) {
+    return PRODUCT_PRICES[resource]
+  }
+  const consumer = consumerOf(resource)
+  return marketValue(consumer.output) / consumer.input!.ratio / (1 + STEP_MARKUP)
 }
 
 /** Income per second of one building, assuming the rest of its chain and the demand keep up. */

@@ -236,6 +236,27 @@ describe('encodeSave / decodeSave', () => {
     expect(isUpgradeOffered(restored, 'soyChain50')).toBe(true)
   })
 
+  it('restores the customer income exactly', () => {
+    const state = createInitialState()
+    state.customerIncome = new Decimal('12.345')
+    expect(decodedState(encodeSave(state, NOW)).customerIncome.eq('12.345')).toBe(true)
+  })
+
+  it('migrates a format 8 save with no customer income', () => {
+    const format8 = savedState()
+    delete format8.customerIncome
+    format8.customers = '40'
+    const restored = decodedState(envelope(8, format8))
+    expect(restored.customerIncome.toNumber()).toBe(0)
+    expect(restored.customers.toNumber()).toBe(40)
+  })
+
+  it.each([['-1'], ['abc'], [3]])('rejects a customer income of %s', (income) => {
+    const state = savedState()
+    state.customerIncome = income
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
+  })
+
   it('migrates a format 7 save with one building past a milestone alone without milestone upgrades', () => {
     const format7 = savedState()
     format7.buildings.soybeanField = 60

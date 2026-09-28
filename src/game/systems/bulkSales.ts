@@ -61,8 +61,12 @@ export function bulkSaleCost(
   if (!cost || euros === 0) {
     return { customers: 0, awareness: 0 }
   }
+  // What the customers spend in the horizon; the sale drives away its share of them.
+  const spend = state.customerIncome.mul(cost.horizonSeconds)
+  const above = Decimal.max(state.customers.sub(STARTING_CUSTOMERS), 0).toNumber()
+  const lost = spend.gt(0) ? Math.ceil(state.customers.mul(euros).div(spend).toNumber()) : above
   return {
-    customers: Math.ceil(euros / cost.eurosPerCustomer),
+    customers: Math.min(lost, above),
     awareness: Math.ceil(euros / cost.eurosPerAwareness),
   }
 }

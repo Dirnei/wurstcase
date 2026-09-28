@@ -10,7 +10,7 @@ import { MANUAL_ACTIONS } from './manual'
 import { MEGAMEAT_EVENT_IDS, MEGAMEAT_EVENTS } from './megaMeatEvents'
 import { CHAIN_MILESTONES, UPGRADE_IDS, UPGRADES } from './upgrades'
 import { PRODUCT_PRICES, PRODUCTS_BY_PRICE } from './products'
-import { veganValue } from '../balance/value'
+import { marketValue } from '../balance/value'
 import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES, type ProductId } from './resources'
 import { LEBENSHOF_UNLOCK_AT, SHELTER_IDS, SHELTERS } from './shelters'
 
@@ -107,57 +107,39 @@ describe('content', () => {
     }
   })
 
-  it('pays less at the biogas plant than at MegaMeat, and both less than vegan food', () => {
+  it('pays less at the biogas plant than at MegaMeat, and both less than the market value', () => {
     const megaMeat = getBuyer('megaMeat').lots
     const biogas = getBuyer('biogas').lots
     for (const resource of RESOURCES) {
       const gas = biogas[resource]!.price / biogas[resource]!.units
-      expect(gas, resource).toBeLessThan(veganValue(resource))
+      expect(gas, resource).toBeLessThan(marketValue(resource))
       const meatLot = megaMeat[resource]
       if (meatLot) {
         const meat = meatLot.price / meatLot.units
         expect(gas, resource).toBeLessThan(meat)
-        expect(meat, resource).toBeLessThan(veganValue(resource))
+        expect(meat, resource).toBeLessThan(marketValue(resource))
       }
     }
   })
 
-  it('pays a share of the vegan value that rises along the chain', () => {
-    const ranges: Record<string, Record<'raw' | 'intermediate' | 'product', [number, number] | null>> = {
-      megaMeat: { raw: [0.35, 0.45], intermediate: [0.6, 0.7], product: null },
-      biogas: { raw: [0.25, 0.35], intermediate: [0.45, 0.55], product: [0.45, 0.55] },
-    }
-    const step = (resource: string) =>
-      (RAW as readonly string[]).includes(resource)
-        ? 'raw'
-        : (INTERMEDIATES as readonly string[]).includes(resource)
-          ? 'intermediate'
-          : 'product'
+  it('pays a fixed share of the market value, and processing before selling pays', () => {
+    const ranges: Record<string, [number, number]> = { megaMeat: [0.85, 0.95], biogas: [0.62, 0.72] }
     for (const buyer of BUYERS) {
       const perUnit = (resource: string) => {
         const lot = buyer.lots[resource as keyof typeof buyer.lots]!
         return lot.price / lot.units
       }
       for (const resource of Object.keys(buyer.lots)) {
-        const range = ranges[buyer.id][step(resource)]!
-        const share = perUnit(resource) / veganValue(resource as (typeof RESOURCES)[number])
-        expect(share, `${buyer.id} ${resource}`).toBeGreaterThanOrEqual(range[0])
-        expect(share, `${buyer.id} ${resource}`).toBeLessThanOrEqual(range[1])
+        const share = perUnit(resource) / marketValue(resource as (typeof RESOURCES)[number])
+        expect(share, `${buyer.id} ${resource}`).toBeGreaterThanOrEqual(ranges[buyer.id][0])
+        expect(share, `${buyer.id} ${resource}`).toBeLessThanOrEqual(ranges[buyer.id][1])
       }
-      // Turning the input into this resource must pay at the same buyer: more for intermediates,
-      // at least as much for products.
       for (const building of BUILDINGS) {
         const { input, output } = building
         if (!input || !(output in buyer.lots) || !(input.resource in buyer.lots)) {
           continue
         }
-        const made = perUnit(output)
-        const fromInput = input.ratio * perUnit(input.resource)
-        if (step(output) === 'intermediate') {
-          expect(made, `${buyer.id} ${output}`).toBeGreaterThan(fromInput)
-        } else {
-          expect(made, `${buyer.id} ${output}`).toBeGreaterThanOrEqual(fromInput)
-        }
+        expect(perUnit(output), `${buyer.id} ${output}`).toBeGreaterThan(input.ratio * perUnit(input.resource))
       }
     }
   })

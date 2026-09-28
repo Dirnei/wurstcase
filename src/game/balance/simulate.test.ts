@@ -49,6 +49,20 @@ describe('simulate', () => {
     expect(run.final.customers.toNumber()).toBeGreaterThan(10)
   })
 
+  it('can feed its surplus to MegaMeat, and sends products to the biogas plant', () => {
+    const run = simulate({ minutes: 20, clicksPerSecond: 2, surplusBuyer: 'megaMeat' })
+    expect(run.final.unitsSold.megaMeat.toNumber()).toBeGreaterThan(0)
+    expect(run.final.unitsSold.biogas.toNumber()).toBeGreaterThan(0)
+    const again = simulate({ minutes: 20, clicksPerSecond: 2, surplusBuyer: 'megaMeat' })
+    expect(again.final.money.eq(run.final.money)).toBe(true)
+  })
+
+  it('loses at least half its customers when it feeds its surplus to MegaMeat', () => {
+    const fair = simulate({ minutes: 60, clicksPerSecond: 2 })
+    const fed = simulate({ minutes: 60, clicksPerSecond: 2, surplusBuyer: 'megaMeat' })
+    expect(fed.final.customers.toNumber()).toBeLessThanOrEqual(fair.final.customers.toNumber() / 2)
+  })
+
   it('buys the hydraulic press, a yield upgrade', () => {
     const { log } = simulate({ minutes: 60, clicksPerSecond: 2 })
     expect(log.some((p) => p.kind === 'upgrade' && p.id === 'hydraulicPress')).toBe(true)

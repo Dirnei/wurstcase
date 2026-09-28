@@ -48,6 +48,16 @@ describe('takeOrders', () => {
 })
 
 describe('sell', () => {
+  it('records what customers pay into the customer income', () => {
+    const state = stateWith((s) => {
+      s.openOrders = new Decimal(5)
+      s.stock.tofuWurst = new Decimal(10)
+    })
+    sell(state)
+    // €15 folded in over the 300-second smoothing.
+    expect(state.customerIncome.toNumber()).toBeCloseTo(15 / 300, 10)
+  })
+
   it('fills orders with the most expensive products first', () => {
     const state = stateWith((s) => {
       s.openOrders = new Decimal(5)

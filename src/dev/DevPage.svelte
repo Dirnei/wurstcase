@@ -2,7 +2,7 @@
   // The developer page is a tool for the author, so its text is plain English (no i18n).
   import { SPECIES } from '../game/content/animals'
   import { BUILDINGS, CHAINS, type BuildingId } from '../game/content/buildings'
-  import { BUYERS } from '../game/content/buyers'
+  import { BUYERS, STEP_MARKUP, type BuyerId } from '../game/content/buyers'
   import { PRODUCTS } from '../game/content/resources'
   import { SHELTERS } from '../game/content/shelters'
   import { POPULATION } from '../game/content/town'
@@ -38,6 +38,7 @@
   // ── Simulation ──
   let minutes = $state(DEFAULT_SETTINGS.minutes)
   let clicksPerSecond = $state(DEFAULT_SETTINGS.clicksPerSecond)
+  let surplusBuyer = $state<BuyerId>('biogas')
   let running = $state(false)
   let result = $state.raw<SimulationResult | null>(null)
   let runMs = $state(0)
@@ -47,7 +48,7 @@
     // Let the page paint "Running…" before the synchronous simulation blocks it.
     setTimeout(() => {
       const start = performance.now()
-      result = simulate({ minutes: Math.max(1, minutes), clicksPerSecond: Math.max(0, clicksPerSecond) })
+      result = simulate({ minutes: Math.max(1, minutes), clicksPerSecond: Math.max(0, clicksPerSecond), surplusBuyer })
       runMs = performance.now() - start
       running = false
     }, 20)
@@ -119,6 +120,12 @@
     >
       <label>Minutes <input type="number" min="1" max="600" bind:value={minutes} /></label>
       <label>Clicks per second <input type="number" min="0" max="20" step="0.5" bind:value={clicksPerSecond} /></label>
+      <label
+        >Surplus to <select bind:value={surplusBuyer}>
+          <option value="biogas">biogas</option>
+          <option value="megaMeat">megaMeat</option>
+        </select></label
+      >
       <button type="submit" class="game-button" disabled={running}>{running ? 'Running…' : 'Run'}</button>
       {#if result && !running}
         <span class="muted">{result.log.length} purchases · {runMs.toFixed(0)} ms</span>
@@ -334,10 +341,11 @@
 
   <section class="panel">
     <h2>Bulk buyers</h2>
+    <p class="muted">Market value: the product's price, less {percent(STEP_MARKUP)} per processing step still to come.</p>
     <table>
       <thead>
         <tr>
-          <th>Resource</th><th>Vegan value</th>
+          <th>Resource</th><th>Market value</th>
           {#each BUYERS as buyer (buyer.id)}<th>{buyer.id}</th>{/each}
         </tr>
       </thead>
@@ -345,7 +353,7 @@
         {#each bulk as row (row.resource)}
           <tr>
             <td>{resourceName(row.resource)}</td>
-            <td class="num">{euro(row.veganValue)}</td>
+            <td class="num">{euro(row.marketValue)}</td>
             {#each BUYERS as buyer (buyer.id)}
               {@const offer = row.buyers[buyer.id]}
               <td class="num">{offer ? `${euro(offer.perUnit)} (${percent(offer.share)})` : '–'}</td>

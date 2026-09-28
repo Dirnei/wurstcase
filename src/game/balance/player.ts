@@ -7,7 +7,8 @@ import { getUpgrade, type UpgradeEffect, type UpgradeId } from '../content/upgra
 import { ASSISTANT, CONVERSION_PER_AWARENESS, ORDERS_PER_CUSTOMER, POPULATION } from '../content/town'
 import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
-import { bestBuyer, bulkSell } from '../systems/bulkSales'
+import type { BuyerId } from '../content/buyers'
+import { bestBuyer, bulkSell, hasLot } from '../systems/bulkSales'
 import { canPerform, isManualUnlocked, performManual } from '../systems/manual'
 import {
   animalPrice,
@@ -56,6 +57,8 @@ export interface Player {
   clickCarry: number
   /** Game seconds since the surplus was last sold in bulk. */
   sinceBulkSale: number
+  /** Where the surplus goes: the biogas plant by default, or MegaMeat for the tempted player. */
+  surplusBuyer: BuyerId
   target: Target | null
 }
 
@@ -78,8 +81,8 @@ const RESCUE_HORIZON_SECONDS = 600
 const BULK_SALE_EVERY_SECONDS = 10
 const BULK_KEEP_SECONDS = 30
 
-export function createPlayer(clicksPerSecond: number): Player {
-  return { clicksPerSecond, clickCarry: 0, sinceBulkSale: 0, target: null }
+export function createPlayer(clicksPerSecond: number, surplusBuyer: BuyerId = 'biogas'): Player {
+  return { clicksPerSecond, clickCarry: 0, sinceBulkSale: 0, surplusBuyer, target: null }
 }
 
 /** One decision step of the scripted player; the caller then advances the game with tick(). */
@@ -91,16 +94,16 @@ export function playerStep(player: Player, state: GameState, seconds: number, lo
   player.sinceBulkSale += seconds
   if (player.sinceBulkSale >= BULK_SALE_EVERY_SECONDS - 1e-9) {
     player.sinceBulkSale = 0
-    sellSurplus(state)
+    sellSurplus(state, player.surplusBuyer)
   }
   if (canHireAssistant(state)) {
     hireAssistant(state)
     log({ time: state.playTime, kind: 'assistant', id: 'assistant', price: ASSISTANT.price })
   }
   if (!player.target) {
-    buyCheapUpgrades(state, log)
+    buyCheapUpgrades(state, log, player.surplusBuyer)
   }
-  player.target ??= chooseTarget(state)
+  player.target ??= chooseTarget(state, player.surplusBuyer)
   if (player.target) {
     buyTowards(player, state, log)
   }
@@ -119,11 +122,11 @@ function click(player: Player, state: GameState, seconds: number): void {
 
 /**
  * Sells each resource's stock beyond what its buildings use (for products: what customers order)
- * in the next 30 seconds, to the best-paying buyer that costs no customers: the player plays for
- * customers, who buy on their own. The game sells whole stocks
+ * in the next 30 seconds, to the surplus buyer where it takes the resource, otherwise to the
+ * best-paying buyer that costs no customers. The game sells whole stocks
  * only, so the kept part is set aside for the sale and put back after it.
  */
-function sellSurplus(state: GameState): void {
+function sellSurplus(state: GameState, surplusBuyer: BuyerId): void {
   const perSecond: Partial<Record<string, number>> = {}
   for (const building of BUILDINGS) {
     if (building.input) {
@@ -133,8 +136,8 @@ function sellSurplus(state: GameState): void {
   }
   const orders = orderRate(state).toNumber()
   for (const resource of RESOURCES) {
-    const best = bestBuyer(resource, { withoutFeedCost: true })
-    if (!best) {
+    const buyer = hasLot(surplusBuyer, resource) ? surplusBuyer : bestBuyer(resource, { withoutFeedCost: true })?.buyer
+    if (!buyer) {
       continue
     }
     const isProduct = (PRODUCTS as readonly string[]).includes(resource)
@@ -144,7 +147,7 @@ function sellSurplus(state: GameState): void {
       continue
     }
     state.stock[resource] = stock.sub(keep)
-    bulkSell(state, best.buyer, resource)
+    bulkSell(state, buyer, resource)
     state.stock[resource] = state.stock[resource].add(keep)
   }
 }
@@ -179,27 +182,27 @@ function clickChain(state: GameState, chain: ChainId): void {
 }
 
 /** Income per second the player can count on: the steady model, or the average so far while clicking. */
-function incomeEstimate(state: Readonly<GameState>): number {
+function incomeEstimate(state: Readonly<GameState>, surplusBuyer: BuyerId): number {
   const average = state.playTime > 0 ? state.totalEarned.toNumber() / state.playTime : 0
-  return Math.max(steadyIncome(state.buildings, state.customers.toNumber(), state.upgrades), average)
+  return Math.max(steadyIncome(state.buildings, state.customers.toNumber(), state.upgrades, surplusBuyer), average)
 }
 
 /** Buys upgrades without an income effect once they cost no more than a few minutes of income. */
-function buyCheapUpgrades(state: GameState, log: (p: Purchase) => void): void {
+function buyCheapUpgrades(state: GameState, log: (p: Purchase) => void, surplusBuyer: BuyerId): void {
   for (const upgrade of offeredUpgrades(state)) {
     if (INCOME_EFFECTS.includes(upgrade.effect.kind)) {
       continue
     }
-    if (upgrade.price <= incomeEstimate(state) * CHEAP_UPGRADE_SECONDS && canBuyUpgrade(state, upgrade.id)) {
+    if (upgrade.price <= incomeEstimate(state, surplusBuyer) * CHEAP_UPGRADE_SECONDS && canBuyUpgrade(state, upgrade.id)) {
       buyUpgrade(state, upgrade.id)
       log({ time: state.playTime, kind: 'upgrade', id: upgrade.id, price: upgrade.price })
     }
   }
 }
 
-function chooseTarget(state: Readonly<GameState>): Target | null {
+function chooseTarget(state: Readonly<GameState>, surplusBuyer: BuyerId): Target | null {
   const customers = state.customers.toNumber()
-  const before = steadyIncome(state.buildings, customers, state.upgrades)
+  const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer)
   const unlocked = BUILDINGS.filter((building) => isUnlocked(state, building.id)).map((b) => b.id)
   const candidates: BuildingId[][] = unlocked.map((id) => [id])
   for (const chain of CHAINS) {
@@ -218,7 +221,7 @@ function chooseTarget(state: Readonly<GameState>): Target | null {
       after[id] += 1
       price += buildingPrice(state, id).toNumber()
     }
-    const gain = steadyIncome(after, customers, state.upgrades) - before
+    const gain = steadyIncome(after, customers, state.upgrades, surplusBuyer) - before
     if (gain > MIN_GAIN && price / gain < bestScore) {
       best = pieces
       bestScore = price / gain
@@ -229,13 +232,13 @@ function chooseTarget(state: Readonly<GameState>): Target | null {
     if (!INCOME_EFFECTS.includes(upgrade.effect.kind)) {
       continue
     }
-    const gain = steadyIncome(state.buildings, customers, [...state.upgrades, upgrade.id]) - before
+    const gain = steadyIncome(state.buildings, customers, [...state.upgrades, upgrade.id], surplusBuyer) - before
     if (gain > MIN_GAIN && upgrade.price / gain < bestScore) {
       bestUpgrade = upgrade.id
       bestScore = upgrade.price / gain
     }
   }
-  const rescue = rescueScore(state)
+  const rescue = rescueScore(state, surplusBuyer)
   if (rescue && rescue.score < bestScore) {
     return { kind: 'rescue', species: rescue.species }
   }
@@ -298,7 +301,7 @@ function servingChain(
  * customers it converts within the horizon first take the products now going to the biogas plant;
  * orders beyond that need new chain capacity, which is added to the price.
  */
-function rescueScore(state: Readonly<GameState>): { species: SpeciesId; score: number } | null {
+function rescueScore(state: Readonly<GameState>, surplusBuyer: BuyerId): { species: SpeciesId; score: number } | null {
   const species = bestSpecies(state)
   if (!species) {
     return null
@@ -313,8 +316,8 @@ function rescueScore(state: Readonly<GameState>): { species: SpeciesId; score: n
     share *
     RESCUE_HORIZON_SECONDS
   const orders = converted * ORDERS_PER_CUSTOMER * ordersFactor(state)
-  const before = steadyIncome(state.buildings, customers, state.upgrades)
-  const fromSurplus = steadyIncome(state.buildings, customers + converted, state.upgrades) - before
+  const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer)
+  const fromSurplus = steadyIncome(state.buildings, customers + converted, state.upgrades, surplusBuyer) - before
   const unserved = Math.max(0, orders - productSurplus(state))
   const serving = servingChain(state, unserved)
   if (!serving) {

@@ -13,6 +13,9 @@ export const OVERSTOCK_SECONDS = 120
 /** The shop assistant: a one-time purchase that sells open orders automatically. */
 export const ASSISTANT = { price: 150, unlockAt: 50 }
 
+/** Seconds over which the customer income follows customer sales; a single sale fades within minutes. */
+export const CUSTOMER_INCOME_SECONDS = 300
+
 /** Act 1's town: customers never exceed it. */
 export const POPULATION = 20_000
 
