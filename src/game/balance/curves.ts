@@ -3,7 +3,7 @@ import { BUILDINGS, CHAINS, type BuildingId, type ChainId } from '../content/bui
 import { BUYERS, type BuyerId } from '../content/buyers'
 import { KITCHENS, PRODUCT_PRICES } from '../content/products'
 import { PRODUCTS, RESOURCES, type ProductId, type ResourceId } from '../content/resources'
-import { ORDERS_PER_CUSTOMER } from '../content/town'
+import { demandRate } from '../content/town'
 import { CHAIN_MILESTONES, type UpgradeId } from '../content/upgrades'
 import type { GameState } from '../state'
 import { createInitialState } from '../state'
@@ -115,7 +115,7 @@ export interface DemandPoint {
 
 export function demandCeiling(customerCounts: readonly number[]): DemandPoint[] {
   return customerCounts.map((customers) => {
-    const orders = customers * ORDERS_PER_CUSTOMER
+    const orders = demandRate(customers)
     const perProduct = (value: (product: ProductId) => number) =>
       Object.fromEntries(PRODUCTS.map((product) => [product, value(product)])) as Record<ProductId, number>
     return {

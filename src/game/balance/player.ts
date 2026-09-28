@@ -5,7 +5,7 @@ import { PRODUCTS, RAW, RESOURCES } from '../content/resources'
 import { SHELTERS, type ShelterId } from '../content/shelters'
 import { getUpgrade, type UpgradeEffect, type UpgradeId } from '../content/upgrades'
 import { AKTIONEN } from '../content/aktionen'
-import { ASSISTANT, ORDERS_PER_CUSTOMER, POPULATION } from '../content/town'
+import { ASSISTANT, demandRate, POPULATION } from '../content/town'
 import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
 import type { BuyerId } from '../content/buyers'
@@ -424,7 +424,9 @@ function rescueScore(state: Readonly<GameState>, surplusBuyer: BuyerId): { speci
     getSpecies(species).awareness * awarenessFactor(state, species) * RESCUE_HORIZON_SECONDS * perPoint,
     POPULATION - customers,
   )
-  const orders = converted * ORDERS_PER_CUSTOMER * ordersFactor(state) * scandalFactor(state)
+  // The orders the won customers add on top of today's: the curve makes later customers order less.
+  const orders = demandRate(customers + converted, ordersFactor(state) * scandalFactor(state)) -
+    demandRate(customers, ordersFactor(state) * scandalFactor(state))
   const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer, scandalFactor(state))
   const fromSurplus = steadyIncome(state.buildings, customers + converted, state.upgrades, surplusBuyer, scandalFactor(state)) - before
   const unserved = Math.max(0, orders - productSurplus(state))

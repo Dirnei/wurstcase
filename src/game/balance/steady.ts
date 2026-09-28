@@ -1,7 +1,7 @@
 import { BUILDINGS, type BuildingId } from '../content/buildings'
 import { BUYERS, getBuyer, type BuyerId } from '../content/buyers'
 import { RESOURCES, type ResourceId } from '../content/resources'
-import { ORDERS_PER_CUSTOMER } from '../content/town'
+import { demandRate } from '../content/town'
 import type { UpgradeId } from '../content/upgrades'
 import { bestBuyer, hasLot, isFlooded, unitPrice } from '../systems/bulkSales'
 import { ordersFactor, productPrice, productsByPrice, rateFactor, yieldPerRun } from '../systems/upgrades'
@@ -76,7 +76,7 @@ export function steadyIncome(
   const owned = { upgrades: [...upgrades] }
   const flow = steadyOutput(buildings, upgrades)
   const taken = usedOutput(flow, upgrades)
-  let demand = customers * ORDERS_PER_CUSTOMER * ordersFactor(owned) * demandFactor
+  let demand = demandRate(customers, ordersFactor(owned) * demandFactor)
   let income = 0
   for (const product of productsByPrice(owned)) {
     const sold = Math.min(flow[product] ?? 0, demand)

@@ -7,6 +7,7 @@ import {
   hireAssistant,
   isOverstocked,
   orderCap,
+  orderRate,
   saleValue,
   sell,
   takeOrders,
@@ -206,12 +207,58 @@ describe('upgrade effects on sales', () => {
 
 describe('MegaMeat scandal and orders', () => {
   it('halves the orders at a scandal of €10,000, and the cap with them', () => {
+    // 1,500 customers sit at the curve's 75 per second.
     const state = stateWith((s) => {
-      s.customers = new Decimal(1_000)
+      s.customers = new Decimal(1_500)
       s.megaMeatScandal = new Decimal(10_000)
     })
     takeOrders(state, 10)
-    expect(state.openOrders.toNumber()).toBe(250)
-    expect(orderCap(state).toNumber()).toBe(750)
+    expect(state.openOrders.toNumber()).toBe(375)
+    expect(orderCap(state).toNumber()).toBe(1_125)
+  })
+})
+
+describe('demand curve', () => {
+  const customers = (count: number, setup: (state: GameState) => void = () => {}) =>
+    stateWith((s) => {
+      s.customers = new Decimal(count)
+      setup(s)
+    })
+
+  it('orders 375 in 10 s at the knee of 750 customers', () => {
+    const state = customers(750)
+    takeOrders(state, 10)
+    expect(state.openOrders.toNumber()).toBe(375)
+  })
+
+  it('meets the flat rate at twice the knee, then falls behind it: 3,000 customers order 1,125 in 10 s, not 1,500', () => {
+    const twice = customers(1_500)
+    takeOrders(twice, 10)
+    expect(twice.openOrders.toNumber()).toBe(750)
+    expect(orderCap(twice).toNumber()).toBe(2_250)
+    const state = customers(3_000)
+    takeOrders(state, 10)
+    expect(state.openOrders.toNumber()).toBe(1_125)
+    expect(orderCap(state).toNumber()).toBe(3_375)
+  })
+
+  it('adds the same for each doubling: 6,000 customers order 1,500 in 10 s', () => {
+    const state = customers(6_000)
+    takeOrders(state, 10)
+    expect(state.openOrders.toNumber()).toBe(1_500)
+  })
+
+  it('applies the loyalty card to the curve’s result: 3,000 customers order about 169 per second', () => {
+    expect(orderRate(customers(3_000, (s) => (s.upgrades = ['loyaltyCard']))).toNumber()).toBeCloseTo(168.75, 10)
+  })
+
+  it('applies the loyalty card and the scandal to the curve’s result', () => {
+    const state = customers(6_000, (s) => {
+      s.upgrades = ['loyaltyCard']
+      s.megaMeatScandal = new Decimal(10_000)
+    })
+    // 150 × 1.5 × ½ per second.
+    expect(orderRate(state).toNumber()).toBeCloseTo(112.5, 10)
+    expect(orderCap(state).toNumber()).toBe(3_375)
   })
 })

@@ -1,6 +1,6 @@
-import type Decimal from 'break_eternity.js'
+import Decimal from 'break_eternity.js'
 import { PRODUCTS, type ProductId } from '../content/resources'
-import { ORDERS_PER_CUSTOMER } from '../content/town'
+import { demandRate } from '../content/town'
 import type { GameState } from '../state'
 import { scandalFactor } from './bulkSales'
 import { add, advance, covered, sum } from './rollingWindow'
@@ -25,7 +25,7 @@ export function advanceSalesStats(state: GameState, seconds: number): void {
 /** Orders all customers place per minute. */
 /** The orders all customers place per minute, lowered while a MegaMeat scandal is up. */
 export function demandPerMinute(state: Readonly<GameState>): Decimal {
-  return state.customers.mul(ORDERS_PER_CUSTOMER * ordersFactor(state) * scandalFactor(state) * 60)
+  return new Decimal(demandRate(state.customers.toNumber(), ordersFactor(state) * scandalFactor(state) * 60))
 }
 
 /**

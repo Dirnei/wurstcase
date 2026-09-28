@@ -121,3 +121,11 @@ describe('steadyIncome with flooded biogas products', () => {
     expect(income).toBeCloseTo(biogas(25, 17), 10)
   })
 })
+
+describe('steadyIncome and the demand curve', () => {
+  it('sells 3,000 customers only the curve’s 112.5 orders per second', () => {
+    // 150 Tofu-Wurst per second from a big soy line; the other 37.5 go to the biogas plant.
+    const soy = owned({ soybeanField: 450, tofuPress: 300, tofuWurstKitchen: 300 })
+    expect(steadyIncome(soy, 3_000)).toBeCloseTo(112.5 * 3 + biogas(37.5, 2), 10)
+  })
+})

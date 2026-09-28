@@ -2,8 +2,8 @@ import Decimal from 'break_eternity.js'
 import { PRODUCTS } from '../content/resources'
 import {
   ASSISTANT,
+  demandRate,
   ORDER_CAP_SECONDS,
-  ORDERS_PER_CUSTOMER,
   OVERSTOCK_SECONDS,
 } from '../content/town'
 import type { GameState } from '../state'
@@ -13,9 +13,12 @@ import { ordersFactor, productPrice, productsByPrice } from './upgrades'
 import { recordCustomerSale } from './customerIncome'
 
 /** Orders per second from all customers. */
-/** Orders per second from all customers, lowered while a MegaMeat scandal is up. */
+/**
+ * Orders per second from all customers: the demand curve on the customer count, then the orders
+ * upgrades and MegaMeat's scandal on its result.
+ */
 export function orderRate(state: Readonly<GameState>): Decimal {
-  return state.customers.mul(ORDERS_PER_CUSTOMER * ordersFactor(state) * scandalFactor(state))
+  return new Decimal(demandRate(state.customers.toNumber(), ordersFactor(state) * scandalFactor(state)))
 }
 
 /** The most open orders that can pile up. */

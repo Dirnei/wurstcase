@@ -48,6 +48,13 @@ describe('demandCeiling', () => {
     expect(ten.kitchens.tofuWurst).toBeCloseTo(1, 10)
     expect(ten.kitchens.leverkas).toBeCloseTo(2, 10)
   })
+
+  it('bends at the knee: 3,000 customers pay €337.50 per second for Tofu-Wurst, not €450', () => {
+    const [beyond, town] = demandCeiling([3_000, POPULATION])
+    expect(beyond.income.tofuWurst).toBeCloseTo(337.5, 10)
+    // The whole town orders about 215 per second.
+    expect(town.income.tofuWurst).toBeCloseTo(645.4, 1)
+  })
 })
 
 describe('bulkTable', () => {
