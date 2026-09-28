@@ -20,6 +20,24 @@ describe('produce', () => {
     expect(stock(state, 'soybeans')).toBe(20)
   })
 
+  it("doubles a building type's output at each milestone owned", () => {
+    for (const [owned, made] of [[24, 24], [25, 50], [50, 200]]) {
+      const state = stateWith((s) => (s.buildings.soybeanField = owned))
+      produce(state, 1)
+      expect(stock(state, 'soybeans'), `${owned} fields`).toBe(made)
+    }
+  })
+
+  it('takes input at the multiplied rate', () => {
+    const state = stateWith((s) => {
+      s.buildings.tofuPress = 26
+      s.stock.soybeans = new Decimal(200)
+    })
+    produce(state, 1)
+    expect(stock(state, 'tofu')).toBe(26)
+    expect(stock(state, 'soybeans')).toBe(122)
+  })
+
   it('processes at full speed when input is plentiful', () => {
     const state = stateWith((s) => {
       s.buildings.tofuPress = 1

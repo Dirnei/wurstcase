@@ -1,7 +1,7 @@
 <script lang="ts">
   import { BUYERS, type BuyerId } from '../game/content/buyers'
   import { RESOURCES, type ResourceId } from '../game/content/resources'
-  import { bulkSaleUnits, bulkSaleValue, bulkSell, canBulkSell } from '../game/systems/bulkSales'
+  import { bulkSaleCost, bulkSaleUnits, bulkSaleValue, bulkSell, canBulkSell } from '../game/systems/bulkSales'
   import { isResourceShown } from '../game/systems/buildings'
   import { amount, euros } from './amounts'
   import { act, readGame } from './game.svelte'
@@ -20,6 +20,7 @@
           sellable: canBulkSell(state, buyer.id, resource),
           units: bulkSaleUnits(state, buyer.id, resource),
           value: bulkSaleValue(state, buyer.id, resource),
+          cost: bulkSaleCost(state, buyer.id, resource),
         })),
       })),
     ),
@@ -61,7 +62,12 @@
                     })
                   : t(`resource.${offer.resource}`)}
               </button>
-              <small>{t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}</small>
+              <small>
+                {t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}
+                {#if offer.cost.customers > 0}
+                  · <span class="cost">{t('bulk.cost', { customers: offer.cost.customers, awareness: offer.cost.awareness })}</span>
+                {/if}
+              </small>
             </li>
           {/each}
         </ul>
@@ -128,6 +134,11 @@
 
   small {
     color: var(--text-muted);
+  }
+
+  .cost {
+    color: var(--danger);
+    font-weight: 600;
   }
 
   button {

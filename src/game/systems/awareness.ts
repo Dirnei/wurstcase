@@ -1,5 +1,5 @@
 import Decimal from 'break_eternity.js'
-import { getSpecies } from '../content/animals'
+import { getSpecies, type SpeciesId } from '../content/animals'
 import { CONVERSION_PER_AWARENESS, POPULATION } from '../content/town'
 import type { GameState } from '../state'
 import { awarenessFactor, conversionFactor } from './upgrades'
@@ -10,10 +10,16 @@ const POINT_EPSILON = 1e-9
 
 /** Residents' awareness per second before counter-events. */
 export function baseAwarenessRate(state: Readonly<GameState>): number {
-  return state.residents.reduce(
-    (sum, resident) => sum + getSpecies(resident.species).awareness * awarenessFactor(state, resident.species),
-    0,
-  )
+  // Counted per species, so the upgrade lookup runs once per species rather than once per resident.
+  const counts = new Map<SpeciesId, number>()
+  for (const resident of state.residents) {
+    counts.set(resident.species, (counts.get(resident.species) ?? 0) + 1)
+  }
+  let rate = 0
+  for (const [species, count] of counts) {
+    rate += count * getSpecies(species).awareness * awarenessFactor(state, species)
+  }
+  return rate
 }
 
 /** Awareness per second from all residents, lowered while a counter-event halves it. */

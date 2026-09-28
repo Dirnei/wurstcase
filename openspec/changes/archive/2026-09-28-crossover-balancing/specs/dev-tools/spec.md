@@ -1,50 +1,6 @@
-# dev-tools Specification
+# Spec Delta
 
-## Purpose
-
-Gives the author a developer page with balancing charts and a simulated playthrough, computed from
-the game's current content and rules. The page is available only on development instances.
-
-## Requirements
-
-### Requirement: Developer page availability
-The game SHALL show the developer page at `#dev` when developer tools are enabled, and SHALL show
-the game as for any unknown address otherwise. Developer tools SHALL be enabled on the development
-server. In a built game they SHALL be enabled only when the server's developer configuration says
-so. A missing or unreadable configuration SHALL count as disabled. The configuration SHALL be
-requested only when `#dev` is opened. The page's code and chart library SHALL be downloaded only
-after developer tools are found to be enabled.
-
-#### Scenario: Development server
-- **WHEN** the game runs under the development server and the author opens `#dev`
-- **THEN** the developer page is shown
-
-#### Scenario: Production container, default
-- **WHEN** the container runs without `DEV_TOOLS` and a visitor opens `#dev`
-- **THEN** the game is shown, and the developer page's code is not downloaded
-
-#### Scenario: Build without a server configuration
-- **WHEN** the built game is served without a developer configuration (as on itch.io) and a
-  visitor opens `#dev`
-- **THEN** the game is shown
-
-#### Scenario: Normal play makes no extra request
-- **WHEN** a player loads and plays the game without opening `#dev`
-- **THEN** no request for the developer configuration is made
-
-### Requirement: Developer page basics
-The developer page SHALL be in English only and SHALL NOT be linked from the game. It SHALL have
-a link back to the game. It SHALL compute everything from the content and systems in the running
-build, so a changed content value shows up after a reload. Opening it SHALL NOT change the
-player's game or save.
-
-#### Scenario: Content change shows up
-- **WHEN** the soybean field's base price is changed in the content and the page is reloaded
-- **THEN** the cost and payback charts use the new price
-
-#### Scenario: Save untouched
-- **WHEN** the author opens the developer page, runs a simulation and returns to the game
-- **THEN** the game continues from the same state, and the simulation's state is not saved
+## MODIFIED Requirements
 
 ### Requirement: Cost vs income chart
 For a chosen building, the page SHALL plot, for 0 to 50 copies owned, the price of the next copy,
@@ -77,16 +33,6 @@ from 1 to 50, in seconds on a logarithmic axis.
 - **WHEN** the payback chart is shown with the current content
 - **THEN** the 25th soybean field pays back faster than the 24th, because it doubles the output
   of all 25
-
-### Requirement: Chain balance table
-The page SHALL show, per chain, the smallest whole numbers of fields, processors and kitchens that
-run without stalls or surplus, the product output per second of that set, and its income per second.
-It SHALL also show what one pass through the chain's manual actions earns, and how many clicks it
-takes.
-
-#### Scenario: Soy chain
-- **WHEN** the chain balance table is shown with the current content
-- **THEN** the soy chain reads 3 soybean fields : 2 tofu presses : 2 Tofu-Wurst kitchens
 
 ### Requirement: Demand ceiling chart
 The page SHALL plot, against the number of customers from 10 up to the town size on a logarithmic
@@ -174,19 +120,7 @@ chicken.
 - **WHEN** the simulation ends before any Leverkas oven is bought
 - **THEN** the Leverkas oven row is marked not reached
 
-### Requirement: Art sheet
-The developer page SHALL show every illustration of the game, grouped by kind, each at every size
-the game uses it and labelled with its id. The sheet SHALL show each illustration on light paper
-and on dark parchment side by side, and SHALL show the landscape in its day and dusk variants.
-
-#### Scenario: Review the art
-- **WHEN** the author opens `#dev`
-- **THEN** the art sheet shows the soybean field at every size it is used, in the day and dusk
-  colours, labelled `soybeanField`
-
-#### Scenario: New art shows up
-- **WHEN** an illustration is changed and the page is reloaded
-- **THEN** the art sheet shows the changed illustration
+## ADDED Requirements
 
 ### Requirement: Chain set payback chart
 The page SHALL plot, for every chain on one chart, the payback time of its k-th balanced set for

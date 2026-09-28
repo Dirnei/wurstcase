@@ -1,60 +1,6 @@
-# upgrades Specification
+# Spec Delta
 
-## Purpose
-
-Gives the player one-time purchases that permanently change the rules of the current game:
-faster buildings, better prices, more demand, stronger awareness, cheaper animals and Aktionen.
-
-## Requirements
-
-### Requirement: Upgrades panel
-The Upgrades tab SHALL be locked until the first upgrade is on offer, and SHALL stay unlocked
-after that. Its lock hint SHALL name the total money earned at which the first upgrade comes on
-offer. The tab SHALL list every upgrade that is on offer and not yet owned, cheapest first. Each
-entry SHALL show the upgrade's name, a short joke line, its effect in plain words and its price in
-a buy button. Owned upgrades SHALL be listed in a collapsed section with their count.
-
-#### Scenario: Nothing on offer yet
-- **WHEN** a new game starts
-- **THEN** the Upgrades tab is locked with the hint that it unlocks at €30 earned
-
-#### Scenario: First offer
-- **WHEN** the total money earned reaches €30
-- **THEN** the Upgrades tab can be opened and shows "strong hands" and its price of €40
-
-### Requirement: Unlock conditions
-An upgrade SHALL be on offer while all of its conditions hold. A condition SHALL be one of:
-
-- total money earned of at least an amount
-- owning at least a number of a building or of a shelter type
-- having at least a number of residents, of one species or in total
-- having run an Aktion at least a number of times
-
-Every condition SHALL only ever go from false to true within a game (money earned, buildings,
-shelters, residents and Aktion runs never decrease), so an upgrade on offer stays on offer until
-it is bought.
-
-#### Scenario: Building count
-- **WHEN** the player owns 4 soybean fields
-- **THEN** "better seeds" is not on offer, and it is on offer once the fifth field is bought
-
-#### Scenario: Spending keeps the offer
-- **WHEN** "mustard on the side" is on offer and the player spends all their money
-- **THEN** "mustard on the side" is still on offer
-
-### Requirement: Buying an upgrade
-The player SHALL be able to buy an upgrade that is on offer when they have at least its price.
-Buying it SHALL subtract the price from money, SHALL NOT change the total money earned, and SHALL
-make the upgrade owned for the rest of this game. An owned upgrade SHALL NOT be offered again.
-The buy button SHALL be unavailable while money is short.
-
-#### Scenario: Buying
-- **WHEN** "strong hands" is on offer and the player has €50 and buys it
-- **THEN** money is €10, "strong hands" is owned and it moves to the owned section
-
-#### Scenario: Not enough money
-- **WHEN** the player has less money than an upgrade costs
-- **THEN** its buy button is unavailable
+## MODIFIED Requirements
 
 ### Requirement: Upgrade effects
 Values that other capabilities define (building output rates, units per manual click, product
@@ -149,15 +95,3 @@ Upgrades, their conditions, prices and effects SHALL be content data.
 #### Scenario: Complete list
 - **WHEN** every condition is met
 - **THEN** 17 upgrades are on offer
-
-### Requirement: Upgrades are saved
-The owned upgrades SHALL be part of the save. A save from before this change SHALL load with no
-upgrades owned; upgrades whose conditions already hold are on offer at once.
-
-#### Scenario: Reload
-- **WHEN** the player owns "better seeds" and reloads the page
-- **THEN** "better seeds" is still owned and the soybean fields still produce twice as much
-
-#### Scenario: Older save
-- **WHEN** a save from before this change with 6 soybean fields is loaded
-- **THEN** no upgrade is owned, and "better seeds" is on offer

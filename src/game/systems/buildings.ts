@@ -3,13 +3,11 @@ import { BUILDINGS, getBuilding, type BuildingId } from '../content/buildings'
 import type { ResourceId } from '../content/resources'
 import type { GameState } from '../state'
 
-/** Each copy owned makes the next one this much more expensive. */
-export const PRICE_GROWTH = 1.1
-
 /** Rounded up to whole euros, so money stays a whole number. */
 export function buildingPrice(state: Readonly<GameState>, id: BuildingId): Decimal {
-  return new Decimal(getBuilding(id).basePrice)
-    .mul(Decimal.pow(PRICE_GROWTH, state.buildings[id]))
+  const building = getBuilding(id)
+  return new Decimal(building.basePrice)
+    .mul(Decimal.pow(building.priceGrowth, state.buildings[id]))
     .ceil()
 }
 

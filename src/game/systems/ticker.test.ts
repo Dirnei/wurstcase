@@ -92,7 +92,7 @@ describe('hintApplies', () => {
   it('checks unlocked buildings', () => {
     const state = createInitialState()
     expect(hintApplies(state, hint('wheat'))).toBe(false)
-    state.totalEarned = new Decimal(200)
+    state.totalEarned = new Decimal(140_000)
     expect(hintApplies(state, hint('wheat'))).toBe(true)
     state.buildings.wheatField = 1
     expect(hintApplies(state, hint('wheat'))).toBe(false)

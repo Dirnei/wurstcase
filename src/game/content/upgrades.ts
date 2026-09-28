@@ -84,13 +84,13 @@ export const UPGRADES: readonly UpgradeDef[] = [
   { id: 'secondFarmer', price: 2_500, when: [{ earned: 3_000 }], effect: { kind: 'rate', buildings: FIELDS, factor: 1.5 } },
   {
     id: 'kneadingMachine',
-    price: 3_000,
+    price: 12_000,
     when: [{ owned: 'seitanKitchen', atLeast: 5 }],
     effect: { kind: 'rate', buildings: ['seitanKitchen'], factor: 2 },
   },
   {
     id: 'leverkasRecipe',
-    price: 4_000,
+    price: 20_000,
     when: [{ owned: 'leverkasOven', atLeast: 1 }],
     effect: { kind: 'price', product: 'leverkas', add: 10 },
   },
@@ -104,19 +104,19 @@ export const UPGRADES: readonly UpgradeDef[] = [
   { id: 'localNewspaper', price: 8_000, when: [{ earned: 10_000 }], effect: { kind: 'conversion', factor: 1.5 } },
   {
     id: 'steamOven',
-    price: 10_000,
+    price: 40_000,
     when: [{ owned: 'leverkasOven', atLeast: 5 }],
     effect: { kind: 'rate', buildings: ['leverkasOven'], factor: 2 },
   },
   {
     id: 'baristaCourse',
-    price: 25_000,
+    price: 4_000,
     when: [{ owned: 'cafeBar', atLeast: 3 }],
     effect: { kind: 'price', product: 'haferCappuccino', add: 4 },
   },
   {
     id: 'newMillstones',
-    price: 30_000,
+    price: 6_000,
     when: [{ owned: 'oatMill', atLeast: 5 }],
     effect: { kind: 'rate', buildings: ['oatMill'], factor: 2 },
   },

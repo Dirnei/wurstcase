@@ -1,14 +1,22 @@
 <script lang="ts">
   // The developer page is a tool for the author, so its text is plain English (no i18n).
-  import { PRICE_GROWTH_ANIMALS, SPECIES } from '../game/content/animals'
+  import { SPECIES } from '../game/content/animals'
   import { BUILDINGS, CHAINS, type BuildingId } from '../game/content/buildings'
   import { BUYERS } from '../game/content/buyers'
   import { PRODUCTS } from '../game/content/resources'
   import { SHELTERS } from '../game/content/shelters'
   import { POPULATION } from '../game/content/town'
   import { getUpgrade, type UnlockClause } from '../game/content/upgrades'
-  import { PRICE_GROWTH } from '../game/systems/buildings'
-  import { animalCurve, bulkTable, costCurve, demandCeiling, MAX_COPIES, paybackCurves } from '../game/balance/curves'
+  import {
+    animalCurve,
+    bulkTable,
+    chainSetPayback,
+    costCurve,
+    demandCeiling,
+    MAX_COPIES,
+    MAX_SETS,
+    paybackCurves,
+  } from '../game/balance/curves'
   import { pacingTable } from '../game/balance/milestones'
   import { DEFAULT_SETTINGS, simulate, type SimulationResult } from '../game/balance/simulate'
   import { chainBalance, manualPass } from '../game/balance/value'
@@ -72,6 +80,8 @@
   const cost = $derived(costCurve(picked))
   const payback = paybackCurves()
   const copies = Array.from({ length: MAX_COPIES }, (_, i) => i + 1)
+  const setPayback = chainSetPayback()
+  const setNumbers = Array.from({ length: MAX_SETS }, (_, i) => i + 1)
   const balances = CHAINS.map((chain) => ({ ...chainBalance(chain), manual: manualPass(chain) }))
 
   const customerSteps = Array.from({ length: 41 }, (_, i) => Math.round(10 * (POPULATION / 10) ** (i / 40)))
@@ -88,8 +98,14 @@
     <h1>Wurst Case: balancing</h1>
     <button type="button" class="game-button" onclick={backToGame}>← Back to the game</button>
     <p class="muted">
-      {BUILDINGS.length} buildings · {SPECIES.length} species · {SHELTERS.length} shelters · buildings and
-      shelters ×{PRICE_GROWTH} per copy · animals ×{PRICE_GROWTH_ANIMALS} per animal · town {POPULATION.toLocaleString('en')}
+      {BUILDINGS.length} buildings · {SPECIES.length} species · {SHELTERS.length} shelters · town
+      {POPULATION.toLocaleString('en')}
+    </p>
+    <p class="muted">
+      Price growth per copy:
+      {BUILDINGS.map((b) => `${buildingName(b.id)} ×${b.priceGrowth}`).join(' · ')} ·
+      {SHELTERS.map((s) => `${name(`shelter.${s.id}`)} ×${s.priceGrowth}`).join(' · ')} ·
+      {SPECIES.map((s) => `${name(`animal.${s.id}`)} ×${s.priceGrowth}`).join(' · ')}
     </p>
   </header>
 
@@ -236,6 +252,14 @@
       logY
       series={payback.map((curve) => ({ label: buildingName(curve.id), values: curve.seconds }))}
     />
+    <Chart
+      title="Seconds for the k-th balanced chain set to pay for itself (crossings show when the next chain takes over)"
+      x={setNumbers}
+      xLabel="Set"
+      yLabel="Seconds"
+      logY
+      series={setPayback.map(({ chain, sets }) => ({ label: name(`chain.${chain}`), values: sets.map((set) => set.seconds) }))}
+    />
   </section>
 
   <section class="panel">
@@ -263,7 +287,7 @@
   <section class="panel">
     <h2>Demand ceiling</h2>
     <Chart
-      title="Most income per second the customers pay for, if every order is this product"
+      title="Most income per second the customers pay for, if every order is this product (lines differ only by price)"
       x={customerSteps}
       xLabel="Customers"
       yLabel="€/s"

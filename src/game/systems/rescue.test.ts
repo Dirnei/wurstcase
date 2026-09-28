@@ -56,8 +56,8 @@ describe('isSpeciesOffered', () => {
     expect(isSpeciesOffered(state, 'cow')).toBe(false)
   })
 
-  it('offers all three species at €5,000 earned', () => {
-    const state = withMoney(0, 5000)
+  it('offers all three species at €150,000 earned', () => {
+    const state = withMoney(0, 150_000)
     expect(isSpeciesOffered(state, 'chicken')).toBe(true)
     expect(isSpeciesOffered(state, 'pig')).toBe(true)
     expect(isSpeciesOffered(state, 'cow')).toBe(true)
@@ -65,8 +65,9 @@ describe('isSpeciesOffered', () => {
 })
 
 describe('animalPrice', () => {
-  it('rises by 20% per animal of the species, rounded up', () => {
-    expect(animalPrice(withResidents('chicken', 2), 'chicken').toNumber()).toBe(72)
+  it("rises by the species' own growth per animal, rounded up", () => {
+    expect(animalPrice(withResidents('chicken', 2), 'chicken').toNumber()).toBe(79)
+    expect(animalPrice(withResidents('cow', 1), 'cow').toNumber()).toBe(4480)
   })
 
   it('prices each species separately', () => {
@@ -85,10 +86,12 @@ describe('shelters', () => {
     expect(usedSpace(state)).toBe(0)
   })
 
-  it('prices the second stable at €33', () => {
+  it('prices the second stable at €34 and the second pasture at €2,180', () => {
     const state = createInitialState()
     state.shelters.stable = 1
-    expect(shelterPrice(state, 'stable').toNumber()).toBe(33)
+    state.shelters.pasture = 1
+    expect(shelterPrice(state, 'stable').toNumber()).toBe(34)
+    expect(shelterPrice(state, 'pasture').toNumber()).toBe(2180)
   })
 
   it('refuses a locked shelter or one the player cannot afford', () => {
@@ -122,7 +125,7 @@ describe('rescue', () => {
   })
 
   it('reports lacking space for a pig next to a chicken in one stable', () => {
-    const state = withResidents('chicken', 1, withMoney(1000, 1500))
+    const state = withResidents('chicken', 1, withMoney(1000, 12_000))
     state.shelters.stable = 1
     expect(canRescue(state, 'pig')).toBe('space')
     expect(rescue(state, 'pig', first)).toBe(false)

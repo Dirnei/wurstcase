@@ -28,9 +28,9 @@ const firstPurchase =
 export const MILESTONES: readonly Milestone[] = [
   { id: 'soybeanField', label: 'First soybean field', window: [2, 10], reached: firstPurchase('building', 'soybeanField') },
   { id: 'tofuPress', label: 'First tofu press', window: [2, 10], reached: firstPurchase('building', 'tofuPress') },
-  { id: 'wheatField', label: 'First wheat field', window: [10, 20], reached: firstPurchase('building', 'wheatField') },
+  { id: 'oatField', label: 'First oat field', window: [10, 20], reached: firstPurchase('building', 'oatField') },
+  { id: 'wheatField', label: 'First wheat field', window: [20, 35], reached: firstPurchase('building', 'wheatField') },
   { id: 'leverkasOven', label: 'First Leverkas oven', window: [20, 35], reached: firstPurchase('building', 'leverkasOven') },
-  { id: 'oatField', label: 'First oat field', window: [20, 35], reached: firstPurchase('building', 'oatField') },
   { id: 'chicken', label: 'First chicken', window: [2, 10], reached: firstPurchase('animal', 'chicken') },
   { id: 'pig', label: 'First pig', window: [10, 20], reached: firstPurchase('animal', 'pig') },
   { id: 'cow', label: 'First cow', window: [20, 35], reached: firstPurchase('animal', 'cow') },

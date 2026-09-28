@@ -37,6 +37,19 @@ describe('content', () => {
     expect(PRODUCT_PRICES.leverkas).toBe(Math.max(...Object.values(PRODUCT_PRICES)))
   })
 
+  it('makes every later chain and species grow more slowly in price', () => {
+    const chainGrowth = CHAINS.map((chain) => {
+      const growths = BUILDINGS.filter((building) => building.chain === chain).map((b) => b.priceGrowth)
+      return { min: Math.min(...growths), max: Math.max(...growths) }
+    })
+    for (let i = 1; i < chainGrowth.length; i++) {
+      expect(chainGrowth[i].max, CHAINS[i]).toBeLessThan(chainGrowth[i - 1].min)
+    }
+    for (let i = 1; i < SPECIES.length; i++) {
+      expect(SPECIES[i].priceGrowth, SPECIES[i].id).toBeLessThan(SPECIES[i - 1].priceGrowth)
+    }
+  })
+
   it('sells products highest price first', () => {
     expect(PRODUCTS_BY_PRICE).toEqual(['leverkas', 'haferCappuccino', 'tofuWurst'])
     expect([...PRODUCTS_BY_PRICE].sort()).toEqual([...PRODUCTS].sort())
@@ -109,6 +122,46 @@ describe('content', () => {
     }
   })
 
+  it('pays a share of the vegan value that rises along the chain', () => {
+    const ranges: Record<string, Record<'raw' | 'intermediate' | 'product', [number, number] | null>> = {
+      megaMeat: { raw: [0.35, 0.45], intermediate: [0.6, 0.7], product: null },
+      biogas: { raw: [0.25, 0.35], intermediate: [0.45, 0.55], product: [0.45, 0.55] },
+    }
+    const step = (resource: string) =>
+      (RAW as readonly string[]).includes(resource)
+        ? 'raw'
+        : (INTERMEDIATES as readonly string[]).includes(resource)
+          ? 'intermediate'
+          : 'product'
+    for (const buyer of BUYERS) {
+      const perUnit = (resource: string) => {
+        const lot = buyer.lots[resource as keyof typeof buyer.lots]!
+        return lot.price / lot.units
+      }
+      for (const resource of Object.keys(buyer.lots)) {
+        const range = ranges[buyer.id][step(resource)]!
+        const share = perUnit(resource) / veganValue(resource as (typeof RESOURCES)[number])
+        expect(share, `${buyer.id} ${resource}`).toBeGreaterThanOrEqual(range[0])
+        expect(share, `${buyer.id} ${resource}`).toBeLessThanOrEqual(range[1])
+      }
+      // Turning the input into this resource must pay at the same buyer: more for intermediates,
+      // at least as much for products.
+      for (const building of BUILDINGS) {
+        const { input, output } = building
+        if (!input || !(output in buyer.lots) || !(input.resource in buyer.lots)) {
+          continue
+        }
+        const made = perUnit(output)
+        const fromInput = input.ratio * perUnit(input.resource)
+        if (step(output) === 'intermediate') {
+          expect(made, `${buyer.id} ${output}`).toBeGreaterThan(fromInput)
+        } else {
+          expect(made, `${buyer.id} ${output}`).toBeGreaterThanOrEqual(fromInput)
+        }
+      }
+    }
+  })
+
   it('has unique species and shelter ids', () => {
     expect(new Set(SPECIES_IDS).size).toBe(SPECIES_IDS.length)
     expect(new Set(SHELTER_IDS).size).toBe(SHELTER_IDS.length)
@@ -175,7 +228,7 @@ describe('content', () => {
     expect(new Set(SATIRE.map((s) => s.id)).size).toBe(SATIRE.length)
     expect(SATIRE.length).toBeGreaterThanOrEqual(12)
     expect(SATIRE.filter((s) => s.unlockAt === 0).length).toBeGreaterThanOrEqual(4)
-    expect(Math.max(...SATIRE.map((s) => s.unlockAt))).toBeLessThanOrEqual(20_000)
+    expect(Math.max(...SATIRE.map((s) => s.unlockAt))).toBeLessThanOrEqual(200_000)
   })
 
   it('has every ticker, Aktion and event text in both languages', () => {

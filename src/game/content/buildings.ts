@@ -16,7 +16,8 @@ export type BuildingId =
 
 export type ChainId = 'soy' | 'wheat' | 'oat'
 
-export const CHAINS: readonly ChainId[] = ['soy', 'wheat', 'oat']
+/** Chains in unlock order; each later chain sells for more per order. */
+export const CHAINS: readonly ChainId[] = ['soy', 'oat', 'wheat']
 
 export interface BuildingDef {
   id: BuildingId
@@ -28,9 +29,17 @@ export interface BuildingDef {
   rate: number
   /** Price in euros of the first copy. */
   basePrice: number
+  /** Each copy owned makes the next one this much more expensive; later chains grow more slowly. */
+  priceGrowth: number
   /** Total euros earned in this game at which the building becomes available. */
   unlockAt: number
 }
+
+/** Copies owned at which a building type's output doubles, as in AdVenture Capitalist. */
+export const OWNED_MILESTONES: readonly number[] = [25, 50, 100]
+
+/** Output factor each reached milestone multiplies in. */
+export const MILESTONE_FACTOR = 2
 
 /** All buildings in production order: fields, then processing, then kitchens. */
 export const BUILDINGS: readonly BuildingDef[] = [...FIELDS, ...PROCESSORS, ...KITCHENS]

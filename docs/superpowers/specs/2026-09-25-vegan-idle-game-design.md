@@ -59,8 +59,8 @@ sell food ──▶ € ──▶ rescue animals ──▶ Lebenshof creates awa
 ```
 FIELDS (raw)        PROCESSING (intermediate)        PRODUCTS (sold)
 Soybean field ───▶  Tofu press     ─▶ Tofu      ──▶  Tofu-Wurst
-Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS ⭐
 Oat field     ───▶  Oat mill       ─▶ Oat drink ──▶  Hafer-Cappuccino
+Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS ⭐
 ```
 
 - **Fields** produce raw ingredients per second. More fields and hired **farmers** raise output.
@@ -70,8 +70,11 @@ Oat field     ───▶  Oat mill       ─▶ Oat drink ──▶  Hafer-Cap
 - **Products** consume intermediates and go to stock for sale.
 - **Leverkas** is the Act 1 premium product: unlocked mid-act, highest price, the "business takes
   off" moment.
-- Every building's cost rises about 10% per copy owned (idle games use 7–15%; exact factor tuned
-  in play).
+- Every building's cost rises with each copy owned, and later chains rise more slowly: soy 13%,
+  oat 11%, wheat 9% (idle games use 7–15%). Each new chain starts as a worse deal and overtakes the
+  one before, as in AdVenture Capitalist. Animals follow the same idea (chicken 25%, pig 18%,
+  cow 12%).
+- Owning 25, 50 and 100 of a building doubles its output each time (×2, ×4, ×8).
 - **Manual start:** the player clicks "Sojabohnen ernten" (harvest soybeans) and "Tofu pressen"
   (press tofu) until they can afford the first field and press.
 
@@ -82,6 +85,10 @@ Oat field     ───▶  Oat mill       ─▶ Oat drink ──▶  Hafer-Cap
   joke message); a lack of stock leaves demand unserved. This bottleneck is the central tension
   between the business half and the rescue half of the game.
 - Stock is sold **most expensive product first**, so moving up to Leverkas is directly rewarding.
+- Customers come slowly ("vegan words spread slowly"), so Act 1 lives in **overproduction**, like
+  the real food system. Surplus goes to bulk buyers: **MegaMeat** buys it as animal feed and pays
+  more, but every sale costs customers and awareness; the **biogas plant** pays less and costs
+  nothing. Both pay more the further along the chain a good is.
 
 ### 3.4 Lebenshof and rescue
 
@@ -164,8 +171,8 @@ Exact numbers are tuned in play; the spec fixes the order of unlocks and the tar
 |---|---|---|
 | 0–2 min | Manual harvest and pressing; sell Tofu-Wurst to 10 curious neighbours (starting customers) | Clicking, selling |
 | 2–10 min | First soybean field and tofu press; demand can't keep up → first chicken rescued | Automation, rescue, awareness |
-| 10–20 min | Wheat field and seitan kitchen; pigs; first Aktion (flyers); first MegaMeat counter-event | Second chain, campaigns, villain |
-| 20–35 min | ⭐ Leverkas unlocked; oat chain and Hafer-Cappuccino; cows; barn expansions | Premium product, space |
+| 10–20 min | Oat chain and Hafer-Cappuccino; pigs; first Aktion (flyers); first MegaMeat counter-event | Second chain, campaigns, villain |
+| 20–35 min | Wheat field and seitan kitchen; ⭐ Leverkas unlocked; cows; barn expansions | Premium product, space |
 | 35–60 min | Push toward 80% town conversion; lawyer's letter arrives; Neustart | Prestige, Rezepte tree |
 
 ## 6. Presentation

@@ -13,14 +13,20 @@ describe('buildingPrice', () => {
     expect(buildingPrice(createInitialState(), 'soybeanField').toNumber()).toBe(10)
   })
 
-  it('rises by 10% per copy owned, rounded up to whole euros', () => {
+  it("rises by the building's own growth per copy owned, rounded up to whole euros", () => {
     const state = createInitialState()
     state.buildings.soybeanField = 1
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(11)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(12)
     state.buildings.soybeanField = 2
     expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(13)
     state.buildings.soybeanField = 24
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(99)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(188)
+  })
+
+  it('grows more slowly in a later chain', () => {
+    const state = createInitialState()
+    state.buildings.wheatField = 1
+    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(654)
   })
 
   it('prices the buildings of a loaded save at the current rate', () => {
@@ -65,10 +71,10 @@ describe('buyBuilding', () => {
   })
 
   it('refuses a locked building even with enough money', () => {
-    const state = withMoney(1_000, 199)
-    expect(canBuy(state, 'wheatField')).toBe(false)
-    expect(buyBuilding(state, 'wheatField')).toBe(false)
-    expect(state.buildings.wheatField).toBe(0)
+    const state = withMoney(100_000, 29_999)
+    expect(canBuy(state, 'oatField')).toBe(false)
+    expect(buyBuilding(state, 'oatField')).toBe(false)
+    expect(state.buildings.oatField).toBe(0)
   })
 })
 
@@ -84,15 +90,17 @@ describe('isUnlocked', () => {
   })
 
   it('unlocks a building once total earnings reach its threshold', () => {
-    expect(isUnlocked(withMoney(0, 199), 'wheatField')).toBe(false)
-    expect(isUnlocked(withMoney(0, 200), 'wheatField')).toBe(true)
+    expect(isUnlocked(withMoney(0, 29_999), 'oatField')).toBe(false)
+    expect(isUnlocked(withMoney(0, 30_000), 'oatField')).toBe(true)
+    expect(isUnlocked(withMoney(0, 139_999), 'wheatField')).toBe(false)
+    expect(isUnlocked(withMoney(0, 140_000), 'wheatField')).toBe(true)
   })
 
   it('keeps a building unlocked after spending the money', () => {
-    const state = withMoney(200)
-    buyBuilding(state, 'wheatField')
-    expect(state.money.lt(200)).toBe(true)
-    expect(isUnlocked(state, 'wheatField')).toBe(true)
+    const state = withMoney(30_000)
+    buyBuilding(state, 'oatField')
+    expect(state.money.lt(30_000)).toBe(true)
+    expect(isUnlocked(state, 'oatField')).toBe(true)
   })
 })
 
@@ -113,16 +121,16 @@ describe('isResourceShown', () => {
 })
 
 describe('nextLockedBuildings', () => {
-  it('is the wheat field and seitan kitchen in a new game', () => {
-    expect(nextLockedBuildings(createInitialState())).toEqual(['wheatField', 'seitanKitchen'])
+  it('is the whole oat chain, in production order, in a new game', () => {
+    expect(nextLockedBuildings(createInitialState())).toEqual(['oatField', 'oatMill', 'cafeBar'])
   })
 
-  it('is the Leverkas oven once the wheat chain is unlocked', () => {
-    expect(nextLockedBuildings(withMoney(0, 200))).toEqual(['leverkasOven'])
+  it('is the wheat field and seitan kitchen once the oat chain is unlocked', () => {
+    expect(nextLockedBuildings(withMoney(0, 30_000))).toEqual(['wheatField', 'seitanKitchen'])
   })
 
-  it('is the whole oat chain, in production order, once the oven is unlocked', () => {
-    expect(nextLockedBuildings(withMoney(0, 1_500))).toEqual(['oatField', 'oatMill', 'cafeBar'])
+  it('is the Leverkas oven, last of all, once the wheat chain is unlocked', () => {
+    expect(nextLockedBuildings(withMoney(0, 140_000))).toEqual(['leverkasOven'])
   })
 
   it('is empty once everything is unlocked', () => {

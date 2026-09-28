@@ -1,7 +1,7 @@
 import { BUILDINGS } from '../content/buildings'
 import type { ResourceId } from '../content/resources'
 import type { GameState } from '../state'
-import { rateFactor } from './upgrades'
+import { outputFactor } from './ownedMilestones'
 
 /** How long an input stays marked as short after a building last waited for it. */
 export const SHORTAGE_HOLD_SECONDS = 3
@@ -18,7 +18,7 @@ export function produce(state: GameState, seconds: number): void {
     if (count === 0) {
       continue
     }
-    const progress = state.progress[building.id] + count * building.rate * rateFactor(state, building.id) * seconds
+    const progress = state.progress[building.id] + count * building.rate * outputFactor(state, building.id) * seconds
     const ready = Math.floor(progress)
     let units = ready
     if (building.input) {

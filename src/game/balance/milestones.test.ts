@@ -16,7 +16,7 @@ describe('pacingTable', () => {
   })
 
   it('marks a milestone that never happened', () => {
-    expect(row([field(270)], 'oatField')).toMatchObject({ time: null, status: 'not reached' })
+    expect(row([field(270)], 'leverkasOven')).toMatchObject({ time: null, status: 'not reached' })
   })
 
   it('uses the first purchase only', () => {
@@ -27,9 +27,9 @@ describe('pacingTable', () => {
     expect(MILESTONES.map((m) => [m.id, m.window])).toEqual([
       ['soybeanField', [2, 10]],
       ['tofuPress', [2, 10]],
-      ['wheatField', [10, 20]],
+      ['oatField', [10, 20]],
+      ['wheatField', [20, 35]],
       ['leverkasOven', [20, 35]],
-      ['oatField', [20, 35]],
       ['chicken', [2, 10]],
       ['pig', [10, 20]],
       ['cow', [20, 35]],

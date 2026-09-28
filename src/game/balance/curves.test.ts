@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { POPULATION } from '../content/town'
-import { animalCurve, bulkTable, costCurve, demandCeiling, paybackCurves } from './curves'
+import { animalCurve, bulkTable, chainSetPayback, costCurve, demandCeiling, paybackCurves } from './curves'
 
 describe('costCurve', () => {
   it('lists the next price, the total spent and the income for 0 to 50 copies', () => {
     const curve = costCurve('soybeanField')
     expect(curve).toHaveLength(51)
     expect(curve[0]).toEqual({ owned: 0, nextPrice: 10, spent: 0, income: 0 })
-    expect(curve[1]).toEqual({ owned: 1, nextPrice: 11, spent: 10, income: 1 })
-    expect(curve[2].spent).toBe(21)
+    expect(curve[1]).toEqual({ owned: 1, nextPrice: 12, spent: 10, income: 1 })
+    expect(curve[2].spent).toBe(22)
     for (let n = 1; n < curve.length; n++) {
       expect(curve[n].spent).toBeGreaterThan(curve[n - 1].spent)
-      expect(curve[n].income).toBe(n)
     }
+  })
+
+  it('includes the milestone multipliers in the income', () => {
+    const curve = costCurve('soybeanField')
+    expect(curve[24].income).toBe(24)
+    expect(curve[25].income).toBe(50)
+    expect(curve[50].income).toBe(200)
   })
 })
 
@@ -24,7 +30,12 @@ describe('paybackCurves', () => {
     expect(field.seconds).toHaveLength(50)
     expect(field.seconds[0]).toBe(10)
     expect(press.seconds[0]).toBeCloseTo(16.7, 1)
-    expect(field.seconds[1]).toBe(11)
+    expect(field.seconds[1]).toBe(12)
+  })
+
+  it('makes the copy that reaches a milestone pay back faster than the one before', () => {
+    const field = paybackCurves().find((c) => c.id === 'soybeanField')!
+    expect(field.seconds[24]).toBeLessThan(field.seconds[23])
   })
 })
 
@@ -43,8 +54,8 @@ describe('bulkTable', () => {
   it('compares bulk prices with the vegan value', () => {
     const soybeans = bulkTable().find((row) => row.resource === 'soybeans')!
     expect(soybeans.veganValue).toBe(1)
-    expect(soybeans.buyers.megaMeat).toEqual({ perUnit: 0.1, share: 0.1 })
-    expect(soybeans.buyers.biogas).toEqual({ perUnit: 0.05, share: 0.05 })
+    expect(soybeans.buyers.megaMeat).toEqual({ perUnit: 0.4, share: 0.4 })
+    expect(soybeans.buyers.biogas).toEqual({ perUnit: 0.3, share: 0.3 })
   })
 
   it('leaves out what a buyer does not take', () => {
@@ -57,7 +68,32 @@ describe('bulkTable', () => {
 describe('animalCurve', () => {
   it('lists the next price and the awareness of the herd', () => {
     const curve = animalCurve('chicken', 3)
-    expect(curve.map((p) => p.nextPrice)).toEqual([50, 60, 72, 87])
+    expect(curve.map((p) => p.nextPrice)).toEqual([50, 63, 79, 98])
     expect(curve.map((p) => p.awareness)).toEqual([0, 1, 2, 3])
+  })
+})
+
+describe('chainSetPayback', () => {
+  it('prices the first balanced soy set and what it earns', () => {
+    const soy = chainSetPayback().find((c) => c.chain === 'soy')!
+    expect(soy.sets).toHaveLength(25)
+    expect(soy.sets[0].price).toBe(175)
+    expect(soy.sets[0].income).toBeCloseTo(3, 10)
+    expect(soy.sets[0].seconds).toBeCloseTo(58.3, 1)
+  })
+
+  it('gets slower for later sets, except where a set reaches a milestone', () => {
+    for (const { chain, sets } of chainSetPayback()) {
+      expect(sets[23].seconds, chain).toBeGreaterThan(sets[0].seconds)
+      expect(sets[24].seconds, chain).toBeLessThan(sets[23].seconds)
+    }
+  })
+
+  it('lets each later chain start behind the one before and end ahead of it', () => {
+    const [soy, oat, wheat] = chainSetPayback().map((c) => c.sets.map((set) => set.seconds))
+    for (const [early, late] of [[soy, oat], [oat, wheat]]) {
+      expect(early[0]).toBeLessThan(late[0])
+      expect(early[24]).toBeGreaterThan(late[24])
+    }
   })
 })

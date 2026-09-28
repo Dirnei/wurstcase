@@ -19,11 +19,11 @@ describe('availability and hasNew', () => {
     const before = availability(earned(99))
     const after = availability(earned(100))
     expect(hasNew(before.lebenshof, after.lebenshof)).toBe(true)
-    expect(hasNew(availability(earned(1_499)).lebenshof, availability(earned(1_500)).lebenshof)).toBe(true)
+    expect(hasNew(availability(earned(11_999)).lebenshof, availability(earned(12_000)).lebenshof)).toBe(true)
   })
 
   it('finds a newly unlocked building under Produktion', () => {
-    expect(hasNew(availability(earned(199)).produktion, availability(earned(200)).produktion)).toBe(true)
+    expect(hasNew(availability(earned(29_999)).produktion, availability(earned(30_000)).produktion)).toBe(true)
   })
 
   it('finds a started counter-event under Aktionen', () => {
@@ -60,4 +60,5 @@ describe('availability and hasNew', () => {
     state.upgrades = ['strongHands']
     expect(hasNew(seen.upgrades, availability(state).upgrades)).toBe(false)
   })
+
 })

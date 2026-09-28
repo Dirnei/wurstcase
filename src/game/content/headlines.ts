@@ -16,14 +16,14 @@ export const SATIRE: readonly SatireDef[] = [
   { id: 'grandmaTofu', unlockAt: 0 },
   { id: 'soyFieldCows', unlockAt: 0 },
   { id: 'megaMeatQuarter', unlockAt: 200 },
-  { id: 'seitanMartialArt', unlockAt: 500 },
-  { id: 'bbqClub', unlockAt: 1_000 },
-  { id: 'pensionerLeverkas', unlockAt: 1_500 },
+  { id: 'bbqClub', unlockAt: 500 },
   { id: 'tractorQueue', unlockAt: 3_000 },
-  { id: 'baristaChampionship', unlockAt: 5_000 },
-  { id: 'lobbyistCorridors', unlockAt: 8_000 },
+  { id: 'lobbyistCorridors', unlockAt: 5_000 },
   { id: 'butcherRolls', unlockAt: 12_000 },
-  { id: 'cowFollowers', unlockAt: 20_000 },
+  { id: 'baristaChampionship', unlockAt: 30_000 },
+  { id: 'seitanMartialArt', unlockAt: 140_000 },
+  { id: 'cowFollowers', unlockAt: 150_000 },
+  { id: 'pensionerLeverkas', unlockAt: 200_000 },
 ]
 
 /** One condition of a tutorial hint; all clauses of a hint must hold. */

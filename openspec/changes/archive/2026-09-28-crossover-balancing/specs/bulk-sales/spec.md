@@ -1,12 +1,6 @@
-# bulk-sales Specification
+# Spec Delta
 
-## Purpose
-
-Gives surplus production an outlet when customers cannot take more: MegaMeat Corp buys raw
-ingredients and intermediates as animal feed, and a biogas plant buys them, and unsold finished
-products too, for even less without feeding the industry. Both pay far less than customers do for vegan food.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Bulk buyers
 The game SHALL offer two bulk buyers: MegaMeat Corp (animal feed) and a biogas plant. Both SHALL
@@ -65,29 +59,7 @@ pays. A sale SHALL be unavailable while the stock is smaller than one lot.
 - **WHEN** total money earned is €29,995 and the player sells 15 soybeans to MegaMeat for €6
 - **THEN** the oat chain unlocks at its €30,000 threshold
 
-### Requirement: Buyer flavour
-Each buyer SHALL be shown with its name and a short satirical line in the selected language.
-
-#### Scenario: Panel
-- **WHEN** the bulk buyers panel is shown
-- **THEN** MegaMeat Corp and the biogas plant each appear with their name and their line
-
-### Requirement: Units sold per buyer
-The game SHALL count, per buyer, the total units sold to it in this game, as a whole number. The
-counts SHALL be saved and restored. A save from before this change SHALL load with both counts at
-0 and keep everything else.
-
-#### Scenario: Counting
-- **WHEN** the player sells 30 soybeans and 8 wheat to MegaMeat and 20 tofu to the biogas plant
-- **THEN** MegaMeat's count is 38 and the biogas plant's count is 20
-
-#### Scenario: Reload
-- **WHEN** MegaMeat's count is 38 and the player reloads the page
-- **THEN** MegaMeat's count is still 38
-
-#### Scenario: Older save
-- **WHEN** a save from before this change with 3 tofu presses and the shop assistant is loaded
-- **THEN** the game continues with 3 tofu presses, the assistant, and both counts at 0
+## ADDED Requirements
 
 ### Requirement: Price of feeding MegaMeat
 Every sale to MegaMeat SHALL cost the player customers and awareness: 1 customer per €100 the sale

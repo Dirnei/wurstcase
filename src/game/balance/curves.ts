@@ -1,13 +1,15 @@
 import { getSpecies, type SpeciesId } from '../content/animals'
-import { BUILDINGS, type BuildingId } from '../content/buildings'
+import { BUILDINGS, CHAINS, type BuildingId, type ChainId } from '../content/buildings'
 import { BUYERS, type BuyerId } from '../content/buyers'
 import { KITCHENS, PRODUCT_PRICES } from '../content/products'
 import { PRODUCTS, RESOURCES, type ProductId, type ResourceId } from '../content/resources'
 import { ORDERS_PER_CUSTOMER } from '../content/town'
 import { createInitialState } from '../state'
 import { buildingPrice } from '../systems/buildings'
+import { milestoneFactor } from '../systems/ownedMilestones'
 import { animalPrice } from '../systems/rescue'
-import { buildingIncome, veganValue } from './value'
+import { steadyOutput } from './steady'
+import { buildingIncome, chainBalance, veganValue } from './value'
 
 export const MAX_COPIES = 50
 
@@ -21,6 +23,11 @@ export interface CostPoint {
   income: number
 }
 
+/** Income per second of this many copies of a building, milestone multipliers included. */
+function incomeOf(id: BuildingId, owned: number): number {
+  return owned * milestoneFactor(owned) * buildingIncome(id)
+}
+
 /** Price and income of a building for 0 to maxCopies copies, from the game's own price rule. */
 export function costCurve(id: BuildingId, maxCopies = MAX_COPIES): CostPoint[] {
   const state = createInitialState()
@@ -29,7 +36,7 @@ export function costCurve(id: BuildingId, maxCopies = MAX_COPIES): CostPoint[] {
   for (let owned = 0; owned <= maxCopies; owned++) {
     state.buildings[id] = owned
     const nextPrice = buildingPrice(state, id).toNumber()
-    points.push({ owned, nextPrice, spent, income: owned * buildingIncome(id) })
+    points.push({ owned, nextPrice, spent, income: incomeOf(id, owned) })
     spent += nextPrice
   }
   return points
@@ -39,8 +46,46 @@ export function costCurve(id: BuildingId, maxCopies = MAX_COPIES): CostPoint[] {
 export function paybackCurves(maxCopies = MAX_COPIES): { id: BuildingId; seconds: number[] }[] {
   return BUILDINGS.map((building) => ({
     id: building.id,
-    seconds: costCurve(building.id, maxCopies - 1).map((point) => point.nextPrice / buildingIncome(building.id)),
+    seconds: costCurve(building.id, maxCopies - 1).map(
+      (point) => point.nextPrice / (incomeOf(building.id, point.owned + 1) - point.income),
+    ),
   }))
+}
+
+export const MAX_SETS = 25
+
+export interface SetPoint {
+  /** Price of the k-th balanced set with k - 1 sets owned. */
+  price: number
+  /** Income per second the set adds, if demand keeps up. */
+  income: number
+  seconds: number
+}
+
+/**
+ * Payback of the 1st to maxSets-th balanced set of every chain: all its buildings at their own
+ * prices, and the product output the set adds at the customer price, milestones included.
+ */
+export function chainSetPayback(maxSets = MAX_SETS): { chain: ChainId; sets: SetPoint[] }[] {
+  return CHAINS.map((chain) => {
+    const balance = chainBalance(chain)
+    const state = createInitialState()
+    const income = () => (steadyOutput(state.buildings)[balance.product] ?? 0) * PRODUCT_PRICES[balance.product]
+    const sets: SetPoint[] = []
+    for (let k = 0; k < maxSets; k++) {
+      const before = income()
+      let price = 0
+      for (const { id, count } of balance.buildings) {
+        for (let i = 0; i < count; i++) {
+          price += buildingPrice(state, id).toNumber()
+          state.buildings[id] += 1
+        }
+      }
+      const added = income() - before
+      sets.push({ price, income: added, seconds: price / added })
+    }
+    return { chain, sets }
+  })
 }
 
 export interface DemandPoint {

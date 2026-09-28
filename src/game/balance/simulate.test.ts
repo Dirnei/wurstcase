@@ -40,7 +40,7 @@ describe('simulate', () => {
     expect(run.samples.map((sample) => sample.time)).toEqual(Array.from({ length: 300 }, (_, i) => i + 1))
   })
 
-  it('rescues animals into shelters once buildings stop adding income', () => {
+  it('rescues animals into shelters and grows its customers', () => {
     const run = simulate({ minutes: 60, clicksPerSecond: 2 })
     const firstStable = run.log.findIndex((p) => p.kind === 'shelter')
     const firstChicken = run.log.findIndex((p) => p.kind === 'animal' && p.id === 'chicken')
@@ -55,6 +55,11 @@ describe('simulate', () => {
     const fifthField = log.filter((p) => p.id === 'soybeanField')[4]
     expect(seeds).toBeGreaterThan(log.indexOf(fifthField))
     expect(log.some((p) => p.kind === 'upgrade' && p.id === 'strongHands')).toBe(true)
+  })
+
+  it('sells its surplus in bulk', () => {
+    const { final } = simulate({ minutes: 30, clicksPerSecond: 2 })
+    expect(final.unitsSold.megaMeat.add(final.unitsSold.biogas).toNumber()).toBeGreaterThan(0)
   })
 
   it('records when each upgrade went on offer and what it would add', () => {

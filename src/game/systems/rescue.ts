@@ -1,8 +1,7 @@
 import Decimal from 'break_eternity.js'
-import { getSpecies, NAME_POOL_SIZE, PRICE_GROWTH_ANIMALS, type SpeciesId } from '../content/animals'
+import { getSpecies, NAME_POOL_SIZE, type SpeciesId } from '../content/animals'
 import { getShelter, LEBENSHOF_UNLOCK_AT, SHELTERS, type ShelterId } from '../content/shelters'
 import type { GameState, Resident } from '../state'
-import { PRICE_GROWTH } from './buildings'
 import { animalPriceFactor, spaceBonus } from './upgrades'
 
 /** Why a rescue is possible or not; money is reported before space when both are short. */
@@ -27,16 +26,18 @@ export function countOf(state: Readonly<GameState>, species: SpeciesId): number 
 
 /** MegaMeat raises the price with every animal of the species it sells. Whole euros. */
 export function animalPrice(state: Readonly<GameState>, species: SpeciesId): Decimal {
-  return new Decimal(getSpecies(species).basePrice)
-    .mul(Decimal.pow(PRICE_GROWTH_ANIMALS, countOf(state, species)))
+  const def = getSpecies(species)
+  return new Decimal(def.basePrice)
+    .mul(Decimal.pow(def.priceGrowth, countOf(state, species)))
     .mul(animalPriceFactor(state))
     .ceil()
 }
 
-/** Shelters rise by the same factor as buildings. Whole euros. */
+/** Each shelter type rises by its own factor. Whole euros. */
 export function shelterPrice(state: Readonly<GameState>, shelter: ShelterId): Decimal {
-  return new Decimal(getShelter(shelter).basePrice)
-    .mul(Decimal.pow(PRICE_GROWTH, state.shelters[shelter]))
+  const def = getShelter(shelter)
+  return new Decimal(def.basePrice)
+    .mul(Decimal.pow(def.priceGrowth, state.shelters[shelter]))
     .ceil()
 }
 
