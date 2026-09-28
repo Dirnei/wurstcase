@@ -58,6 +58,9 @@ describe('bulkTable', () => {
     expect(soybeans.buyers.megaMeat!.share).toBeCloseTo(4.92, 2)
     expect(soybeans.buyers.megaMeat!.capPerSecond).toBeCloseTo(54.6, 1)
     expect(soybeans.buyers.biogas!.capPerSecond).toBeUndefined()
+    // The biogas plant's product markets flood too, with the same €1,575 and 20 s.
+    const leverkas = bulkTable().find((row) => row.resource === 'leverkas')!
+    expect(leverkas.buyers.biogas!.capPerSecond).toBeCloseTo(54.6, 1)
     expect(soybeans.buyers.biogas!.perUnit).toBeCloseTo(0.429, 3)
     expect(soybeans.buyers.biogas!.share).toBeCloseTo(0.67, 3)
   })

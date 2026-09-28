@@ -9,6 +9,7 @@
     bulkSell,
     canBulkSell,
     hasLot,
+    isFlooded,
     lotFor,
     marketLevel,
     timeToRecover,
@@ -18,6 +19,7 @@
   import { amount, euros, liveCount, liveEuros } from './amounts'
   import { act, readGame } from './game.svelte'
   import ArtSlot from './ArtSlot.svelte'
+  import ScandalLine from './ScandalLine.svelte'
   import { t } from './i18n.svelte'
 
   type Row = { kind: 'chain'; chain: ChainId } | { kind: 'resource'; resource: ResourceId }
@@ -58,9 +60,9 @@
             value: bulkSaleValue(state, buyer.id, resource, share),
             cost: bulkSaleCost(state, buyer.id, resource, share),
           })),
-          // Only a flooded market (MegaMeat) has a level; its lot price would only show the full price.
-          market: getBuyer(buyer.id).flood
-            ? { level: marketLevel(state, resource), recover: timeToRecover(state, resource, RECOVERED) }
+          // Only a flooded market has a level; its lot price would only show the fresh price.
+          market: isFlooded(buyer.id, resource)
+            ? { level: marketLevel(state, resource, buyer.id), recover: timeToRecover(state, resource, RECOVERED, buyer.id) }
             : null,
         })),
       })),
@@ -89,6 +91,7 @@
 <section class="panel">
   <h2>{t('bulk.title')}</h2>
   <p class="muted">{t('bulk.hint')}</p>
+  <ScandalLine />
   <div class="buyers">
     {#each buyers as buyer (buyer.id)}
       <div class="buyer card" style:grid-row="span {offerRows + 1}">
@@ -139,7 +142,7 @@
                               buyer: t(`bulk.${buyer.id}.name`),
                               units: amount(sale.units),
                               price: euros(sale.value),
-                            }) + (buyer.feeds ? `, ${t('bulk.cost', { customers: sale.cost.customers, awareness: sale.cost.awareness })}` : '')
+                            }) + (buyer.feeds ? `, ${t('bulk.cost', { awareness: sale.cost.awareness, percent: sale.cost.scandalLoss })}` : '')
                           : t('bulk.sellShareNone', { percent: percent(sale.share), resource: t(`resource.${offer.resource}`) })}
                         onclick={() => sell(buyer.id, offer.resource, sale.share)}
                       >
@@ -150,9 +153,12 @@
                         {#if buyer.feeds}
                           <!-- Reserved whether or not the sale costs anything. -->
                           <span class="cost">
-                            {#if sale.sellable && (sale.cost.customers > 0 || sale.cost.awareness > 0)}
-                              <span class="pair">−{amount(sale.cost.customers)}<ArtSlot kind="stat" id="customers" size="sm" /></span>
+                            {#if sale.sellable && (sale.cost.awareness > 0 || sale.cost.scandalLoss > 0)}
                               <span class="pair">−{amount(sale.cost.awareness)}<ArtSlot kind="stat" id="awareness" size="sm" /></span>
+                              <!-- How many percent less customers would order and campaigns would win after this sale. -->
+                              <span class="pair" title={t('bulk.scandalLoss', { percent: sale.cost.scandalLoss })}
+                                >−{sale.cost.scandalLoss} %<ArtSlot kind="misc" id="megaMeatMark" size="sm" /></span
+                              >
                             {/if}
                           </span>
                         {/if}

@@ -7,13 +7,15 @@ import {
   OVERSTOCK_SECONDS,
 } from '../content/town'
 import type { GameState } from '../state'
+import { scandalFactor } from './bulkSales'
 import { recordSale } from './salesStats'
 import { ordersFactor, productPrice, productsByPrice } from './upgrades'
 import { recordCustomerSale } from './customerIncome'
 
 /** Orders per second from all customers. */
+/** Orders per second from all customers, lowered while a MegaMeat scandal is up. */
 export function orderRate(state: Readonly<GameState>): Decimal {
-  return state.customers.mul(ORDERS_PER_CUSTOMER * ordersFactor(state))
+  return state.customers.mul(ORDERS_PER_CUSTOMER * ordersFactor(state) * scandalFactor(state))
 }
 
 /** The most open orders that can pile up. */

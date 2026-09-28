@@ -10,12 +10,21 @@ export interface Lot {
 }
 
 /**
- * What feeding the industry costs the player. A sale drives away the share of customers that it is
- * of what they spend with the player in horizonSeconds; awareness drops one point per so many euros.
+ * What feeding the industry costs the player: awareness, one point per so many euros, and a
+ * scandal that makes campaigns win fewer customers for a while. Customers are never taken away.
  */
 export interface FeedCost {
-  horizonSeconds: number
   eurosPerAwareness: number
+  /**
+   * The scandal a sale's euros raise: campaigns win K ÷ (K + scandal) of their customers, and the
+   * scandal halves every H seconds of game time.
+   */
+  scandal: {
+    /** K: the scandal, in euros of MegaMeat sales, at which campaigns win half. */
+    halfReachEuros: number
+    /** H: seconds of game time in which the scandal halves. */
+    halfLifeSeconds: number
+  }
 }
 
 /**
@@ -41,6 +50,8 @@ export interface Flood {
   halfPriceEuros: number
   /** H: seconds of game time in which the flood halves. */
   halfLifeSeconds: number
+  /** The resources whose markets flood; all the buyer takes when left out. */
+  resources?: readonly ResourceId[]
 }
 
 export interface BuyerDef {
@@ -73,10 +84,13 @@ export const BUYERS: readonly BuyerDef[] = [
     id: 'megaMeat',
     pegged: { lotUnits: 20, raw: 1.05, intermediate: 0.5 },
     flood: { halfPriceEuros: 1_575, halfLifeSeconds: 20 },
-    feedCost: { horizonSeconds: 60, eurosPerAwareness: 10 },
+    feedCost: { eurosPerAwareness: 10, scandal: { halfReachEuros: 10_000, halfLifeSeconds: 600 } },
   },
   {
     id: 'biogas',
+    // Only the finished products flood: their lots pay far more than raw goods, so dumping them
+    // would otherwise be an income without a ceiling.
+    flood: { halfPriceEuros: 1_575, halfLifeSeconds: 20, resources: ['tofuWurst', 'leverkas', 'haferCappuccino'] },
     lots: {
       soybeans: { units: 7, price: 3 },
       wheat: { units: 3, price: 8 },

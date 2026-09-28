@@ -57,10 +57,14 @@ describe('simulate', () => {
     expect(again.final.money.eq(run.final.money)).toBe(true)
   })
 
-  it('loses at least half its customers when it feeds its surplus to MegaMeat', () => {
+  it('grows more slowly and earns less when it feeds its surplus to MegaMeat', () => {
     const fair = simulate({ minutes: 60, clicksPerSecond: 2 })
     const fed = simulate({ minutes: 60, clicksPerSecond: 2, surplusBuyer: 'megaMeat' })
-    expect(fed.final.customers.toNumber()).toBeLessThanOrEqual(fair.final.customers.toNumber() / 2)
+    const at = (run: typeof fair, minutes: number) => run.samples[minutes * 60 - 1]
+    expect(fed.final.unitsSold.megaMeat.toNumber()).toBeGreaterThan(0)
+    // Customers are compared at 30 minutes, before either run can fill the town.
+    expect(at(fed, 30).customers).toBeLessThan(at(fair, 30).customers)
+    expect(at(fed, 60).totalEarned).toBeLessThanOrEqual(0.75 * at(fair, 60).totalEarned)
   })
 
   it('runs the flyers and grows its customers only through campaigns', () => {

@@ -310,6 +310,37 @@ describe('encodeSave / decodeSave', () => {
     expect(restored.customers.toNumber()).toBe(321)
   })
 
+  it('restores the MegaMeat scandal exactly', () => {
+    const state = createInitialState()
+    state.megaMeatScandal = new Decimal(4_000)
+    expect(decodedState(encodeSave(state, NOW)).megaMeatScandal.toNumber()).toBe(4_000)
+  })
+
+  it('migrates a format 14 save to no scandal and fresh biogas markets, keeping everything else', () => {
+    const format14 = savedState()
+    delete format14.megaMeatScandal
+    delete format14.biogasFlood
+    format14.megaMeatFlood = { soybeans: '400' }
+    format14.customers = '654'
+    const restored = decodedState(envelope(14, format14))
+    expect(restored.megaMeatScandal.toNumber()).toBe(0)
+    expect(restored.biogasFlood).toEqual({})
+    expect(restored.megaMeatFlood.soybeans!.toNumber()).toBe(400)
+    expect(restored.customers.toNumber()).toBe(654)
+  })
+
+  it('restores a biogas product flood exactly', () => {
+    const state = createInitialState()
+    state.biogasFlood.leverkas = new Decimal('1234.5')
+    expect(decodedState(encodeSave(state, NOW)).biogasFlood.leverkas!.eq('1234.5')).toBe(true)
+  })
+
+  it.each([['-1'], ['abc'], [5]])('rejects a MegaMeat scandal of %j', (scandal) => {
+    const state = savedState()
+    state.megaMeatScandal = scandal
+    expect(decodeSave(envelope(CURRENT_FORMAT, state))).toEqual({ ok: false, reason: 'invalid' })
+  })
+
   it('migrates a format 13 save with floods in units to fresh markets', () => {
     const format13 = savedState()
     format13.megaMeatFlood = { soybeans: '500', wheat: '60' }

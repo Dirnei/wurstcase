@@ -104,14 +104,20 @@ show as a table how many kitchens of each product that demand keeps busy.
 ### Requirement: Bulk buyer table
 The page SHALL list every resource with its market value and each bulk buyer's price per unit,
 both in euros and as a percentage of the market value, at base product prices and, for MegaMeat,
-its full price at a fresh market. It SHALL also show MegaMeat's half-price flood K and the flood's
-half-life H, and the most MegaMeat can pay per second for each resource (full price × K × ln 2 ÷ H). The header of the table SHALL show the step
-markup.
+its full price at a fresh market. It SHALL also show the half-price flood K and the flood's
+half-life H, and for every flooded market (MegaMeat's resources, the biogas plant's finished
+products) the most the buyer can pay per second (full price × K × ln 2 ÷ H). The header of the
+table SHALL show the step markup.
 
 #### Scenario: Soybeans
 - **WHEN** the table is shown with the current content
 - **THEN** soybeans read a market value of €0.64, MegaMeat €3.15 (492%) with at most about €55 per
-  second, and the biogas plant €0.43 (67%)
+  second, and the biogas plant €0.43 (67%) with no cap
+
+#### Scenario: Leverkas
+- **WHEN** the table is shown with the current content
+- **THEN** Leverkas reads the biogas plant at €17 (68%) with at most about €55 per second, and no
+  MegaMeat price
 
 ### Requirement: Simulated playthrough
 The page SHALL simulate a game from a new game state with the game's own simulation step. The
@@ -172,7 +178,9 @@ expansions and campaign runs included, with its game time.
 
 #### Scenario: Feeding the industry
 - **WHEN** the simulation runs with MegaMeat as the surplus buyer and otherwise default settings
-- **THEN** it sells to MegaMeat and ends with at most half the customers of the default run
+- **THEN** it sells to MegaMeat, has fewer customers than the default run at 30 minutes of game
+  time (before either run can fill the town), and has earned at most three quarters of the
+  default run's total at 60 minutes
 
 #### Scenario: Storeroom grows
 - **WHEN** a default simulation has run

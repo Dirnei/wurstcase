@@ -17,7 +17,7 @@ import { createInitialState, type GameState, type MegaMeatState, type Resident }
  * Decimal fields are written as strings (decimal.toString()) so nothing is rounded past 1e308.
  */
 
-export const CURRENT_FORMAT = 14
+export const CURRENT_FORMAT = 15
 
 /** Upgrades a state from format N (the key) to format N + 1. */
 export type Migration = (state: unknown) => unknown
@@ -93,6 +93,9 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   // 13 → 14 (chain-proportions): floods are counted in euros now, not units; markets start fresh.
   // A flood halves every 20 s, so nothing of value is lost.
   13: (state) => (isRecord(state) ? { ...state, megaMeatFlood: {} } : state),
+  // 14 → 15 (megameat-scandal): sales feed a scandal instead of taking customers, and the biogas
+  // plant's product markets flood; no scandal yet and fresh biogas markets.
+  14: (state) => (isRecord(state) ? { megaMeatScandal: '0', biogasFlood: {}, ...state } : state),
 }
 
 export type DecodeResult =
@@ -191,8 +194,12 @@ function writeState(state: GameState): Record<string, unknown> {
     upgrades: [...state.upgrades],
     customerIncome: state.customerIncome.toString(),
     storeroom: state.storeroom,
+    megaMeatScandal: state.megaMeatScandal.toString(),
     megaMeatFlood: Object.fromEntries(
       Object.entries(state.megaMeatFlood).map(([resource, flood]) => [resource, flood.toString()]),
+    ),
+    biogasFlood: Object.fromEntries(
+      Object.entries(state.biogasFlood).map(([resource, flood]) => [resource, flood.toString()]),
     ),
   }
 }
@@ -211,7 +218,8 @@ function readState(value: unknown): GameState | null {
     !isRecord(value.aktionen.runs) ||
     typeof value.aktionen.unlocked !== 'boolean' ||
     !Array.isArray(value.upgrades) ||
-    !isRecord(value.megaMeatFlood)
+    !isRecord(value.megaMeatFlood) ||
+    !isRecord(value.biogasFlood)
   ) {
     return null
   }
@@ -223,6 +231,7 @@ function readState(value: unknown): GameState | null {
   const customers = readAmount(value.customers)
   const openOrders = readAmount(value.openOrders)
   const customerIncome = readRate(value.customerIncome)
+  const megaMeatScandal = readRate(value.megaMeatScandal)
   if (
     !isFiniteNumber(playTime) ||
     playTime < 0 ||
@@ -231,6 +240,7 @@ function readState(value: unknown): GameState | null {
     !customers ||
     !openOrders ||
     !customerIncome ||
+    !megaMeatScandal ||
     !isFiniteNumber(orderProgress) ||
     orderProgress < 0 ||
     typeof assistant !== 'boolean' ||
@@ -301,6 +311,17 @@ function readState(value: unknown): GameState | null {
     }
     state.megaMeatFlood[id] = flood
   }
+  for (const id of RESOURCES) {
+    const saved = value.biogasFlood[id]
+    if (saved === undefined) {
+      continue
+    }
+    const flood = readRate(saved)
+    if (!flood) {
+      return null
+    }
+    state.biogasFlood[id] = flood
+  }
   // Unknown ids (content removed) and repeats are dropped; the purchase order is kept.
   state.upgrades = [...new Set(value.upgrades.filter(isUpgradeId))] as UpgradeId[]
   for (const entry of value.residents) {
@@ -325,6 +346,7 @@ function readState(value: unknown): GameState | null {
     orderProgress,
     assistant,
     customerIncome,
+    megaMeatScandal,
     storeroom: storeroom as number,
   }
 }

@@ -10,7 +10,7 @@ import type { GameState } from '../state'
 import { buildingPrice, buyBuilding, canBuy, isUnlocked } from '../systems/buildings'
 import type { BuyerId } from '../content/buyers'
 import { aktionCost, aktionEstimate, canRun, isAktionOffered, runAktion } from '../systems/aktionen'
-import { bestBuyer, bulkSell, hasLot, unitPrice } from '../systems/bulkSales'
+import { bestBuyer, bulkSell, hasLot, scandalFactor, unitPrice } from '../systems/bulkSales'
 import { canPerform, isManualUnlocked, performManual } from '../systems/manual'
 import {
   animalPrice,
@@ -248,7 +248,7 @@ function clickChain(state: GameState, chain: ChainId): void {
 /** Income per second the player can count on: the steady model, or the average so far while clicking. */
 function incomeEstimate(state: Readonly<GameState>, surplusBuyer: BuyerId): number {
   const average = state.playTime > 0 ? state.totalEarned.toNumber() / state.playTime : 0
-  return Math.max(steadyIncome(state.buildings, state.customers.toNumber(), state.upgrades, surplusBuyer), average)
+  return Math.max(steadyIncome(state.buildings, state.customers.toNumber(), state.upgrades, surplusBuyer, scandalFactor(state)), average)
 }
 
 /** Buys upgrades without an income effect once they cost no more than a few minutes of income. */
@@ -308,7 +308,7 @@ function expandWhenFull(state: GameState, log: (p: Purchase) => void, surplusBuy
 
 function chooseTarget(state: Readonly<GameState>, surplusBuyer: BuyerId): Target | null {
   const customers = state.customers.toNumber()
-  const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer)
+  const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer, scandalFactor(state))
   const unlocked = BUILDINGS.filter((building) => isUnlocked(state, building.id)).map((b) => b.id)
   const candidates: BuildingId[][] = unlocked.map((id) => [id])
   for (const chain of CHAINS) {
@@ -327,7 +327,7 @@ function chooseTarget(state: Readonly<GameState>, surplusBuyer: BuyerId): Target
       after[id] += 1
       price += buildingPrice(state, id).toNumber()
     }
-    const gain = steadyIncome(after, customers, state.upgrades, surplusBuyer) - before
+    const gain = steadyIncome(after, customers, state.upgrades, surplusBuyer, scandalFactor(state)) - before
     if (gain > MIN_GAIN && price / gain < bestScore) {
       best = pieces
       bestScore = price / gain
@@ -338,7 +338,7 @@ function chooseTarget(state: Readonly<GameState>, surplusBuyer: BuyerId): Target
     if (!INCOME_EFFECTS.includes(upgrade.effect.kind)) {
       continue
     }
-    const gain = steadyIncome(state.buildings, customers, [...state.upgrades, upgrade.id], surplusBuyer) - before
+    const gain = steadyIncome(state.buildings, customers, [...state.upgrades, upgrade.id], surplusBuyer, scandalFactor(state)) - before
     if (gain > MIN_GAIN && upgrade.price / gain < bestScore) {
       bestUpgrade = upgrade.id
       bestScore = upgrade.price / gain
@@ -424,9 +424,9 @@ function rescueScore(state: Readonly<GameState>, surplusBuyer: BuyerId): { speci
     getSpecies(species).awareness * awarenessFactor(state, species) * RESCUE_HORIZON_SECONDS * perPoint,
     POPULATION - customers,
   )
-  const orders = converted * ORDERS_PER_CUSTOMER * ordersFactor(state)
-  const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer)
-  const fromSurplus = steadyIncome(state.buildings, customers + converted, state.upgrades, surplusBuyer) - before
+  const orders = converted * ORDERS_PER_CUSTOMER * ordersFactor(state) * scandalFactor(state)
+  const before = steadyIncome(state.buildings, customers, state.upgrades, surplusBuyer, scandalFactor(state))
+  const fromSurplus = steadyIncome(state.buildings, customers + converted, state.upgrades, surplusBuyer, scandalFactor(state)) - before
   const unserved = Math.max(0, orders - productSurplus(state))
   const serving = servingChain(state, unserved)
   if (!serving) {

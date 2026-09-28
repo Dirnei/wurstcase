@@ -1,6 +1,7 @@
 import { AKTION_IDS, AKTIONEN_UNLOCK_AWARENESS, getAktion, type AktionId } from '../content/aktionen'
 import { POPULATION } from '../content/town'
 import type { GameState } from '../state'
+import { scandalFactor } from './bulkSales'
 import { aktionCostFactor, reachFactor } from './upgrades'
 import { activeFactors, endEvent, onFirstAktion } from './villain'
 
@@ -42,9 +43,17 @@ export function aktionCost(state: Readonly<GameState>, id: AktionId): number {
   return Math.ceil(getAktion(id).cost * growthFor(state, id, 'costGrowth') * activeFactors(state).aktionCost * aktionCostFactor(state))
 }
 
-/** Customers a campaign would win now: grown with its runs, fewer as the town fills up, never beyond it. */
+/**
+ * Customers a campaign would win now: grown with its runs, lowered by MegaMeat's study and scandal,
+ * fewer as the town fills up, never beyond it.
+ */
 export function aktionEstimate(state: Readonly<GameState>, id: AktionId): number {
-  const base = (getAktion(id).customers ?? 0) * growthFor(state, id, 'reachGrowth') * activeFactors(state).reach * reachFactor(state)
+  const base =
+    (getAktion(id).customers ?? 0) *
+    growthFor(state, id, 'reachGrowth') *
+    activeFactors(state).reach *
+    reachFactor(state) *
+    scandalFactor(state)
   const customers = state.customers.toNumber()
   const share = Math.max(0, 1 - customers / POPULATION)
   return Math.max(0, Math.min(Math.floor(base * share), POPULATION - customers))

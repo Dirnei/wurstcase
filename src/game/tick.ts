@@ -1,7 +1,7 @@
 import type { GameState } from './state'
 import { coolDown, unlockAktionen } from './systems/aktionen'
 import { gatherAwareness } from './systems/awareness'
-import { recoverMarkets } from './systems/bulkSales'
+import { advanceScandal, recoverMarkets } from './systems/bulkSales'
 import { advanceCustomerIncome } from './systems/customerIncome'
 import { produce } from './systems/production'
 import { takeOrders } from './systems/sales'
@@ -24,5 +24,6 @@ export function tick(state: GameState, seconds: number): void {
   takeOrders(state, seconds)
   coolDown(state, seconds)
   recoverMarkets(state, seconds)
+  advanceScandal(state, seconds)
   recordTrend(state, before, seconds)
 }

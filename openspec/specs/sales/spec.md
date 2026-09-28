@@ -16,9 +16,11 @@ customers (the curious neighbours). The number of customers SHALL be shown in th
 - **THEN** there are 10 customers
 
 ### Requirement: Open orders
-Each customer SHALL place orders at a fixed rate per second, and orders SHALL be counted in whole
-orders only. Open orders SHALL be capped at 30 seconds of orders from all customers; while the cap
-is reached, no further orders build up. The sales panel SHALL show the open orders and the cap.
+Each customer SHALL place orders at a fixed rate per second, multiplied by the MegaMeat scandal
+factor (K ÷ (K + scandal), as the bulk-sales MegaMeat scandal requirement defines it), and orders
+SHALL be counted in whole orders only. Open orders SHALL be capped at 30 seconds of orders from
+all customers; while the cap is reached, no further orders build up. The sales panel SHALL show
+the open orders and the cap.
 
 #### Scenario: Orders build up
 - **WHEN** 10 customers each order 0.05 units per second and 10 seconds pass without selling
@@ -31,6 +33,11 @@ is reached, no further orders build up. The sales panel SHALL show the open orde
 #### Scenario: Whole orders only
 - **WHEN** 10 customers each order 0.05 units per second and 1 second passes
 - **THEN** there are 0 open orders
+
+#### Scenario: Scandal halves orders
+- **WHEN** the MegaMeat scandal is €10,000 (K = €10,000), there are 1,000 customers and 10 seconds
+  pass without selling
+- **THEN** there are 250 open orders and the cap is 750
 
 ### Requirement: Selling by hand
 The player SHALL be able to sell with one click. A sale SHALL fill as many open orders as there
@@ -101,7 +108,7 @@ and no assistant, and keep everything else.
 The sales panel SHALL show, per minute and in the selected language's number format:
 
 - **Demand:** the orders all customers place per minute (customers × orders per customer per
-  second × 60).
+  second × the MegaMeat scandal factor × 60).
 - **Sold:** for each product shown in the stock panel, the units sold to customers per minute.
 - **Income:** the euros earned from customer sales per minute.
 
@@ -115,6 +122,10 @@ one, sold and income SHALL show 0 until sales happen.
 #### Scenario: Demand from customers
 - **WHEN** there are 10 customers
 - **THEN** the demand shows 30 orders per minute
+
+#### Scenario: Demand under a scandal
+- **WHEN** there are 1,000 customers and the MegaMeat scandal is €10,000
+- **THEN** the demand shows 1,500 orders per minute, not 3,000
 
 #### Scenario: Cheap product not selling
 - **WHEN** 10 customers order, the assistant is hired, Leverkas and Hafer-Cappuccino together are

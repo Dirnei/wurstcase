@@ -203,3 +203,15 @@ describe('upgrade effects on sales', () => {
     expect(state.openOrders.toNumber()).toBe(7)
   })
 })
+
+describe('MegaMeat scandal and orders', () => {
+  it('halves the orders at a scandal of €10,000, and the cap with them', () => {
+    const state = stateWith((s) => {
+      s.customers = new Decimal(1_000)
+      s.megaMeatScandal = new Decimal(10_000)
+    })
+    takeOrders(state, 10)
+    expect(state.openOrders.toNumber()).toBe(250)
+    expect(orderCap(state).toNumber()).toBe(750)
+  })
+})

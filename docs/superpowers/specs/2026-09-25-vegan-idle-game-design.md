@@ -101,11 +101,15 @@ Wheat field   ───▶  Seitan kitchen ─▶ Seitan    ──▶  LEVERKAS 
   money there. Its market floods, though: every sale lowers the price of the next (half price
   after €1,575 of full-price sales in that market, e.g. 500 soybeans or 60 wheat), and the flood
   halves every 20 seconds, so MegaMeat pays at most about €55 per second for any one resource
-  however much the player dumps. Every sale also drives away the share of customers that it is of
-  what they spend with you in one minute, plus awareness. Feeding the industry wins the first
-  minutes; a player who only feeds MegaMeat ends an hour far behind the fair player, with the
-  customers the industry took. (Changed by `megameat-outbids`; flood in euros and the one-minute
-  feed cost by `chain-proportions`.)
+  however much the player dumps. Every sale also costs awareness and feeds a **MegaMeat scandal**:
+  while the town remembers what you sold to the industry, customers order less and campaigns win
+  fewer customers (both half at a €10,000 scandal), and the scandal fades with a 10-minute
+  half-life. Customers you already have never leave. The biogas plant's product markets
+  (Tofu-Wurst, Hafer-Cappuccino, Leverkas) flood the same way as MegaMeat's, so dumping finished
+  products is capped too; its raw and intermediate markets do not flood. Feeding the industry wins
+  the first minutes; a player who keeps feeding MegaMeat grows more slowly and ends an hour behind
+  the fair player. (Changed by `megameat-outbids`; flood in euros by `chain-proportions`; scandal
+  and biogas flood by `megameat-scandal`.)
 
 ### 3.4 Lebenshof and rescue
 

@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { BUILDING_IDS, type BuildingId } from '../content/buildings'
 import { steadyIncome, steadyOutput, usedOutput } from './steady'
 
+/**
+ * What a steady surplus of `rate` products per second at `price` earns at the biogas plant, whose
+ * product markets flood: the flood settles at rate × price × τ euros, τ = 20 s ÷ ln 2, K = €1,575.
+ */
+function biogas(rate: number, price: number): number {
+  const settled = rate * price * (20 / Math.LN2)
+  return rate * price * (1_575 / (1_575 + settled))
+}
+
 function owned(counts: Partial<Record<BuildingId, number>>): Record<BuildingId, number> {
   return { ...Object.fromEntries(BUILDING_IDS.map((id) => [id, 0])), ...counts } as Record<BuildingId, number>
 }
@@ -19,8 +28,8 @@ describe('steadyIncome', () => {
 
   it('sells what the customers do not order to the biogas plant', () => {
     const soy = owned({ soybeanField: 3, tofuPress: 2, tofuWurstKitchen: 2 })
-    // 10 customers order 0.5 Tofu-Wurst per second (€3); the other 0.5 go for €2 each.
-    expect(steadyIncome(soy, 10)).toBeCloseTo(0.5 * 3 + 0.5 * 2, 10)
+    // 10 customers order 0.5 Tofu-Wurst per second (€3); the other 0.5 go for €2 each, less the flood.
+    expect(steadyIncome(soy, 10)).toBeCloseTo(0.5 * 3 + biogas(0.5, 2), 10)
   })
 
   it('sells the output of a field without the rest of its chain to the biogas plant', () => {
@@ -44,8 +53,8 @@ describe('steadyIncome', () => {
       leverkasOven: 2,
     })
     // 10 customers order 0.5 per second, all of it Leverkas (€25) from the balanced wheat set; the
-    // 1 Tofu-Wurst per second goes to the biogas plant for €2 each.
-    expect(steadyIncome(both, 10)).toBeCloseTo(0.5 * 25 + 1 * 2, 10)
+    // 1 Tofu-Wurst per second goes to the biogas plant for €2 each, less the flood.
+    expect(steadyIncome(both, 10)).toBeCloseTo(0.5 * 25 + biogas(1, 2), 10)
   })
 })
 
@@ -87,6 +96,28 @@ describe('steadyIncome with upgrades', () => {
 
   it('raises the demand limit with the loyalty card', () => {
     const soy = owned({ soybeanField: 3, tofuPress: 2, tofuWurstKitchen: 2 })
-    expect(steadyIncome(soy, 10, ['loyaltyCard'])).toBeCloseTo(0.75 * 3 + 0.25 * 2, 10)
+    expect(steadyIncome(soy, 10, ['loyaltyCard'])).toBeCloseTo(0.75 * 3 + biogas(0.25, 2), 10)
+  })
+})
+
+describe('steadyIncome under a demand factor', () => {
+  it('sells half the orders to customers when the demand factor is 0.5', () => {
+    // The balanced soy line makes 1 Tofu-Wurst per second; 10 customers order 0.5 per second, halved to 0.25.
+    const soy = owned({ soybeanField: 3, tofuPress: 2, tofuWurstKitchen: 2 })
+    const full = steadyIncome(soy, 10)
+    const halved = steadyIncome(soy, 10, [], 'biogas', 0.5)
+    // The quarter of a Tofu-Wurst per second no longer ordered goes to the biogas plant instead of €3.
+    expect(full).toBeCloseTo(0.5 * 3 + biogas(0.5, 2), 10)
+    expect(halved).toBeCloseTo(0.25 * 3 + biogas(0.75, 2), 10)
+  })
+})
+
+describe('steadyIncome with flooded biogas products', () => {
+  it('earns at most about €55 per second from surplus Leverkas at the biogas plant', () => {
+    // 100 balanced wheat sets make 25 Leverkas per second; with no customers all of it is surplus.
+    const wheat = owned({ wheatField: 200, seitanKitchen: 150, leverkasOven: 100 })
+    const income = steadyIncome(wheat, 0)
+    expect(income).toBeLessThan((1_575 * Math.LN2) / 20)
+    expect(income).toBeCloseTo(biogas(25, 17), 10)
   })
 })

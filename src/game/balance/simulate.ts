@@ -1,6 +1,7 @@
 import type { BuyerId } from '../content/buyers'
 import { UPGRADES, type UpgradeId } from '../content/upgrades'
 import { createInitialState, type GameState } from '../state'
+import { scandalFactor } from '../systems/bulkSales'
 import { isUpgradeOffered } from '../systems/upgrades'
 import { tick } from '../tick'
 import { createPlayer, playerStep, type Purchase, type Strategy } from './player'
@@ -91,8 +92,8 @@ function recordOffers(state: GameState, offers: UpgradeOffer[], surplusBuyer: Bu
     const customers = state.customers.toNumber()
     const without = state.upgrades.filter((id) => id !== upgrade.id)
     const gain = INCOME_EFFECTS.has(upgrade.effect.kind)
-      ? steadyIncome(state.buildings, customers, [...without, upgrade.id], surplusBuyer) -
-        steadyIncome(state.buildings, customers, without, surplusBuyer)
+      ? steadyIncome(state.buildings, customers, [...without, upgrade.id], surplusBuyer, scandalFactor(state)) -
+        steadyIncome(state.buildings, customers, without, surplusBuyer, scandalFactor(state))
       : null
     offers.push({ id: upgrade.id, time: state.playTime, gain })
   }

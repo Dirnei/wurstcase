@@ -136,6 +136,24 @@ describe('upgrade effects on Aktionen', () => {
   })
 })
 
+describe('MegaMeat scandal and campaigns', () => {
+  it('halves the flyers at a scandal of €10,000, shown on the button before the run', () => {
+    const state = withPool(150)
+    state.megaMeatScandal = new Decimal(10_000)
+    expect(aktionEstimate(state, 'flyer')).toBe(9)
+    runAktion(state, 'flyer')
+    expect(state.customers.toNumber()).toBe(19)
+  })
+
+  it('stacks with MegaMeat’s study', () => {
+    const state = withPool(150)
+    state.megaMeatScandal = new Decimal(10_000)
+    state.megaMeat.active = { event: 'study', remaining: 60 }
+    runAktion(state, 'flyer')
+    expect(state.customers.toNumber()).toBe(14)
+  })
+})
+
 describe('campaigns grow with each run', () => {
   it('costs 125 and wins 21 on the second flyer run', () => {
     const state = withPool(200)

@@ -2,7 +2,6 @@ import Decimal from 'break_eternity.js'
 import { CHAIN_RESOURCES } from '../content/buildings'
 import { BUYERS, getBuyer, type BuyerId, type Lot } from '../content/buyers'
 import type { ProductId, ResourceId } from '../content/resources'
-import { STARTING_CUSTOMERS } from '../content/town'
 import type { GameState } from '../state'
 import { productPrice } from './upgrades'
 
@@ -17,10 +16,14 @@ const STAGES = new Map(
 const EURO_EPSILON = 1e-9
 
 type Priced = Readonly<Pick<GameState, 'upgrades'>>
-type Flooded = Readonly<Pick<GameState, 'upgrades' | 'megaMeatFlood'>>
+type Floods = Pick<GameState, 'megaMeatFlood' | 'biogasFlood'>
+type Flooded = Readonly<Pick<GameState, 'upgrades'> & Floods>
 
 /** A flood this small counts as a fresh market, so recovered markets read exactly 100%. */
 const FRESH_FLOOD = 0.01
+
+/** Where each buyer's floods live in the state. */
+const FLOOD_OF: Record<BuyerId, keyof Floods> = { megaMeat: 'megaMeatFlood', biogas: 'biogasFlood' }
 
 /** MegaMeat's full price per unit at a fresh market, pegged to the chain product; undefined for products. */
 export function fullPrice(state: Priced, resource: ResourceId): number | undefined {
@@ -34,8 +37,8 @@ export function fullPrice(state: Priced, resource: ResourceId): number | undefin
 }
 
 /**
- * A buyer's lot for a resource, or undefined if it does not take it. MegaMeat's lot price is at its
- * full price, before the flood; what a sale really pays is `bulkSaleValue`.
+ * A buyer's lot for a resource, or undefined if it does not take it. A flooded market's lot price
+ * is at its full price, before the flood; what a sale really pays is `bulkSaleValue`.
  */
 export function lotFor(state: Priced, buyer: BuyerId, resource: ResourceId): Lot | undefined {
   const { lots, pegged } = getBuyer(buyer)
@@ -48,58 +51,77 @@ export function lotFor(state: Priced, buyer: BuyerId, resource: ResourceId): Lot
     : { units: pegged.lotUnits, price: Math.floor(pegged.lotUnits * full + EURO_EPSILON) }
 }
 
-function floodOf(state: Pick<GameState, 'megaMeatFlood'>, resource: ResourceId): number {
-  return state.megaMeatFlood[resource]?.toNumber() ?? 0
+/** Whether this buyer's market for this resource floods. */
+export function isFlooded(buyer: BuyerId, resource: ResourceId): boolean {
+  const { flood } = getBuyer(buyer)
+  return flood !== undefined && hasLot(buyer, resource) && (!flood.resources || flood.resources.includes(resource))
 }
 
-/** MegaMeat's current price as a share of its full price: K ÷ (K + flood); 1 at a fresh market. */
-export function marketLevel(state: Pick<GameState, 'megaMeatFlood'>, resource: ResourceId): number {
-  const { halfPriceEuros: k } = getBuyer('megaMeat').flood!
-  return k / (k + floodOf(state, resource))
+/** A buyer's price per unit at a fresh market: MegaMeat's pegged price, or the lot's price per unit. */
+function freshPrice(state: Priced, buyer: BuyerId, resource: ResourceId): number | undefined {
+  const lot = lotFor(state, buyer, resource)
+  return lot && (buyer === 'megaMeat' ? fullPrice(state, resource) : lot.price / lot.units)
+}
+
+function floodOf(state: Partial<Floods>, resource: ResourceId, buyer: BuyerId): number {
+  return state[FLOOD_OF[buyer]]?.[resource]?.toNumber() ?? 0
+}
+
+/** A flooded market's current price as a share of its full price: K ÷ (K + flood); 1 when fresh or unflooded. */
+export function marketLevel(state: Partial<Floods>, resource: ResourceId, buyer: BuyerId = 'megaMeat'): number {
+  if (!isFlooded(buyer, resource)) {
+    return 1
+  }
+  const { halfPriceEuros: k } = getBuyer(buyer).flood!
+  return k / (k + floodOf(state, resource, buyer))
 }
 
 /**
- * What selling this many units to MegaMeat pays now, paid unit by unit along the falling price:
- * K × ln((K + F + n × full) ÷ (K + F)), in whole euros, with the flood F in euros of full price.
+ * What selling this many units on a flooded market pays now, paid unit by unit along the falling
+ * price: K × ln((K + F + n × full) ÷ (K + F)), in whole euros, with the flood F in euros of full price.
  */
-export function floodedValue(state: Flooded, resource: ResourceId, units: Decimal): Decimal {
-  const full = fullPrice(state, resource)
+export function floodedValue(state: Flooded, resource: ResourceId, units: Decimal, buyer: BuyerId = 'megaMeat'): Decimal {
+  const full = freshPrice(state, buyer, resource)
   if (full === undefined || units.lte(0)) {
     return new Decimal(0)
   }
-  const { halfPriceEuros: k } = getBuyer('megaMeat').flood!
-  const base = k + floodOf(state, resource)
+  const { halfPriceEuros: k } = getBuyer(buyer).flood!
+  const base = k + floodOf(state, resource, buyer)
   return new Decimal(Math.floor(k * Math.log1p((units.toNumber() * full) / base) + EURO_EPSILON))
 }
 
-/** What one more unit pays right now: the buyer's lot price per unit, or MegaMeat's flooded price. */
-export function unitPrice(state: Flooded, buyer: BuyerId, resource: ResourceId): number | undefined {
-  if (getBuyer(buyer).flood) {
-    const full = fullPrice(state, resource)
-    return full === undefined ? undefined : full * marketLevel(state, resource)
-  }
-  const lot = lotFor(state, buyer, resource)
-  return lot && lot.price / lot.units
+/** What one more unit pays right now: the lot's price per unit, lowered by the flood where the market floods. */
+export function unitPrice(state: Priced & Partial<Floods>, buyer: BuyerId, resource: ResourceId): number | undefined {
+  const full = freshPrice(state, buyer, resource)
+  return full === undefined ? undefined : full * marketLevel(state, resource, buyer)
 }
 
-/** Seconds of game time until MegaMeat's market for a resource is back at the given level; 0 if it is. */
-export function timeToRecover(state: Pick<GameState, 'megaMeatFlood'>, resource: ResourceId, level: number): number {
-  const { halfPriceEuros: k, halfLifeSeconds: h } = getBuyer('megaMeat').flood!
-  const flood = floodOf(state, resource)
+/** Seconds of game time until a flooded market is back at the given level; 0 if it is. */
+export function timeToRecover(state: Partial<Floods>, resource: ResourceId, level: number, buyer: BuyerId = 'megaMeat'): number {
+  if (!isFlooded(buyer, resource)) {
+    return 0
+  }
+  const { halfPriceEuros: k, halfLifeSeconds: h } = getBuyer(buyer).flood!
+  const flood = floodOf(state, resource, buyer)
   const allowed = k * (1 / level - 1)
   return flood <= allowed ? 0 : h * Math.log2(flood / allowed)
 }
 
-/** Lets every flooded market recover: the flood halves every H seconds, exactly across ticks. */
+/** Lets every flooded market recover: each flood halves every H seconds of its buyer, exactly across ticks. */
 export function recoverMarkets(state: GameState, seconds: number): void {
-  const { halfLifeSeconds } = getBuyer('megaMeat').flood!
-  const factor = 2 ** (-seconds / halfLifeSeconds)
-  for (const resource of Object.keys(state.megaMeatFlood) as ResourceId[]) {
-    const flood = state.megaMeatFlood[resource]!.mul(factor)
-    if (flood.lt(FRESH_FLOOD)) {
-      delete state.megaMeatFlood[resource]
-    } else {
-      state.megaMeatFlood[resource] = flood
+  for (const buyer of BUYERS) {
+    if (!buyer.flood) {
+      continue
+    }
+    const floods = state[FLOOD_OF[buyer.id]]
+    const factor = 2 ** (-seconds / buyer.flood.halfLifeSeconds)
+    for (const resource of Object.keys(floods) as ResourceId[]) {
+      const flood = floods[resource]!.mul(factor)
+      if (flood.lt(FRESH_FLOOD)) {
+        delete floods[resource]
+      } else {
+        floods[resource] = flood
+      }
     }
   }
 }
@@ -109,11 +131,11 @@ export function recoverMarkets(state: GameState, seconds: number): void {
  * it. With withoutFeedCost, only buyers whose sales cost no customers count.
  */
 export function bestBuyer(
-  state: Priced & Partial<Pick<GameState, 'megaMeatFlood'>>,
+  state: Priced & Partial<Floods>,
   resource: ResourceId,
   { withoutFeedCost = false } = {},
 ): { buyer: BuyerId; perUnit: number } | null {
-  const flooded = { upgrades: state.upgrades, megaMeatFlood: state.megaMeatFlood ?? {} }
+  const flooded = { upgrades: state.upgrades, megaMeatFlood: state.megaMeatFlood ?? {}, biogasFlood: state.biogasFlood ?? {} }
   let best: { buyer: BuyerId; perUnit: number } | null = null
   for (const buyer of BUYERS) {
     if (withoutFeedCost && buyer.feedCost) {
@@ -148,34 +170,66 @@ export function bulkSaleUnits(state: Readonly<GameState>, buyer: BuyerId, resour
   return lot ? wholeLots(state, buyer, resource, share).mul(lot.units) : new Decimal(0)
 }
 
-/** Euros a sale would pay right now; for MegaMeat along its flooded market. */
+/** Euros a sale would pay right now; on a flooded market along its falling price. */
 export function bulkSaleValue(state: Readonly<GameState>, buyer: BuyerId, resource: ResourceId, share = 1): Decimal {
-  if (getBuyer(buyer).flood) {
-    return floodedValue(state, resource, bulkSaleUnits(state, buyer, resource, share))
+  if (isFlooded(buyer, resource)) {
+    return floodedValue(state, resource, bulkSaleUnits(state, buyer, resource, share), buyer)
   }
   const lot = lotFor(state, buyer, resource)
   return lot ? wholeLots(state, buyer, resource, share).mul(lot.price) : new Decimal(0)
 }
 
-/** Customers and awareness points a sale would cost right now; both 0 for a buyer without a feed cost. */
+/** A scandal this small counts as none, so a faded scandal reads exactly 0. */
+const NO_SCANDAL = 0.01
+
+/** The share of their customers campaigns win under the current MegaMeat scandal: K ÷ (K + scandal). */
+export function scandalFactor(state: Pick<GameState, 'megaMeatScandal'>): number {
+  const { halfReachEuros: k } = getBuyer('megaMeat').feedCost!.scandal
+  return k / (k + state.megaMeatScandal.toNumber())
+}
+
+/** Lets the scandal fade: it halves every H seconds, exactly across ticks. */
+export function advanceScandal(state: GameState, seconds: number): void {
+  if (state.megaMeatScandal.eq(0)) {
+    return
+  }
+  const { halfLifeSeconds } = getBuyer('megaMeat').feedCost!.scandal
+  const scandal = state.megaMeatScandal.mul(2 ** (-seconds / halfLifeSeconds))
+  state.megaMeatScandal = scandal.lt(NO_SCANDAL) ? new Decimal(0) : scandal
+}
+
+/** Reach lost below which the scandal no longer counts as fading: 5%. */
+const FADED_LOSS = 0.05
+
+/** Game seconds until the scandal costs campaigns less than 5% of their customers; 0 if it already does. */
+export function scandalFadeSeconds(state: Pick<GameState, 'megaMeatScandal'>): number {
+  const { halfReachEuros: k, halfLifeSeconds: h } = getBuyer('megaMeat').feedCost!.scandal
+  // K ÷ (K + S) ≥ 95% once S ≤ K ÷ 19.
+  const faded = k * (FADED_LOSS / (1 - FADED_LOSS))
+  const scandal = state.megaMeatScandal.toNumber()
+  return scandal <= faded ? 0 : h * Math.log2(scandal / faded)
+}
+
+/**
+ * What a sale would cost right now: awareness points, and how many percent fewer customers
+ * campaigns would win right after it, rounded up. Both 0 for a buyer without a feed cost.
+ */
 export function bulkSaleCost(
   state: Readonly<GameState>,
   buyer: BuyerId,
   resource: ResourceId,
   share = 1,
-): { customers: number; awareness: number } {
+): { awareness: number; scandalLoss: number } {
   const cost = getBuyer(buyer).feedCost
   const euros = bulkSaleValue(state, buyer, resource, share).toNumber()
   if (!cost || euros === 0) {
-    return { customers: 0, awareness: 0 }
+    return { awareness: 0, scandalLoss: 0 }
   }
-  // What the customers spend in the horizon; the sale drives away its share of them.
-  const spend = state.customerIncome.mul(cost.horizonSeconds)
-  const above = Decimal.max(state.customers.sub(STARTING_CUSTOMERS), 0).toNumber()
-  const lost = spend.gt(0) ? Math.ceil(state.customers.mul(euros).div(spend).toNumber()) : above
+  const after = scandalFactor({ megaMeatScandal: state.megaMeatScandal.add(euros) })
   return {
-    customers: Math.min(lost, above),
     awareness: Math.ceil(euros / cost.eurosPerAwareness),
+    // A hair of float noise must not turn an exact percent into the next one.
+    scandalLoss: Math.ceil((1 - after) * 100 - 1e-9),
   }
 }
 
@@ -195,14 +249,16 @@ export function bulkSell(state: GameState, buyer: BuyerId, resource: ResourceId,
   state.money = state.money.add(earned)
   state.totalEarned = state.totalEarned.add(earned)
   state.unitsSold[buyer] = state.unitsSold[buyer].add(units)
-  if (getBuyer(buyer).flood) {
+  if (isFlooded(buyer, resource)) {
     // The flood counts the sale at full price, in euros.
-    const full = new Decimal(fullPrice(state, resource) ?? 0)
-    state.megaMeatFlood[resource] = (state.megaMeatFlood[resource] ?? new Decimal(0)).add(units.mul(full))
+    const floods = state[FLOOD_OF[buyer]]
+    const full = new Decimal(freshPrice(state, buyer, resource) ?? 0)
+    floods[resource] = (floods[resource] ?? new Decimal(0)).add(units.mul(full))
   }
-  // The starting neighbours never leave, and awareness never goes negative.
-  const floor = Decimal.min(state.customers, STARTING_CUSTOMERS)
-  state.customers = Decimal.max(state.customers.sub(cost.customers), floor)
+  // Customers stay; the sale costs awareness (never below 0) and feeds the scandal.
   state.awareness = Decimal.max(state.awareness.sub(cost.awareness), 0)
+  if (getBuyer(buyer).feedCost) {
+    state.megaMeatScandal = state.megaMeatScandal.add(earned)
+  }
   return true
 }

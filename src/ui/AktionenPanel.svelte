@@ -4,6 +4,7 @@
   import { amount } from './amounts'
   import { act, readGame } from './game.svelte'
   import ArtSlot from './ArtSlot.svelte'
+  import ScandalLine from './ScandalLine.svelte'
   import { t } from './i18n.svelte'
 
   const pool = $derived(amount(readGame((state) => state.awareness)))
@@ -29,6 +30,7 @@
 <section class="panel">
   <h2>{t('aktionen.title')}</h2>
   <p class="pool"><ArtSlot kind="stat" id="awareness" size="sm" />{t('aktionen.pool', { amount: pool })}</p>
+  <ScandalLine />
 
 
   <ul>
