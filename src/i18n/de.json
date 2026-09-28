@@ -120,6 +120,7 @@
   "bulk.market": "Markt {percent} %",
   "bulk.recover": "{percent} % in {time}",
   "bulk.lotSize": "in Posten zu {units}",
+  "bulk.noProducts": "MegaMeat nimmt keine veganen Produkte",
   "bulk.cost": "kostet {customers} Kundschaft und {awareness} Aufmerksamkeit",
   "lebenshof.title": "Lebenshof",
   "lebenshof.space": "Platz: {used} / {total}",

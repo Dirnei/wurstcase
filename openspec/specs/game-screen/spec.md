@@ -286,8 +286,15 @@ resize or re-wrap any other element on the tab:
   of equal width; for MegaMeat it SHALL also show its cost in customers and awareness, on a line
   that is reserved whether or not the sale costs anything. An unavailable button SHALL keep its
   size and show a dash instead of the units and price.
-- The buyer cards SHALL share one row grid: side by side, their headers take the same height and
-  the same resource sits at the same height in every card that buys it.
+- In each buyer card, the offers SHALL be grouped by production chain, in the chain order of the
+  Produktion tab (soy, oats, wheat). Each group SHALL be labelled with the chain's name in the
+  selected language and SHALL list its offers in production order: raw ingredient, intermediate,
+  product. A group SHALL be shown in a card only while at least one of its offers is shown there.
+- The buyer cards SHALL share one row grid: side by side, their headers take the same height, each
+  chain's label sits at the same height in both cards, and the same resource sits at the same
+  height in every card that buys it. Where one card has an offer that the other buyer does not
+  take, the other card SHALL keep that row, and MegaMeat's card SHALL show a short note there that
+  it takes no vegan products.
 - Demand, income and the sold amounts SHALL use the fixed-decimal form of the number format. The
   units on the bulk sell buttons SHALL use the whole-count form, and their prices the
   fixed-decimal form.
@@ -322,6 +329,21 @@ resize or re-wrap any other element on the tab:
 - **WHEN** the viewport is 375 px wide and the player opens the Verkauf tab
 - **THEN** the figure grid, the sold table and all three bulk buttons of each offer fit without
   horizontal scrolling, each at least 44 px tall
+
+#### Scenario: Offers grouped by chain
+- **WHEN** the soy and oat chains are unlocked and the player has some of every soy and oat good
+- **THEN** each buyer card shows a Soy group before an Oats group; the biogas plant's Soy group
+  lists soybeans, tofu and Tofu-Wurst in that order, and MegaMeat's lists soybeans and tofu
+
+#### Scenario: Groups line up
+- **WHEN** both buyer cards sit side by side with the Soy and Oats groups shown
+- **THEN** the Oats label and oats start at the same height in both cards, and MegaMeat's card
+  shows the note that it takes no vegan products in the row where the biogas plant offers
+  Tofu-Wurst
+
+#### Scenario: Locked chain has no group
+- **WHEN** only the soy chain is unlocked
+- **THEN** neither card shows an Oats or Wheat group
 
 ### Requirement: Settings tab
 The Einstellungen tab SHALL be always unlocked and SHALL show the DE/EN toggle, the theme choice,

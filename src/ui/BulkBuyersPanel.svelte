@@ -1,6 +1,7 @@
 <script lang="ts">
   import { BULK_SHARES, BUYERS, type BuyerId } from '../game/content/buyers'
-  import { RESOURCES, type ResourceId } from '../game/content/resources'
+  import { CHAIN_RESOURCES, type ChainId } from '../game/content/buildings'
+  import { PRODUCTS, type ResourceId } from '../game/content/resources'
   import {
     bulkSaleCost,
     bulkSaleUnits,
@@ -19,13 +20,33 @@
   import ArtSlot from './ArtSlot.svelte'
   import { t } from './i18n.svelte'
 
+  type Row = { kind: 'chain'; chain: ChainId } | { kind: 'resource'; resource: ResourceId }
+
+  /**
+   * The rows both cards share: per chain, a heading and then every resource any buyer offers, in
+   * production order; chains with nothing to offer are left out. Planned across the buyers, so row n
+   * means the same in every card, and a buyer without an offer in a row keeps it as a placeholder.
+   */
+  const rows = $derived(
+    readGame((state) =>
+      CHAIN_RESOURCES.flatMap(({ chain, resources }): Row[] => {
+        const offered = resources.filter(
+          (resource) => isResourceShown(state, resource) && BUYERS.some((buyer) => hasLot(buyer.id, resource)),
+        )
+        return offered.length === 0
+          ? []
+          : [{ kind: 'chain', chain }, ...offered.map((resource): Row => ({ kind: 'resource', resource }))]
+      }),
+    ),
+  )
+
   const buyers = $derived(
     readGame((state) =>
       BUYERS.map((buyer) => ({
         id: buyer.id,
         feeds: buyer.feedCost !== undefined,
-        offers: RESOURCES.filter(
-          (resource) => hasLot(buyer.id, resource) && isResourceShown(state, resource),
+        offers: rows.flatMap((row) =>
+          row.kind === 'resource' && hasLot(buyer.id, row.resource) ? [row.resource] : [],
         ).map((resource) => ({
           resource,
           lot: lotFor(state, buyer.id, resource)!,
@@ -46,8 +67,8 @@
     ),
   )
 
-  // The cards share the rows of one grid: a header row, then one row per offer of the longest list.
-  const offerRows = $derived(Math.max(1, ...buyers.map((buyer) => buyer.offers.length)))
+  // The cards share the rows of one grid: a header row, then the planned rows.
+  const offerRows = $derived(Math.max(1, rows.length))
 
   /** The market level the recovery time counts down to. */
   const RECOVERED = 0.95
@@ -79,61 +100,75 @@
           </div>
         </div>
         <ul style:grid-row="span {offerRows}">
-          {#each buyer.offers as offer (offer.resource)}
-            <li>
-              <div class="head">
-                <ArtSlot kind="resource" id={offer.resource} size="sm" />
-                <span class="resource">{t(`resource.${offer.resource}`)}</span>
-                <small class="lot">
-                  {offer.market
-                    ? t('bulk.lotSize', { units: amount(offer.lot.units) })
-                    : t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}
-                </small>
-              </div>
-              {#if offer.market}
-                <!-- Fixed tracks, so the recovering market only changes digits and the meter's fill. -->
-                <small class="market">
-                  <span>{t('bulk.market', { percent: Math.floor(offer.market.level * 100) })}</span>
-                  <span class="meter" aria-hidden="true"><span style:width="{offer.market.level * 100}%"></span></span>
-                  <span class="recover">
-                    {offer.market.recover > 0 ? t('bulk.recover', { percent: Math.round(RECOVERED * 100), time: clock(offer.market.recover) }) : ''}
-                  </span>
-                </small>
-              {/if}
-              <div class="shares">
-                {#each offer.sales as sale (sale.share)}
-                  <button
-                    type="button"
-                    class="game-button share"
-                    disabled={!sale.sellable}
-                    aria-label={sale.sellable
-                      ? t('bulk.sellShare', {
-                          percent: percent(sale.share),
-                          resource: t(`resource.${offer.resource}`),
-                          buyer: t(`bulk.${buyer.id}.name`),
-                          units: amount(sale.units),
-                          price: euros(sale.value),
-                        }) + (buyer.feeds ? `, ${t('bulk.cost', { customers: sale.cost.customers, awareness: sale.cost.awareness })}` : '')
-                      : t('bulk.sellShareNone', { percent: percent(sale.share), resource: t(`resource.${offer.resource}`) })}
-                    onclick={() => sell(buyer.id, offer.resource, sale.share)}
-                  >
-                    <span class="pct">{t('bulk.share', { percent: percent(sale.share) })}</span>
-                    <!-- Units and price on lines of their own, so a growing value never re-wraps; a dash keeps the size. -->
-                    <span class="units">{sale.sellable ? `${liveCount(sale.units)} →` : '–'}</span>
-                    <span class="price">{sale.sellable ? liveEuros(sale.value) : ''}</span>
-                    {#if buyer.feeds}
-                      <!-- Reserved whether or not the sale costs anything. -->
-                      <span class="cost">
-                        {#if sale.sellable && (sale.cost.customers > 0 || sale.cost.awareness > 0)}
-                          <span class="pair">−{amount(sale.cost.customers)}<ArtSlot kind="stat" id="customers" size="sm" /></span>
-                          <span class="pair">−{amount(sale.cost.awareness)}<ArtSlot kind="stat" id="awareness" size="sm" /></span>
-                        {/if}
+          {#each rows as row (row.kind === 'chain' ? `chain-${row.chain}` : row.resource)}
+            {#if row.kind === 'chain'}
+              <li class="chain"><h4>{t(`chain.${row.chain}`)}</h4></li>
+            {:else}
+              {@const offer = buyer.offers.find((candidate) => candidate.resource === row.resource)}
+              {#if offer}
+                <li>
+                  <div class="head">
+                    <ArtSlot kind="resource" id={offer.resource} size="sm" />
+                    <span class="resource">{t(`resource.${offer.resource}`)}</span>
+                    <small class="lot">
+                      {offer.market
+                        ? t('bulk.lotSize', { units: amount(offer.lot.units) })
+                        : t('bulk.lot', { units: amount(offer.lot.units), price: euros(offer.lot.price) })}
+                    </small>
+                  </div>
+                  {#if offer.market}
+                    <!-- Fixed tracks, so the recovering market only changes digits and the meter's fill. -->
+                    <small class="market">
+                      <span>{t('bulk.market', { percent: Math.floor(offer.market.level * 100) })}</span>
+                      <span class="meter" aria-hidden="true"><span style:width="{offer.market.level * 100}%"></span></span>
+                      <span class="recover">
+                        {offer.market.recover > 0 ? t('bulk.recover', { percent: Math.round(RECOVERED * 100), time: clock(offer.market.recover) }) : ''}
                       </span>
-                    {/if}
-                  </button>
-                {/each}
-              </div>
-            </li>
+                    </small>
+                  {/if}
+                  <div class="shares">
+                    {#each offer.sales as sale (sale.share)}
+                      <button
+                        type="button"
+                        class="game-button share"
+                        disabled={!sale.sellable}
+                        aria-label={sale.sellable
+                          ? t('bulk.sellShare', {
+                              percent: percent(sale.share),
+                              resource: t(`resource.${offer.resource}`),
+                              buyer: t(`bulk.${buyer.id}.name`),
+                              units: amount(sale.units),
+                              price: euros(sale.value),
+                            }) + (buyer.feeds ? `, ${t('bulk.cost', { customers: sale.cost.customers, awareness: sale.cost.awareness })}` : '')
+                          : t('bulk.sellShareNone', { percent: percent(sale.share), resource: t(`resource.${offer.resource}`) })}
+                        onclick={() => sell(buyer.id, offer.resource, sale.share)}
+                      >
+                        <span class="pct">{t('bulk.share', { percent: percent(sale.share) })}</span>
+                        <!-- Units and price on lines of their own, so a growing value never re-wraps; a dash keeps the size. -->
+                        <span class="units">{sale.sellable ? `${liveCount(sale.units)} →` : '–'}</span>
+                        <span class="price">{sale.sellable ? liveEuros(sale.value) : ''}</span>
+                        {#if buyer.feeds}
+                          <!-- Reserved whether or not the sale costs anything. -->
+                          <span class="cost">
+                            {#if sale.sellable && (sale.cost.customers > 0 || sale.cost.awareness > 0)}
+                              <span class="pair">−{amount(sale.cost.customers)}<ArtSlot kind="stat" id="customers" size="sm" /></span>
+                              <span class="pair">−{amount(sale.cost.awareness)}<ArtSlot kind="stat" id="awareness" size="sm" /></span>
+                            {/if}
+                          </span>
+                        {/if}
+                      </button>
+                    {/each}
+                  </div>
+                </li>
+              {:else}
+                <!-- This buyer does not take the resource; the row stays so both cards line up. -->
+                <li class="none">
+                  {#if buyer.id === 'megaMeat' && PRODUCTS.includes(row.resource as (typeof PRODUCTS)[number])}
+                    <small>{t('bulk.noProducts')}</small>
+                  {/if}
+                </li>
+              {/if}
+            {/if}
           {/each}
         </ul>
       </div>
@@ -198,6 +233,31 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+  }
+
+  /* Chain labels, styled like the rail's stock groups. */
+  .chain {
+    justify-content: end;
+  }
+
+  .chain h4 {
+    margin: 0;
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .chain:not(:first-child) {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+
+  .none small {
+    font-style: italic;
   }
 
   small {
