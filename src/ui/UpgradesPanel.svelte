@@ -130,15 +130,27 @@
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   }
 
+  /* The grid stretches every card to its row's height; row 1 takes the spare height, so the buy
+     buttons of a row all sit at the bottom, level with each other. */
   .offers li {
     display: grid;
     grid-template-columns: 48px 1fr;
+    grid-template-rows: 1fr auto;
     gap: 6px 10px;
     padding: 10px;
   }
 
+  .offers .art,
+  .offers .about {
+    align-self: start;
+  }
+
+  /* The same height as the Produktion tab's Buy buttons. */
   .offers button {
     grid-column: 1 / -1;
+    min-height: 30px;
+    padding-block: 2px;
+    white-space: nowrap;
   }
 
   .art {
@@ -196,5 +208,11 @@
 
   .owned .effect {
     color: var(--ink-muted);
+  }
+
+  @media (max-width: 767px) {
+    .offers button {
+      min-height: 44px;
+    }
   }
 </style>
