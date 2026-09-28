@@ -1,10 +1,9 @@
 <script lang="ts">
   import logoUrl from '../assets/logo.svg'
-  import { formatDuration } from '../format/duration'
   import { isLebenshofUnlocked } from '../game/systems/rescue'
   import { incomePerMinute } from '../game/systems/salesStats'
   import { LANGS } from '../i18n/lang'
-  import { amount, euros } from './amounts'
+  import { liveAmount, liveEuros } from './amounts'
   import ArtSlot from './ArtSlot.svelte'
   import { readGame } from './game.svelte'
   import { currentLang, setLanguage, t } from './i18n.svelte'
@@ -12,10 +11,11 @@
   import { saleCount } from './motion/saleFlash.svelte'
   import { currentTab } from './route.svelte'
 
-  const money = $derived(euros(readGame((state) => state.money)))
-  const income = $derived(euros(readGame(incomePerMinute)))
-  const awareness = $derived(readGame(isLebenshofUnlocked) ? amount(readGame((state) => state.awareness)) : null)
-  const playTime = $derived(formatDuration(readGame((state) => state.playTime)))
+  const money = $derived(liveEuros(readGame((state) => state.money)))
+  const income = $derived(liveEuros(readGame(incomePerMinute)))
+  const awareness = $derived(
+    readGame(isLebenshofUnlocked) ? liveAmount(readGame((state) => state.awareness)) : null,
+  )
   const settingsOpen = $derived(currentTab() === 'einstellungen')
 </script>
 
@@ -26,26 +26,26 @@
     <h1>{t('app.title')}</h1>
   </div>
 
+  <!-- Three fixed slots: a changing value only changes digits inside its own slot. -->
   <dl class="stats">
     <div class="stat money">
-      <dt><ArtSlot kind="stat" id="money" size="sm" /><span>{t('money.label')}</span></dt>
+      <dt><ArtSlot kind="stat" id="money" size="sm" /><span title={t('money.label')}>{t('money.label')}</span></dt>
       <!-- With reduced motion the sale amount does not float; the money flashes instead (see app.css). -->
       <dd use:flash={saleCount()}>{money}</dd>
     </div>
-    <div class="stat">
-      <dt><ArtSlot kind="stat" id="income" size="sm" /><span>{t('topbar.income')}</span></dt>
+    <div class="stat income">
+      <dt><ArtSlot kind="stat" id="income" size="sm" /><span title={t('topbar.income')}>{t('topbar.income')}</span></dt>
       <dd>{t('topbar.incomeValue', { amount: income })}</dd>
     </div>
+    <!-- Column 3 keeps its width while empty, so money and income do not move when awareness appears. -->
     {#if awareness !== null}
-      <div class="stat">
-        <dt><ArtSlot kind="stat" id="awareness" size="sm" /><span>{t('topbar.awareness')}</span></dt>
+      <div class="stat awareness">
+        <dt>
+          <ArtSlot kind="stat" id="awareness" size="sm" /><span title={t('topbar.awareness')}>{t('topbar.awareness')}</span>
+        </dt>
         <dd>{awareness}</dd>
       </div>
     {/if}
-    <div class="stat">
-      <dt><ArtSlot kind="stat" id="playTime" size="sm" /><span>{t('playTime.label')}</span></dt>
-      <dd>{playTime}</dd>
-    </div>
   </dl>
 
   <div class="tools">
@@ -107,27 +107,48 @@
 
   .stats {
     flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 20px;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 11rem));
+    gap: 4px 16px;
     margin: 0;
   }
 
   .stat {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     line-height: 1.15;
+  }
+
+  .money {
+    grid-column: 1;
+  }
+
+  .income {
+    grid-column: 2;
+  }
+
+  .awareness {
+    grid-column: 3;
   }
 
   dt {
     display: flex;
     align-items: center;
     gap: 4px;
+    min-width: 0;
     color: var(--ink-muted);
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+
+  dt span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   dd {
@@ -205,7 +226,15 @@
     .stats {
       order: 3;
       flex-basis: 100%;
-      gap: 4px 16px;
+      gap: 4px 8px;
+    }
+
+    dd {
+      font-size: 0.95rem;
+    }
+
+    .money dd {
+      font-size: 1.1rem;
     }
 
     .tools {
@@ -221,6 +250,17 @@
     .settings {
       height: 44px;
       width: 44px;
+    }
+  }
+
+  /* The narrowest phones: slots are about 85px, so the longest German values need a smaller font. */
+  @media (max-width: 359px) {
+    dd {
+      font-size: 0.85rem;
+    }
+
+    .money dd {
+      font-size: 1rem;
     }
   }
 </style>

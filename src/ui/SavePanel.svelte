@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { formatDuration } from '../format/duration'
   import { importSave } from '../game/save'
-  import { exportCurrentSave, replaceState, startNewGame } from './game.svelte'
+  import ArtSlot from './ArtSlot.svelte'
+  import { exportCurrentSave, readGame, replaceState, startNewGame } from './game.svelte'
   import { t } from './i18n.svelte'
 
   let mode = $state<'closed' | 'export' | 'import'>('closed')
@@ -10,6 +12,7 @@
   let copied = $state(false)
   let newGameStarted = $state(false)
   let exportField = $state<HTMLTextAreaElement>()
+  const playTime = $derived(formatDuration(readGame((state) => state.playTime)))
 
   function newGame() {
     if (!confirm(t('save.newGameConfirm'))) {
@@ -66,6 +69,11 @@
       <button type="button" class="game-button" onclick={newGame}>{t('save.newGame')}</button>
     </div>
   </div>
+
+  <p class="play-time">
+    <ArtSlot kind="stat" id="playTime" size="sm" /><span>{t('playTime.label')}</span>
+    <strong>{playTime}</strong>
+  </p>
 
   {#if newGameStarted && mode === 'closed'}
     <p role="status">{t('save.newGameDone')}</p>
@@ -128,6 +136,16 @@
 
   p {
     margin: 0;
+  }
+
+  .play-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .play-time strong {
+    font-variant-numeric: tabular-nums;
   }
 
   .error {

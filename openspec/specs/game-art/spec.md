@@ -9,8 +9,8 @@ the rescued animals live.
 
 ### Requirement: An illustration for every item
 Every building, resource, animal species, shelter type, Aktion, bulk buyer, upgrade effect type
-and tab SHALL have its own illustration. The top-bar stats (money, income, awareness, play time)
-and the rail's customers and open orders SHALL have one too. The illustrations SHALL be shown
+and tab SHALL have its own illustration. The top-bar stats (money, income, awareness), the play
+time and the rail's customers and open orders SHALL have one too. The illustrations SHALL be shown
 wherever the item is shown:
 - building cards
 - the rail
@@ -20,6 +20,7 @@ wherever the item is shown:
 - bulk buyer cards
 - the tab strip and bottom bar
 - the top bar
+- the play time on the Einstellungen tab
 
 Each item SHALL use the same illustration everywhere. A build SHALL fail when any item that is
 content has no illustration.
@@ -31,6 +32,10 @@ content has no illustration.
 #### Scenario: Same art everywhere
 - **WHEN** tofu is shown in the rail and in the tofu press's recipe
 - **THEN** both show the same tofu illustration
+
+#### Scenario: Play-time art
+- **WHEN** the player opens Einstellungen
+- **THEN** the play time is shown with the hourglass illustration
 
 ### Requirement: Upgrade art
 Each upgrade card SHALL show the illustration of its effect type. For effects that name
