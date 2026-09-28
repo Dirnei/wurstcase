@@ -2,6 +2,8 @@
   import { LANGS } from '../i18n/lang'
   import { currentLang, setLanguage, t } from './i18n.svelte'
   import SavePanel from './SavePanel.svelte'
+  import { THEME_CHOICES } from './theme'
+  import { currentTheme, setTheme } from './theme.svelte'
 
   const SUPPORT_URL = 'https://ko-fi.com/dirnei'
 </script>
@@ -10,10 +12,21 @@
 
 <section class="panel">
   <h2 id="settings-language">{t('settings.language')}</h2>
-  <div class="language" role="group" aria-labelledby="settings-language">
+  <div class="choices" role="group" aria-labelledby="settings-language">
     {#each LANGS as lang (lang)}
       <button type="button" class="game-button" aria-pressed={currentLang() === lang} onclick={() => setLanguage(lang)}>
         {t(`language.toggle.${lang}`)}
+      </button>
+    {/each}
+  </div>
+</section>
+
+<section class="panel">
+  <h2 id="settings-theme">{t('settings.theme')}</h2>
+  <div class="choices" role="group" aria-labelledby="settings-theme">
+    {#each THEME_CHOICES as choice (choice)}
+      <button type="button" class="game-button" aria-pressed={currentTheme() === choice} onclick={() => setTheme(choice)}>
+        {t(`theme.${choice}`)}
       </button>
     {/each}
   </div>
@@ -35,17 +48,18 @@
 </section>
 
 <style>
-  .language {
+  .choices {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
-  .language button {
+  .choices button {
     min-width: 64px;
     text-align: center;
   }
 
-  .language button[aria-pressed='true'] {
+  .choices button[aria-pressed='true'] {
     background: var(--leaf);
     color: var(--on-leaf);
   }

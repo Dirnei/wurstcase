@@ -91,11 +91,12 @@
     build()
     const resize = new ResizeObserver(() => plot?.setSize({ width: container.clientWidth, height }))
     resize.observe(container)
-    const theme = matchMedia('(prefers-color-scheme: dark)')
-    theme.addEventListener('change', build)
+    // The theme in effect is on <html>, whether chosen by the player or taken from the system.
+    const theme = new MutationObserver(build)
+    theme.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => {
       resize.disconnect()
-      theme.removeEventListener('change', build)
+      theme.disconnect()
       plot?.destroy()
       plot = undefined
     }

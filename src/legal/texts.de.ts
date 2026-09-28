@@ -51,7 +51,7 @@ export const de: LegalTexts = {
         id: 'browser',
         heading: 'Speicherung im Browser',
         paragraphs: [
-          'Damit das Spiel funktioniert, speichert es Daten ausschließlich lokal im Speicher Ihres Browsers (Local Storage): Ihre Sprachauswahl (Schlüssel „vegle.language“) und Ihren Spielstand.',
+          'Damit das Spiel funktioniert, speichert es Daten ausschließlich lokal im Speicher Ihres Browsers (Local Storage): Ihre Sprachauswahl (Schlüssel „vegle.language“), Ihre Wahl des Farbschemas (Schlüssel „vegle.theme“) und Ihren Spielstand.',
           'Diese Daten verlassen Ihr Gerät nicht und werden nicht an uns übertragen. Die Speicherung ist für die von Ihnen gewünschte Nutzung des Spiels unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG); eine Einwilligung ist dafür nicht nötig.',
           'Sie können diese Daten jederzeit löschen, indem Sie die Websitedaten für diese Seite in den Einstellungen Ihres Browsers entfernen. Dabei geht Ihr Spielstand verloren.',
         ],

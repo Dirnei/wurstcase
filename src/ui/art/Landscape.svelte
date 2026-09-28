@@ -131,31 +131,28 @@
     opacity: 0;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .sun {
-      opacity: 0;
-    }
-
-    .moon,
-    .stars {
-      opacity: 1;
-    }
+  :global(:root[data-theme='dark']) .sun {
+    opacity: 0;
   }
 
-  /* The art sheet shows both at once. */
-  :global(.art-day) .sun {
+  :global(:root[data-theme='dark']) :is(.moon, .stars) {
     opacity: 1;
   }
 
-  :global(.art-day) :is(.moon, .stars) {
+  /* The art sheet shows both at once; :root outweighs the data-theme rules above. */
+  :global(:root .art-day) .sun {
+    opacity: 1;
+  }
+
+  :global(:root .art-day) :is(.moon, .stars) {
     opacity: 0;
   }
 
-  :global(.art-dusk) .sun {
+  :global(:root .art-dusk) .sun {
     opacity: 0;
   }
 
-  :global(.art-dusk) :is(.moon, .stars) {
+  :global(:root .art-dusk) :is(.moon, .stars) {
     opacity: 1;
   }
 </style>

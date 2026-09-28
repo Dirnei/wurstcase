@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wurst Case</title>
+    <script>
+      // Sets the theme before the first paint, so a reload never flashes the other theme.
+      // Same storage key and resolve rule as src/ui/theme.ts; keep the two in step.
+      try {
+        var choice = localStorage.getItem('vegle.theme')
+        var dark = choice === 'dark' || (choice !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      } catch (error) {
+        document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

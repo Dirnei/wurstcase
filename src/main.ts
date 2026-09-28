@@ -8,6 +8,7 @@ import './ui/art/art.css'
 import { startLoop } from './loop/loop'
 import { startAutosave } from './save/autosave'
 import { advance, saveNow } from './ui/game.svelte'
+import './ui/theme.svelte'
 
 function every(fn: () => void, intervalMs: number): () => void {
   const id = setInterval(fn, intervalMs)

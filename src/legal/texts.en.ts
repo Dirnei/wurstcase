@@ -55,7 +55,7 @@ export const en: LegalTexts = {
         id: 'browser',
         heading: 'Storage in your browser',
         paragraphs: [
-          'For the game to work, it stores data only locally in your browser’s storage (local storage): your language choice (key “vegle.language”) and your game progress.',
+          'For the game to work, it stores data only locally in your browser’s storage (local storage): your language choice (key “vegle.language”), your theme choice (key “vegle.theme”) and your game progress.',
           'This data does not leave your device and is not transmitted to us. Storing it is strictly necessary for the use of the game you requested (§ 25 (2) no. 2 TDDDG); no consent is therefore required.',
           'You can delete this data at any time by removing the site data for this page in your browser settings. Your game progress will be lost.',
         ],

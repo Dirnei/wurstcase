@@ -55,6 +55,11 @@ describe('Datenschutzerklärung', () => {
     const storage = de.datenschutz.sections.find((s) => s.heading === 'Speicherung im Browser')
     expect(storage?.paragraphs.join(' ')).toContain('vegle.language')
   })
+
+  it.each([de, en])('names the browser storage key for the theme choice', (texts) => {
+    const storage = texts.datenschutz.sections.find((s) => s.paragraphs.join(' ').includes('vegle.language'))
+    expect(storage?.paragraphs.join(' ')).toContain('vegle.theme')
+  })
 })
 
 describe('Impressum', () => {
