@@ -40,6 +40,12 @@ export const BUILDINGS: readonly BuildingDef[] = [...FIELDS, ...PROCESSORS, ...K
 
 export const BUILDING_IDS: readonly BuildingId[] = BUILDINGS.map((building) => building.id)
 
+/** Each chain's resources in production order (raw ingredient, intermediate, product), in chain order. */
+export const CHAIN_RESOURCES: readonly { chain: ChainId; resources: readonly ResourceId[] }[] = CHAINS.map((chain) => ({
+  chain,
+  resources: BUILDINGS.filter((building) => building.chain === chain).map((building) => building.output),
+}))
+
 const BY_ID = new Map(BUILDINGS.map((building) => [building.id, building]))
 
 export function getBuilding(id: BuildingId): BuildingDef {

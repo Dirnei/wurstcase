@@ -3,7 +3,7 @@ import de from '../../i18n/de.json'
 import en from '../../i18n/en.json'
 import { AKTION_IDS, AKTIONEN } from './aktionen'
 import { NAME_POOL_SIZE, SPECIES, SPECIES_IDS } from './animals'
-import { BUILDINGS, BUILDING_IDS, CHAINS } from './buildings'
+import { BUILDINGS, BUILDING_IDS, CHAIN_RESOURCES, CHAINS } from './buildings'
 import { BUYERS, getBuyer } from './buyers'
 import { HINTS, SATIRE } from './headlines'
 import { MANUAL_ACTIONS } from './manual'
@@ -15,6 +15,20 @@ import { INTERMEDIATES, PRODUCTS, RAW, RESOURCES, type ProductId } from './resou
 import { LEBENSHOF_UNLOCK_AT, SHELTER_IDS, SHELTERS } from './shelters'
 
 describe('content', () => {
+  it('groups the resources by chain in chain and production order', () => {
+    expect(CHAIN_RESOURCES.map((group) => group.chain)).toEqual(CHAINS)
+    expect(CHAIN_RESOURCES).toEqual([
+      { chain: 'soy', resources: ['soybeans', 'tofu', 'tofuWurst'] },
+      { chain: 'oat', resources: ['oats', 'oatDrink', 'haferCappuccino'] },
+      { chain: 'wheat', resources: ['wheat', 'seitan', 'leverkas'] },
+    ])
+  })
+
+  it('puts every resource in exactly one chain', () => {
+    const grouped = CHAIN_RESOURCES.flatMap((group) => group.resources)
+    expect([...grouped].sort()).toEqual([...RESOURCES].sort())
+  })
+
   it('uses only known resources', () => {
     for (const building of BUILDINGS) {
       expect(RESOURCES, building.id).toContain(building.output)

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RESOURCES } from '../game/content/resources'
+  import { CHAIN_RESOURCES } from '../game/content/buildings'
   import { POPULATION } from '../game/content/town'
   import { isResourceShown } from '../game/systems/buildings'
   import { canSell, isOverstocked, orderCap, saleValue, sell } from '../game/systems/sales'
@@ -17,14 +17,20 @@
 
   let stockOpen = $state(false)
 
-  const items = $derived(
+  // One group per chain, in production order; a chain with nothing shown yet has no group.
+  const groups = $derived(
     readGame((state) =>
-      RESOURCES.filter((resource) => isResourceShown(state, resource)).map((resource) => ({
-        resource,
-        stock: amount(state.stock[resource]),
-        short: state.shortage[resource] !== undefined,
-        trend: stockTrend(state, resource),
-      })),
+      CHAIN_RESOURCES.map(({ chain, resources }) => ({
+        chain,
+        items: resources
+          .filter((resource) => isResourceShown(state, resource))
+          .map((resource) => ({
+            resource,
+            stock: amount(state.stock[resource]),
+            short: state.shortage[resource] !== undefined,
+            trend: stockTrend(state, resource),
+          })),
+      })).filter((group) => group.items.length > 0),
     ),
   )
   const money = $derived(euros(readGame((state) => state.money)))
@@ -68,24 +74,29 @@
 <aside class="rail" aria-label={t('rail.label')}>
   <section class="stock" class:open={stockOpen} id="rail-stock">
     <h2>{t('stock.title')}</h2>
-    <dl>
-      {#each items as item (item.resource)}
-        <div class="row" class:short={item.short}>
-          <dt>
-            <ArtSlot kind="resource" id={item.resource} size="sm" />
-            <span class="name">{t(`resource.${item.resource}`)}</span>
-          </dt>
-          <dd class="amount" title={item.short ? t('stock.short') : undefined}>
-            {item.stock}
-            {#if item.short}<span class="visually-hidden">({t('stock.short')})</span>{/if}
-          </dd>
-          <dd class="trend {item.trend}" title={t(`stock.trend.${item.trend}`)}>
-            <span aria-hidden="true">{MARKS[item.trend]}</span>
-            <span class="visually-hidden">{t(`stock.trend.${item.trend}`)}</span>
-          </dd>
-        </div>
-      {/each}
-    </dl>
+    {#each groups as group (group.chain)}
+      <div class="group" role="group" aria-labelledby="stock-chain-{group.chain}">
+        <h3 id="stock-chain-{group.chain}">{t(`chain.${group.chain}`)}</h3>
+        <dl>
+          {#each group.items as item (item.resource)}
+            <div class="row" class:short={item.short}>
+              <dt>
+                <ArtSlot kind="resource" id={item.resource} size="sm" />
+                <span class="name">{t(`resource.${item.resource}`)}</span>
+              </dt>
+              <dd class="amount" title={item.short ? t('stock.short') : undefined}>
+                {item.stock}
+                {#if item.short}<span class="visually-hidden">({t('stock.short')})</span>{/if}
+              </dd>
+              <dd class="trend {item.trend}" title={t(`stock.trend.${item.trend}`)}>
+                <span aria-hidden="true">{MARKS[item.trend]}</span>
+                <span class="visually-hidden">{t(`stock.trend.${item.trend}`)}</span>
+              </dd>
+            </div>
+          {/each}
+        </dl>
+      </div>
+    {/each}
   </section>
 
   <section class="shop">
@@ -147,6 +158,21 @@
     margin: 0 0 4px;
     font-size: 1rem;
     font-weight: 600;
+  }
+
+  .stock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  h3 {
+    margin: 0 0 2px;
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   dl {
@@ -248,9 +274,15 @@
     color: var(--danger);
   }
 
-  /* Tablet: amounts and marks only; names stay for screen readers. */
+  /* Tablet: amounts and marks only; names and chain labels stay for screen readers. */
   @media (min-width: 768px) and (max-width: 1023px) {
-    .name {
+    .group + .group {
+      padding-top: 8px;
+      border-top: 1.4px solid var(--line);
+    }
+
+    .name,
+    h3 {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -328,7 +360,7 @@
     }
 
     .stock.open {
-      display: block;
+      display: flex;
     }
   }
 </style>
