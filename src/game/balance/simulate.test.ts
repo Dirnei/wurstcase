@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from './simulate'
 
+// Tests running a 60-minute simulation inside the test take a few seconds; CI gates deploys on them.
+const SLOW_SIM_TIMEOUT = 15_000
+
 describe('simulate', () => {
   it('gives the same result for the same settings', () => {
     const a = simulate({ minutes: 10, clicksPerSecond: 2 })
@@ -57,7 +60,7 @@ describe('simulate', () => {
     expect(again.final.money.eq(run.final.money)).toBe(true)
   })
 
-  it('grows more slowly and earns less when it feeds its surplus to MegaMeat', () => {
+  it('grows more slowly and earns less when it feeds its surplus to MegaMeat', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const fair = simulate({ minutes: 60, clicksPerSecond: 2 })
     const fed = simulate({ minutes: 60, clicksPerSecond: 2, surplusBuyer: 'megaMeat' })
     const at = (run: typeof fair, minutes: number) => run.samples[minutes * 60 - 1]
@@ -73,6 +76,7 @@ describe('simulate', () => {
     expect(final.customers.toNumber()).toBeGreaterThan(10)
   })
 
+  // Its two 60-minute runs happen while the suite is collected, outside any test timeout.
   describe('tempted by MegaMeat', () => {
     const fair = simulate({ minutes: 60, clicksPerSecond: 2 })
     const tempted = simulate({ minutes: 60, clicksPerSecond: 2, strategy: 'tempted' })
@@ -95,7 +99,7 @@ describe('simulate', () => {
       expect(earnedAt(fair, 60)).toBeGreaterThanOrEqual(1.5 * earnedAt(tempted, 60))
     })
 
-    it('is deterministic', () => {
+    it('is deterministic', { timeout: SLOW_SIM_TIMEOUT }, () => {
       const again = simulate({ minutes: 60, clicksPerSecond: 2, strategy: 'tempted' })
       expect(again.final.money.eq(tempted.final.money)).toBe(true)
       expect(again.log).toEqual(tempted.log)

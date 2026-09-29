@@ -10,9 +10,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Pushing to the gh-pages branch is all the deployment needs.
+# Read-only by default; only the deploy job, which runs no project code, may push.
 permissions:
-  contents: write
+  contents: read
 
 # One deployment at a time: a newer push replaces a queued run, while a running deployment is
 # left to complete, as in GitHub's Pages starter workflow.
@@ -23,6 +23,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Runs npm ci and the project's scripts, so it holds no write token.
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,11 +82,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    # Shared with the preview deployments of pr-preview.yml, so only one run pushes to gh-pages at
-    # a time; a push that is under way always completes.
-    concurrency:
-      group: gh-pages
-      cancel-in-progress: false
+    # Pushing to the gh-pages branch is all the deployment needs.
+    permissions:
+      contents: write
     steps:
       # The deploy action works inside a checkout of this repository.
       - name: Checkout
@@ -102,3 +103,6 @@ jobs:
           branch: gh-pages
           folder: dist
           clean-exclude: preview/
+          # A preview pushed in between makes the push non-fast-forward; the action fetches and
+          # retries.
+          attempt-limit: 5

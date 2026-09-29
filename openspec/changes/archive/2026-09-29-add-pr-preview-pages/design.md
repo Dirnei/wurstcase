@@ -143,16 +143,26 @@ Notes from applying (ui-worker):
   `JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445` (`# v4.9.0`, the
   commit `v4` pointed to), resolved with `git ls-remote` on 2026-09-29; both are lightweight tags,
   so the tag SHA is the commit. `actions/*` stay on `@v4`.
-- **One lock for gh-pages pushes:** both workflows are split into a `build` job and a `deploy`
-  job, handing `dist/` over as a one-day artifact. Only the `deploy` jobs share the job-level
-  concurrency group `gh-pages` (`cancel-in-progress: false`), so builds run in parallel and pushes
-  to the branch never overlap. Ordering stays as before: `pages.yml` keeps its workflow-level
-  `pages` group, and `pr-preview.yml` keeps `pr-preview-<N>` with cancel, so a newer commit or the
-  close of the same pull request supersedes an older run. On close the build job is skipped and
-  the deploy job runs alone to remove the preview.
-- **Residual risk:** GitHub keeps only one *pending* job per concurrency group. If a deploy is
-  running and two more wait for `gh-pages`, the older waiting one is cancelled. A cancelled
-  preview is fixed by the next push to that pull request; a cancelled live deploy shows as a
-  cancelled `pages.yml` run and is fixed by re-running it (or "Run workflow").
+- **Build and deploy split:** both workflows have a `build` job (install, check, tests, build,
+  runtime files) and a `deploy` job that gets `dist/` as a one-day artifact. On close,
+  `pr-preview.yml` skips the build and its deploy job runs alone to remove the preview.
+- **Least-privilege tokens:** both workflows default to `contents: read`. The build jobs, which run
+  `npm ci` and the project's (or the pull request's) code, keep `contents: read`. Only the deploy
+  jobs, which run no project code, may write: `pages.yml` with `contents: write`, `pr-preview.yml`
+  with `contents: write` and `pull-requests: write` (the comment). This replaces the workflow-level
+  write permissions of decisions 1 and 2.
+- **No shared concurrency group:** a group keeps only one pending job, so a shared `gh-pages`
+  group could silently cancel a waiting live deploy or a pull request's removal. Instead
+  `pages.yml` keeps its own `pages` group (`cancel-in-progress: false`) and `pr-preview.yml` its
+  per-PR group with cancel, as in decisions 1 and 2. Pushes that meet a newer `gh-pages` (the
+  live deploy and a preview at the same moment) are non-fast-forward; both actions fetch and
+  retry them, and the live deploy sets `attempt-limit: 5` (default 3). As the design's risk list
+  says, a push that still loses fails the run visibly and a re-run fixes it.
 - **No Dependabot previews:** both jobs of `pr-preview.yml` also require
   `github.actor != 'dependabot[bot]'`.
+- **Test timeout (test only):** now that every deploy gates on `npm test`, the two tests in
+  `src/game/balance/simulate.test.ts` that run a 60-minute simulation inside the test ("grows more
+  slowly and earns less when it feeds its surplus to MegaMeat", and "is deterministic" in "tempted
+  by MegaMeat") get an explicit 15 s timeout; one had hit vitest's 5 s default at 5,066 ms. The
+  describe's two shared runs happen at collection time, outside any test timeout. No game code or
+  balance numbers change.

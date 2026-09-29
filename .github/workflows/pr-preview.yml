@@ -9,10 +9,9 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
 
-# Pushing the preview to gh-pages and posting the comment.
+# Read-only by default; only the deploy job, which runs no pull request code, may write.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 # A newer push to the same pull request replaces its running or queued run, so the last commit
 # (or the close) always wins.
@@ -28,6 +27,9 @@ jobs:
       github.actor != 'dependabot[bot]' &&
       github.event.action != 'closed'
     runs-on: ubuntu-latest
+    # Runs npm ci and the pull request's code, so it holds no write token.
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,11 +86,11 @@ jobs:
       github.actor != 'dependabot[bot]' &&
       (needs.build.result == 'success' || github.event.action == 'closed')
     runs-on: ubuntu-latest
-    # Shared with the live deployment of pages.yml, so only one run pushes to gh-pages at a time;
-    # a push that is under way always completes.
-    concurrency:
-      group: gh-pages
-      cancel-in-progress: false
+    # Pushing the preview to gh-pages and posting the comment. A push that meets a newer gh-pages
+    # (the live deploy or another preview) is fetched and retried by the action.
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       # The deploy action works inside a checkout of this repository.
       - name: Checkout
