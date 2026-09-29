@@ -139,10 +139,15 @@ copy changes only through upgrades. The building SHALL NOT show owned-count mile
   upgrades
 - **THEN** the soybean field shows 200 soybeans per second
 
+#### Scenario: Milestone between 50 and 100
+- **WHEN** the player owns 75 of each soy chain building and the soy chain's 25, 50 and 75
+  milestone upgrades
+- **THEN** the soybean field shows 600 soybeans per second
+
 #### Scenario: Last milestone
-- **WHEN** the player owns 100 of each soy chain building and all three soy chain milestone
+- **WHEN** the player owns 200 of each soy chain building and all six soy chain milestone
   upgrades
-- **THEN** the soybean field shows 800 soybeans per second
+- **THEN** the soybean field shows 12,800 soybeans per second
 
 ### Requirement: Buying buildings
 The player SHALL be able to buy one building at a time when they have enough money. Prices SHALL
@@ -161,36 +166,41 @@ them here:
 
 | Chain | Set growth | Building | Base price | Share of a set | Growth per copy | Unlock at |
 |---|---|---|---|---|---|---|
-| Soy | 1.13 | Soybean field | €10 | 1.5 | ×1.085 | start |
-| Soy | 1.13 | Tofu press | €25 | 1 | ×1.13 | start |
-| Soy | 1.13 | Tofu-Wurst kitchen | €40 | 1 | ×1.13 | start |
-| Oat | 1.07 | Oat field | €250 | 2 | ×1.034 | €30,000 |
-| Oat | 1.07 | Oat mill | €500 | 1.5 | ×1.046 | €30,000 |
-| Oat | 1.07 | Café bar | €700 | 1 | ×1.07 | €30,000 |
-| Wheat | 1.06 | Wheat field | €400 | 2 | ×1.030 | €140,000 |
-| Wheat | 1.06 | Seitan kitchen | €600 | 1.5 | ×1.040 | €140,000 |
-| Wheat | 1.06 | Leverkas oven | €900 | 1 | ×1.06 | €200,000 |
+| Soy | 1.09 | Soybean field | €10 | 1.5 | ×1.059 | start |
+| Soy | 1.09 | Tofu press | €25 | 1 | ×1.09 | start |
+| Soy | 1.09 | Tofu-Wurst kitchen | €40 | 1 | ×1.09 | start |
+| Oat | 1.05 | Oat field | €250 | 2 | ×1.025 | €30,000 |
+| Oat | 1.05 | Oat mill | €500 | 1.5 | ×1.033 | €30,000 |
+| Oat | 1.05 | Café bar | €700 | 1 | ×1.05 | €30,000 |
+| Wheat | 1.045 | Wheat field | €400 | 2 | ×1.022 | €140,000 |
+| Wheat | 1.045 | Seitan kitchen | €600 | 1.5 | ×1.030 | €140,000 |
+| Wheat | 1.045 | Leverkas oven | €900 | 1 | ×1.045 | €200,000 |
 
 #### Scenario: Cost scaling
-- **WHEN** the soybean field (€10, set growth 1.13, share 1.5) is bought and the player owns 2
-- **THEN** the next one costs €12 (10 × 1.13^(2 ÷ 1.5), about €11.77, rounded up)
+- **WHEN** the soybean field (€10, set growth 1.09, share 1.5) is bought and the player owns 2
+- **THEN** the next one costs €12 (10 × 1.09^(2 ÷ 1.5), about €11.22, rounded up)
 
 #### Scenario: Cost scaling with many copies
 - **WHEN** the player owns 24 soybean fields
-- **THEN** the next one costs €71 (10 × 1.13^16, about €70.68, rounded up)
+- **THEN** the next one costs €40 (10 × 1.09^16, about €39.70, rounded up)
 
 #### Scenario: Product building grows per copy
 - **WHEN** the player owns 1 tofu press (€25, share 1)
-- **THEN** the next one costs €29 (about €28.25, rounded up)
+- **THEN** the next one costs €28 (about €27.25, rounded up)
 
 #### Scenario: Slower growth in a later chain
-- **WHEN** the player owns 1 wheat field (€400, set growth 1.06, share 2)
-- **THEN** the next one costs €412 (about €411.83, rounded up)
+- **WHEN** the player owns 1 wheat field (€400, set growth 1.045, share 2)
+- **THEN** the next one costs €409 (about €408.90, rounded up)
 
 #### Scenario: A whole set multiplies every price once
 - **WHEN** the player owns 2 wheat fields (one set's share) and 1 Leverkas oven
-- **THEN** the next wheat field costs €424 (400 × 1.06) and the next oven €954 (900 × 1.06):
+- **THEN** the next wheat field costs €418 (400 × 1.045) and the next oven €941 (900 × 1.045,
+  €940.50 rounded up):
   one set raises every price in the chain by the set growth once
+
+#### Scenario: Save from before the flatter curve
+- **WHEN** a save with 24 soybean fields made under set growth 1.13 is loaded
+- **THEN** the player keeps all 24 fields, gets no refund, and the next field costs €40
 
 #### Scenario: Loaded save uses the current rate
 - **WHEN** a save made under the per-copy rule is loaded with 2 soybean fields

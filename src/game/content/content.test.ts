@@ -284,7 +284,7 @@ describe('content', () => {
 
   it('has valid upgrades', () => {
     expect(new Set(UPGRADE_IDS).size).toBe(UPGRADE_IDS.length)
-    expect(UPGRADES).toHaveLength(28)
+    expect(UPGRADES).toHaveLength(37)
     for (const upgrade of UPGRADES) {
       expect(Number.isInteger(upgrade.price) && upgrade.price > 0, upgrade.id).toBe(true)
       expect(upgrade.when.length, upgrade.id).toBeGreaterThan(0)
@@ -303,12 +303,12 @@ describe('content', () => {
     }
   })
 
-  it('has three chain milestone upgrades per chain with readable, rising prices', () => {
-    expect(CHAIN_MILESTONES).toHaveLength(CHAINS.length * 3)
+  it('has six chain milestone upgrades per chain with readable, rising prices', () => {
+    expect(CHAIN_MILESTONES).toHaveLength(CHAINS.length * 6)
     for (const chain of CHAINS) {
       const prices = CHAIN_MILESTONES.filter((m) => m.chain === chain).map((m) => m.upgrade.price)
-      expect(prices, chain).toHaveLength(3)
-      expect(prices[0] < prices[1] && prices[1] < prices[2], chain).toBe(true)
+      expect(prices, chain).toHaveLength(6)
+      for (let i = 1; i < prices.length; i++) expect(prices[i], chain).toBeGreaterThan(prices[i - 1])
       for (const price of prices) {
         const digits = String(price).replace(/0+$/, '')
         expect(digits.length, `${chain} ${price}`).toBeLessThanOrEqual(2)

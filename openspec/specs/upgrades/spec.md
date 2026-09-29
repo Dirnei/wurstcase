@@ -197,7 +197,7 @@ Upgrades, their conditions, prices and effects SHALL be content data.
 
 #### Scenario: Complete list
 - **WHEN** every condition is met
-- **THEN** 28 upgrades are on offer: the 19 above and 9 chain milestone upgrades
+- **THEN** 37 upgrades are on offer: the 19 above and 18 chain milestone upgrades
 
 ### Requirement: Upgrades are saved
 The owned upgrades SHALL be part of the save. A save from before upgrades existed SHALL load with
@@ -220,19 +220,19 @@ completed (every building of the chain at the milestone's count or more).
   50 milestone upgrade comes on offer only once the kitchens reach 50 too
 
 ### Requirement: Chain milestone upgrades
-For each chain, the game SHALL offer three chain milestone upgrades, on offer once the player owns
-at least 25, 50 and 100 of every building of that chain (its field, its processing building and
+For each chain, the game SHALL offer six chain milestone upgrades, on offer once the player owns
+at least 25, 50, 75, 100, 150 and 200 of every building of that chain (its field, its processing building and
 its kitchen). Each SHALL be a rate upgrade that doubles the output per second of all buildings of
 its chain. Each SHALL have its own name and joke line in every language.
 
 A chain milestone upgrade's price SHALL be a fixed multiple (starting value 10) of the sum of the
-prices of the copies that complete it (the 25th, 50th or 100th copy of each of the chain's
+prices of the copies that complete it (the 25th, 50th, 75th, 100th, 150th or 200th copy of each of the chain's
 buildings), rounded to two significant digits. The milestones, the factor and the price multiple
 SHALL be content data, and the prices SHALL follow the buildings' base prices and price growth.
 
 #### Scenario: First chain milestone offer
 - **WHEN** the player owns 25 soybean fields, 25 tofu presses and 25 Tofu-Wurst kitchens
-- **THEN** the soy chain's first milestone upgrade is on offer for €14,000
+- **THEN** the soy chain's first milestone upgrade is on offer for €5,500
 
 #### Scenario: One building alone is not enough
 - **WHEN** the player owns 60 soybean fields, 60 tofu presses and 24 Tofu-Wurst kitchens
@@ -247,3 +247,14 @@ SHALL be content data, and the prices SHALL follow the buildings' base prices an
 #### Scenario: Skipped milestones stay on offer
 - **WHEN** the player owns 50 of each soy chain building and no soy chain milestone upgrade
 - **THEN** the soy chain's 25 and 50 milestone upgrades are both on offer
+
+#### Scenario: Milestone at 75
+- **WHEN** the player owns 75 of each soy chain building and the soy chain's 25 and 50 milestone
+  upgrades
+- **THEN** the soy chain's 75 milestone upgrade is on offer for €390,000, and the 100 milestone is
+  not
+
+#### Scenario: New milestones in an older save
+- **WHEN** a save from before the 75, 150 and 200 milestones is loaded with 80 of each oat chain
+  building and the oat chain's 25 and 50 milestone upgrades
+- **THEN** the oat chain's 75 milestone upgrade is on offer and not owned

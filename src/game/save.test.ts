@@ -233,6 +233,17 @@ describe('encodeSave / decodeSave', () => {
     expect(isUpgradeOffered(restored, 'soyChain50')).toBe(true)
   })
 
+  it('offers a new chain milestone an older save already qualifies for, without owning it', () => {
+    const saved = savedState()
+    saved.buildings.oatField = 80
+    saved.buildings.oatMill = 80
+    saved.buildings.cafeBar = 80
+    saved.upgrades = ['oatChain25', 'oatChain50']
+    const restored = decodedState(envelope(CURRENT_FORMAT, saved))
+    expect(restored.upgrades).toEqual(['oatChain25', 'oatChain50'])
+    expect(isUpgradeOffered(restored, 'oatChain75' as never)).toBe(true)
+  })
+
   it('restores the customer income exactly', () => {
     const state = createInitialState()
     state.customerIncome = new Decimal('12.345')

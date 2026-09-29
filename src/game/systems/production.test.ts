@@ -31,7 +31,9 @@ describe('produce', () => {
     const cases: [number, UpgradeId[], number][] = [
       [25, ['soyChain25'], 50],
       [50, ['soyChain25', 'soyChain50'], 200],
-      [100, ['soyChain25', 'soyChain50', 'soyChain100'], 800],
+      [75, ['soyChain25', 'soyChain50', 'soyChain75'], 600],
+      [100, ['soyChain25', 'soyChain50', 'soyChain75', 'soyChain100'], 1_600],
+      [200, ['soyChain25', 'soyChain50', 'soyChain75', 'soyChain100', 'soyChain150', 'soyChain200'], 12_800],
     ]
     for (const [owned, upgrades, made] of cases) {
       const state = stateWith((s) => {

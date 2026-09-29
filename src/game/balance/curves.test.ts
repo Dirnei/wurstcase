@@ -33,9 +33,11 @@ describe('paybackCurves', () => {
     expect(field.seconds[1]).toBe(11)
   })
 
-  it('makes every copy pay back more slowly than the one before', () => {
+  it('never lets a copy pay back faster than the one before', () => {
+    // Prices round up to whole euros, so two copies in a row can cost the same.
     const field = paybackCurves().find((c) => c.id === 'soybeanField')!
-    for (let n = 1; n < field.seconds.length; n++) expect(field.seconds[n]).toBeGreaterThan(field.seconds[n - 1])
+    for (let n = 1; n < field.seconds.length; n++) expect(field.seconds[n]).toBeGreaterThanOrEqual(field.seconds[n - 1])
+    expect(field.seconds.at(-1)!).toBeGreaterThan(field.seconds[0])
   })
 })
 
@@ -91,9 +93,9 @@ describe('chainSetPayback', () => {
   it('prices the first balanced soy set and what it earns', () => {
     const soy = chainSetPayback().find((c) => c.chain === 'soy')!
     expect(soy.sets).toHaveLength(25)
-    expect(soy.sets[0].price).toBe(173)
+    expect(soy.sets[0].price).toBe(170)
     expect(soy.sets[0].income).toBeCloseTo(3, 10)
-    expect(soy.sets[0].seconds).toBeCloseTo(57.7, 1)
+    expect(soy.sets[0].seconds).toBeCloseTo(56.7, 1)
   })
 
   it('gets slower for later sets, except where a set reaches a milestone', () => {
@@ -106,15 +108,18 @@ describe('chainSetPayback', () => {
   it('adds the chain milestone a set completes to its price', () => {
     // The 13th soy set takes the soy chain to 39 fields, 26 presses and 26 kitchens: 25 of each.
     const soy = chainSetPayback().find((c) => c.chain === 'soy')!
-    expect(soy.sets[12].price - soy.sets[11].price).toBeGreaterThan(13_000)
+    expect(soy.sets[12].price - soy.sets[11].price).toBeGreaterThan(5_000)
   })
 
-  it('lets each later chain start behind the one before and end ahead of it', () => {
+  it('lets each later chain start behind the one before', () => {
     const [soy, oat, wheat] = chainSetPayback().map((c) => c.sets.map((set) => set.seconds))
     for (const [early, late] of [[soy, oat], [oat, wheat]]) {
       expect(early[0]).toBeLessThan(late[0])
+      // Crossover gate suspended by flatten-building-price-curve (design.md, "Suspended gates"):
+      // the user playtests the flatter curve, under which the later chain no longer ends ahead.
+      // Re-baselined to the measured order at set 24 (soy 1,472 < oat 1,582 < wheat 1,621 s).
       // The 25th set completes a chain milestone in every chain, so compare the set before it.
-      expect(early[23]).toBeGreaterThan(late[23])
+      expect(early[23]).toBeLessThan(late[23])
     }
   })
 })

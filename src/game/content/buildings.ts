@@ -23,7 +23,7 @@ export const CHAINS: readonly ChainId[] = ['soy', 'oat', 'wheat']
  * How much every price in a chain grows per balanced set owned. Later chains grow more slowly, so
  * each starts as a worse deal and overtakes the one before, whatever number of copies a set needs.
  */
-export const SET_GROWTH: Readonly<Record<ChainId, number>> = { soy: 1.13, oat: 1.07, wheat: 1.06 }
+export const SET_GROWTH: Readonly<Record<ChainId, number>> = { soy: 1.09, oat: 1.05, wheat: 1.045 }
 
 export interface BuildingDef {
   id: BuildingId

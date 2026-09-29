@@ -21,23 +21,23 @@ describe('buildingPrice', () => {
     state.buildings.soybeanField = 2
     expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(12)
     state.buildings.soybeanField = 24
-    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(71)
+    expect(buildingPrice(state, 'soybeanField').toNumber()).toBe(40)
     state.buildings.tofuPress = 1
-    expect(buildingPrice(state, 'tofuPress').toNumber()).toBe(29)
+    expect(buildingPrice(state, 'tofuPress').toNumber()).toBe(28)
     state.buildings.wheatField = 1
-    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(412)
+    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(409)
   })
 
   it('multiplies every price in a chain by its set growth once per whole set owned', () => {
     const state = createInitialState()
     state.buildings.wheatField = 2
     state.buildings.leverkasOven = 1
-    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(424)
-    expect(buildingPrice(state, 'leverkasOven').toNumber()).toBe(954)
+    expect(buildingPrice(state, 'wheatField').toNumber()).toBe(418)
+    expect(buildingPrice(state, 'leverkasOven').toNumber()).toBe(941)
   })
 
   it('grows more slowly per set in a later chain', () => {
-    expect(CHAINS.map((chain) => SET_GROWTH[chain])).toEqual([1.13, 1.07, 1.06])
+    expect(CHAINS.map((chain) => SET_GROWTH[chain])).toEqual([1.09, 1.05, 1.045])
   })
 
   it('prices the buildings of a loaded save at the current rate', () => {
@@ -52,7 +52,7 @@ describe('buildingPrice', () => {
 
   it('stays finite for very many copies', () => {
     const state = createInitialState()
-    state.buildings.soybeanField = 10_000
+    state.buildings.soybeanField = 20_000
     const price = buildingPrice(state, 'soybeanField')
     expect(price.gt(1e308)).toBe(true)
     expect(Number.isNaN(price.mag)).toBe(false)

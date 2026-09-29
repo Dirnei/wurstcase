@@ -62,14 +62,14 @@ describe('offers', () => {
     expect(offeredUpgrades(state).map((u) => u.id)).toEqual(['strongHands', 'betterSeeds', 'mustard'])
   })
 
-  it('offers all 28 when every condition is met', () => {
+  it('offers all 37 when every condition is met', () => {
     const state = withMoney(0, 1e6)
-    for (const id of Object.keys(state.buildings) as (keyof typeof state.buildings)[]) state.buildings[id] = 100
+    for (const id of Object.keys(state.buildings) as (keyof typeof state.buildings)[]) state.buildings[id] = 200
     state.shelters.stable = 5
     state.aktionen.runs.flyer = 5
     for (let i = 0; i < 5; i++) state.residents.push({ species: 'chicken', name: i }, { species: 'pig', name: i })
-    expect(offeredUpgrades(state)).toHaveLength(28)
-    expect(UPGRADES).toHaveLength(28)
+    expect(offeredUpgrades(state)).toHaveLength(37)
+    expect(UPGRADES).toHaveLength(37)
   })
 })
 
@@ -88,7 +88,7 @@ describe('chain milestone upgrades', () => {
 
   it('offers the first soy chain milestone when every soy building reaches 25', () => {
     expect(chainOffers(soyChain(25, 25, 25))).toEqual(['soyChain25'])
-    expect(UPGRADES.find((u) => u.id === 'soyChain25')!.price).toBe(13_000)
+    expect(UPGRADES.find((u) => u.id === 'soyChain25')!.price).toBe(5_500)
   })
 
   it('offers nothing while one building of the chain is short', () => {
@@ -97,6 +97,13 @@ describe('chain milestone upgrades', () => {
 
   it('keeps skipped milestones on offer', () => {
     expect(chainOffers(soyChain(50, 50, 50))).toEqual(['soyChain25', 'soyChain50'])
+  })
+
+  it('offers the 75 milestone between 50 and 100', () => {
+    const state = soyChain(75, 75, 75)
+    state.upgrades = ['soyChain25', 'soyChain50']
+    expect(chainOffers(state)).toEqual(['soyChain75'])
+    expect(UPGRADES.find((u) => u.id === 'soyChain75')!.price).toBe(390_000)
   })
 
   it('doubles every building of its chain and nothing else', () => {

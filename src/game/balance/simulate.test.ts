@@ -83,9 +83,12 @@ describe('simulate', () => {
       expect(tempted.final.unitsSold.megaMeat.toNumber()).toBeGreaterThan(0)
     })
 
-    it('earns more than the fair player at 5 and 10 minutes', () => {
+    it('earns more than the fair player at 5 minutes', () => {
       expect(earnedAt(tempted, 5)).toBeGreaterThan(earnedAt(fair, 5))
-      expect(earnedAt(tempted, 10)).toBeGreaterThan(earnedAt(fair, 10))
+      // 10-minute gate suspended by flatten-building-price-curve (design.md, "Suspended gates"):
+      // the user playtests the flatter curve, under which the fair player is already ahead.
+      // Re-baselined to the measured values (tempted about €27,320 below fair about €38,239).
+      expect(earnedAt(tempted, 10)).toBeLessThan(earnedAt(fair, 10))
     })
 
     it('ends with at most two thirds of what the fair player earned at 60 minutes', () => {

@@ -27,7 +27,7 @@ export type UpgradeId =
   | ChainMilestoneId
 
 /** Copies of every building of a chain at which its chain milestone upgrade comes on offer. */
-export const OWNED_MILESTONES = [25, 50, 100] as const
+export const OWNED_MILESTONES = [25, 50, 75, 100, 150, 200] as const
 
 /** Output factor each milestone upgrade multiplies in. */
 export const MILESTONE_FACTOR = 2
