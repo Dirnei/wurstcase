@@ -80,14 +80,14 @@ describe('salesStats', () => {
 describe('demand under a MegaMeat scandal', () => {
   it('shows half the demand at a scandal of €10,000', () => {
     const state = createInitialState()
-    state.customers = new Decimal(1_500)
+    state.customers = new Decimal(1_600)
     state.megaMeatScandal = new Decimal(10_000)
-    expect(demandPerMinute(state).toNumber()).toBeCloseTo(2_250, 6)
+    expect(demandPerMinute(state).toNumber()).toBeCloseTo(1_200, 6)
   })
 
-  it('follows the demand curve: 3,000 customers order 6,750 per minute, not 9,000', () => {
+  it('follows the demand curve: 800 customers order 1,800 per minute, not 2,400', () => {
     const state = createInitialState()
-    state.customers = new Decimal(3_000)
-    expect(demandPerMinute(state).toNumber()).toBeCloseTo(6_750, 6)
+    state.customers = new Decimal(800)
+    expect(demandPerMinute(state).toNumber()).toBeCloseTo(1_800, 6)
   })
 })

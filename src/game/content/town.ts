@@ -7,9 +7,9 @@ export const ORDERS_PER_CUSTOMER = 0.05
 /**
  * Customers up to which each one places ORDERS_PER_CUSTOMER. Beyond it, demand grows more slowly:
  * every doubling of the customer count adds as many orders per second as the knee's customers
- * place (37.5 at a knee of 750). The balancing knob for how soon production overtakes demand.
+ * place (10 at a knee of 200). The balancing knob for how soon production overtakes demand.
  */
-export const DEMAND_KNEE = 750
+export const DEMAND_KNEE = 200
 
 /**
  * Orders per second from this many customers, times a factor (upgrades, MegaMeat's scandal):

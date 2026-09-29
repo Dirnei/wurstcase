@@ -103,8 +103,8 @@ of each product that demand keeps busy.
 - **THEN** it shows €1.50 per second for Tofu-Wurst and €12.50 per second for Leverkas
 
 #### Scenario: Beyond the knee
-- **WHEN** the chart is read at 3,000 customers
-- **THEN** it shows €337.50 per second for Tofu-Wurst (112.5 orders per second × €3), not €450
+- **WHEN** the chart is read at 800 customers
+- **THEN** it shows €90 per second for Tofu-Wurst (30 orders per second × €3), not €120
 
 ### Requirement: Bulk buyer table
 The page SHALL list every resource with its market value and each bulk buyer's price per unit,

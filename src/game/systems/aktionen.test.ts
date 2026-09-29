@@ -70,9 +70,16 @@ describe('runAktion', () => {
 
   it('converts fewer customers as the town fills up', () => {
     const state = withPool(1_500, 19_000, 5_000)
-    expect(aktionEstimate(state, 'openFarmDay')).toBe(15)
+    // 150 × 5%, rounded down.
+    expect(aktionEstimate(state, 'openFarmDay')).toBe(7)
     runAktion(state, 'openFarmDay')
-    expect(state.customers.toNumber()).toBe(19_015)
+    expect(state.customers.toNumber()).toBe(19_007)
+  })
+
+  it('wins 149 customers with the first open farm day and 749 with the first viral video', () => {
+    const state = withPool(0, 10, 20_000)
+    expect(aktionEstimate(state, 'openFarmDay')).toBe(149)
+    expect(aktionEstimate(state, 'viralReel')).toBe(749)
   })
 
   it('never converts beyond the town', () => {

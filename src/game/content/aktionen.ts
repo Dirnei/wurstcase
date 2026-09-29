@@ -31,8 +31,8 @@ export const AKTIONEN_UNLOCK_AWARENESS = 50
 export const AKTIONEN: readonly AktionDef[] = [
   // The flyers come with the Aktionen tab, which the first 50 awareness unlocks.
   { id: 'flyer', unlockAt: 0, cost: 100, customers: 20, cooldown: 30, costGrowth: 1.25, reachGrowth: 1.1 },
-  { id: 'openFarmDay', unlockAt: 5_000, cost: 1_500, customers: 300, cooldown: 120, costGrowth: 1.25, reachGrowth: 1.1 },
-  { id: 'viralReel', unlockAt: 15_000, requiresSpecies: 'pig', cost: 6_000, customers: 1_500, cooldown: 300, costGrowth: 1.25, reachGrowth: 1.1 },
+  { id: 'openFarmDay', unlockAt: 5_000, cost: 1_500, customers: 150, cooldown: 120, costGrowth: 1.25, reachGrowth: 1.1 },
+  { id: 'viralReel', unlockAt: 15_000, requiresSpecies: 'pig', cost: 6_000, customers: 750, cooldown: 300, costGrowth: 1.25, reachGrowth: 1.1 },
   { id: 'factCheck', unlockAt: 0, endsEvent: true, cost: 300, cooldown: 60 },
 ]
 

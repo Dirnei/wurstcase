@@ -207,14 +207,14 @@ describe('upgrade effects on sales', () => {
 
 describe('MegaMeat scandal and orders', () => {
   it('halves the orders at a scandal of €10,000, and the cap with them', () => {
-    // 1,500 customers sit at the curve's 75 per second.
+    // 1,600 customers sit at the curve's 40 per second.
     const state = stateWith((s) => {
-      s.customers = new Decimal(1_500)
+      s.customers = new Decimal(1_600)
       s.megaMeatScandal = new Decimal(10_000)
     })
     takeOrders(state, 10)
-    expect(state.openOrders.toNumber()).toBe(375)
-    expect(orderCap(state).toNumber()).toBe(1_125)
+    expect(state.openOrders.toNumber()).toBe(200)
+    expect(orderCap(state).toNumber()).toBe(600)
   })
 })
 
@@ -225,40 +225,40 @@ describe('demand curve', () => {
       setup(s)
     })
 
-  it('orders 375 in 10 s at the knee of 750 customers', () => {
-    const state = customers(750)
+  it('orders 100 in 10 s at the knee of 200 customers', () => {
+    const state = customers(200)
     takeOrders(state, 10)
-    expect(state.openOrders.toNumber()).toBe(375)
+    expect(state.openOrders.toNumber()).toBe(100)
   })
 
-  it('meets the flat rate at twice the knee, then falls behind it: 3,000 customers order 1,125 in 10 s, not 1,500', () => {
-    const twice = customers(1_500)
+  it('meets the flat rate at twice the knee, then falls behind it: 800 customers order 300 in 10 s, not 400', () => {
+    const twice = customers(400)
     takeOrders(twice, 10)
-    expect(twice.openOrders.toNumber()).toBe(750)
-    expect(orderCap(twice).toNumber()).toBe(2_250)
-    const state = customers(3_000)
+    expect(twice.openOrders.toNumber()).toBe(200)
+    expect(orderCap(twice).toNumber()).toBe(600)
+    const state = customers(800)
     takeOrders(state, 10)
-    expect(state.openOrders.toNumber()).toBe(1_125)
-    expect(orderCap(state).toNumber()).toBe(3_375)
+    expect(state.openOrders.toNumber()).toBe(300)
+    expect(orderCap(state).toNumber()).toBe(900)
   })
 
-  it('adds the same for each doubling: 6,000 customers order 1,500 in 10 s', () => {
-    const state = customers(6_000)
+  it('adds the same for each doubling: 6,400 customers order 600 in 10 s', () => {
+    const state = customers(6_400)
     takeOrders(state, 10)
-    expect(state.openOrders.toNumber()).toBe(1_500)
+    expect(state.openOrders.toNumber()).toBe(600)
   })
 
-  it('applies the loyalty card to the curve’s result: 3,000 customers order about 169 per second', () => {
-    expect(orderRate(customers(3_000, (s) => (s.upgrades = ['loyaltyCard']))).toNumber()).toBeCloseTo(168.75, 10)
+  it('applies the loyalty card to the curve’s result: 800 customers order 45 per second', () => {
+    expect(orderRate(customers(800, (s) => (s.upgrades = ['loyaltyCard']))).toNumber()).toBeCloseTo(45, 10)
   })
 
   it('applies the loyalty card and the scandal to the curve’s result', () => {
-    const state = customers(6_000, (s) => {
+    const state = customers(6_400, (s) => {
       s.upgrades = ['loyaltyCard']
       s.megaMeatScandal = new Decimal(10_000)
     })
-    // 150 × 1.5 × ½ per second.
-    expect(orderRate(state).toNumber()).toBeCloseTo(112.5, 10)
-    expect(orderCap(state).toNumber()).toBe(3_375)
+    // 60 × 1.5 × ½ per second.
+    expect(orderRate(state).toNumber()).toBeCloseTo(45, 10)
+    expect(orderCap(state).toNumber()).toBe(1_350)
   })
 })
