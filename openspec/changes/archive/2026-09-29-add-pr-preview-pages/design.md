@@ -160,9 +160,11 @@ Notes from applying (ui-worker):
   says, a push that still loses fails the run visibly and a re-run fixes it.
 - **No Dependabot previews:** both jobs of `pr-preview.yml` also require
   `github.actor != 'dependabot[bot]'`.
-- **Test timeout (test only):** now that every deploy gates on `npm test`, the two tests in
-  `src/game/balance/simulate.test.ts` that run a 60-minute simulation inside the test ("grows more
-  slowly and earns less when it feeds its surplus to MegaMeat", and "is deterministic" in "tempted
-  by MegaMeat") get an explicit 15 s timeout; one had hit vitest's 5 s default at 5,066 ms. The
-  describe's two shared runs happen at collection time, outside any test timeout. No game code or
-  balance numbers change.
+- **Test timeout (test only):** now that every deploy gates on `npm test`, every test in
+  `src/game/balance/simulate.test.ts` that runs a 60-minute simulation inside the test gets an
+  explicit 15 s timeout (`SLOW_SIM_TIMEOUT`): feeding the surplus to MegaMeat, "is deterministic"
+  in "tempted by MegaMeat", rescuing animals, the flyers, the storeroom, the hydraulic press,
+  better seeds, and the 60-minute speed guard (which keeps its own 4 s assertion). They take
+  2–3 s locally, half the 5 s default, and one had hit it at 5,066 ms. The tempted describe's two
+  shared runs happen at collection time, outside any test timeout. No other test file runs the
+  simulation. No game code or balance numbers change.

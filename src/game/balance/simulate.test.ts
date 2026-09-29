@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from './simulate'
 
-// Tests running a 60-minute simulation inside the test take a few seconds; CI gates deploys on them.
+// Every test that runs a 60-minute simulation inside the test takes 2–3 s locally, half vitest's
+// 5 s default; CI runners are slower and deploys gate on the tests.
 const SLOW_SIM_TIMEOUT = 15_000
 
 describe('simulate', () => {
@@ -43,7 +44,7 @@ describe('simulate', () => {
     expect(run.samples.map((sample) => sample.time)).toEqual(Array.from({ length: 300 }, (_, i) => i + 1))
   })
 
-  it('rescues animals into shelters and grows its customers', () => {
+  it('rescues animals into shelters and grows its customers', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const run = simulate({ minutes: 60, clicksPerSecond: 2 })
     const firstStable = run.log.findIndex((p) => p.kind === 'shelter')
     const firstChicken = run.log.findIndex((p) => p.kind === 'animal' && p.id === 'chicken')
@@ -70,7 +71,7 @@ describe('simulate', () => {
     expect(at(fed, 60).totalEarned).toBeLessThanOrEqual(0.75 * at(fair, 60).totalEarned)
   })
 
-  it('runs the flyers and grows its customers only through campaigns', () => {
+  it('runs the flyers and grows its customers only through campaigns', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const { log, final } = simulate({ minutes: 60, clicksPerSecond: 2 })
     expect(log.some((p) => p.kind === 'aktion' && p.id === 'flyer')).toBe(true)
     expect(final.customers.toNumber()).toBeGreaterThan(10)
@@ -106,19 +107,19 @@ describe('simulate', () => {
     })
   })
 
-  it('expands the storeroom when goods fill up', () => {
+  it('expands the storeroom when goods fill up', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const { log, final } = simulate({ minutes: 60, clicksPerSecond: 2 })
     const expansions = log.filter((p) => p.kind === 'storeroom')
     expect(expansions.length).toBeGreaterThanOrEqual(1)
     expect(final.storeroom).toBe(1 + expansions.length)
   })
 
-  it('buys the hydraulic press, a yield upgrade', () => {
+  it('buys the hydraulic press, a yield upgrade', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const { log } = simulate({ minutes: 60, clicksPerSecond: 2 })
     expect(log.some((p) => p.kind === 'upgrade' && p.id === 'hydraulicPress')).toBe(true)
   })
 
-  it('buys better seeds once the fifth soybean field makes them pay', () => {
+  it('buys better seeds once the fifth soybean field makes them pay', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const { log } = simulate({ minutes: 60, clicksPerSecond: 2 })
     const seeds = log.findIndex((p) => p.kind === 'upgrade' && p.id === 'betterSeeds')
     const fifthField = log.filter((p) => p.id === 'soybeanField')[4]
@@ -142,7 +143,7 @@ describe('simulate', () => {
 
   // A guard against pathological slowdowns, not a benchmark: sized for a busy machine running
   // several simulations at once, and still catches a run twice as slow as today's 2–3 s.
-  it('runs a 60-minute game in under 4 seconds', () => {
+  it('runs a 60-minute game in under 4 seconds', { timeout: SLOW_SIM_TIMEOUT }, () => {
     const start = performance.now()
     simulate({ minutes: 60, clicksPerSecond: 2 })
     expect(performance.now() - start).toBeLessThan(4000)
