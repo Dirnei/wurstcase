@@ -14,22 +14,25 @@ permissions:
   contents: write
   pull-requests: write
 
-# A newer push to the same pull request replaces a running or queued preview build.
+# A newer push to the same pull request replaces its running or queued run, so the last commit
+# (or the close) always wins.
 concurrency:
   group: pr-preview-${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
-  preview:
-    # Fork pull requests get no preview: their token cannot write to this repository.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+  build:
+    # No preview for fork pull requests (their token cannot write here) or Dependabot's.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Node
-        if: github.event.action != 'closed'
         uses: actions/setup-node@v4
         with:
           # Same Node major as the Dockerfile's build stage.
@@ -37,25 +40,20 @@ jobs:
           cache: npm
 
       - name: Install
-        if: github.event.action != 'closed'
         run: npm ci
 
       - name: Type check
-        if: github.event.action != 'closed'
         run: npm run check
 
       - name: Test
-        if: github.event.action != 'closed'
         run: npm test
 
       - name: Build
-        if: github.event.action != 'closed'
         run: npm run build
 
       # Same script and variables as the live deployment, but the developer page is always on
       # and PAGES_CNAME stays empty, so a preview never claims the domain.
       - name: Write runtime files
-        if: github.event.action != 'closed'
         shell: bash
         env:
           LEGAL_NAME: ${{ vars.LEGAL_NAME }}
@@ -69,9 +67,43 @@ jobs:
           PAGES_CNAME: ''
         run: bash .github/scripts/write-runtime-files.sh
 
+      - name: Keep the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview
+          path: dist
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy:
+    needs: build
+    # Runs after a green build, and on close without one, to remove the preview.
+    if: >-
+      always() &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]' &&
+      (needs.build.result == 'success' || github.event.action == 'closed')
+    runs-on: ubuntu-latest
+    # Shared with the live deployment of pages.yml, so only one run pushes to gh-pages at a time;
+    # a push that is under way always completes.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    steps:
+      # The deploy action works inside a checkout of this repository.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the build
+        if: github.event.action != 'closed'
+        uses: actions/download-artifact@v4
+        with:
+          name: preview
+          path: dist
+
       # Deploys on open and new commits, removes on close; keeps one sticky comment with the link.
       - name: Deploy preview
-        uses: rossjrw/pr-preview-action@v1
+        uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9 # v1.8.1
         with:
           source-dir: dist
           umbrella-dir: preview

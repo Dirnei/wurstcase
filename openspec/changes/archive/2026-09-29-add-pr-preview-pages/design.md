@@ -135,3 +135,24 @@ Notes from applying (ui-worker):
   it is rebuilt at merge.
 - Task 5.3 needs the pushed branch and the repository settings, so it stays open for the user
   after merge.
+
+### Validator notes folded in before merge
+
+- **Pinned third-party actions:** `rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9`
+  (`# v1.8.1`, the commit `v1` pointed to) and
+  `JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445` (`# v4.9.0`, the
+  commit `v4` pointed to), resolved with `git ls-remote` on 2026-09-29; both are lightweight tags,
+  so the tag SHA is the commit. `actions/*` stay on `@v4`.
+- **One lock for gh-pages pushes:** both workflows are split into a `build` job and a `deploy`
+  job, handing `dist/` over as a one-day artifact. Only the `deploy` jobs share the job-level
+  concurrency group `gh-pages` (`cancel-in-progress: false`), so builds run in parallel and pushes
+  to the branch never overlap. Ordering stays as before: `pages.yml` keeps its workflow-level
+  `pages` group, and `pr-preview.yml` keeps `pr-preview-<N>` with cancel, so a newer commit or the
+  close of the same pull request supersedes an older run. On close the build job is skipped and
+  the deploy job runs alone to remove the preview.
+- **Residual risk:** GitHub keeps only one *pending* job per concurrency group. If a deploy is
+  running and two more wait for `gh-pages`, the older waiting one is cancelled. A cancelled
+  preview is fixed by the next push to that pull request; a cancelled live deploy shows as a
+  cancelled `pages.yml` run and is fixed by re-running it (or "Run workflow").
+- **No Dependabot previews:** both jobs of `pr-preview.yml` also require
+  `github.actor != 'dependabot[bot]'`.

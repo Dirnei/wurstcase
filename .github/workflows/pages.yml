@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -68,9 +68,36 @@ jobs:
       - name: Disable Jekyll
         run: touch dist/.nojekyll
 
+      - name: Keep the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: dist
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Shared with the preview deployments of pr-preview.yml, so only one run pushes to gh-pages at
+    # a time; a push that is under way always completes.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    steps:
+      # The deploy action works inside a checkout of this repository.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the build
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: dist
+
       # Replaces the root of gh-pages with this build, but keeps the previews.
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
         with:
           branch: gh-pages
           folder: dist
