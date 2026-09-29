@@ -41,9 +41,12 @@ None. The next `docker compose up -d --build web` uses it.
   (PATH and the nginx variables only). The build stage (`docker build --target build`) has
   `CI=true`; the speed guard took 2,521 ms there, against its 10 s CI limit.
 - Local `npm test` with `CI` unset: 712 passed, the guard's limit stays `4_000` (test unchanged).
-- Side effect to know: `docker compose build web` from a worktree retags `vegle:local`, the tag
+- Side effect found: `docker compose build web` from a worktree retags `vegle:local`, the tag
   the running container of main uses. I pointed the tag back at main's image right after. The
-  TEAM-SETUP rule therefore also allows `docker build .`, which leaves the tag alone.
+  TEAM-SETUP rule (and task 1.2 and 2.1) therefore use `docker build .` (or `--target build`)
+  before READY, which leaves the tag alone, and say never to run `docker compose build web`
+  from a worktree; `docker compose up -d --build web` is for the repo root at merge only. The
+  later check of this branch ran `docker build --target build .` (exit 0).
 - Task 3.2 (rebuild and start the container) runs at merge, with the exit code and image ID in
   the merge report.
 

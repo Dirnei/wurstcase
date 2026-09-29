@@ -154,11 +154,12 @@ you ── wish ──► product-owner ── writes change, validate --strict 
 - Stop the Vite dev server before `openspec archive` (EPERM on Windows).
 - Hard balance gates: crossover (sets 1 and 24), tempted checks, fed check
   (fewer customers at 30 min and ≤ 0.75 × fair earned at 60). Pacing windows are guidelines.
-- The image must always build. Before reporting READY, the worker runs
-  `docker compose build web` (or `docker build .`) in its worktree and gives the exit code in
-  the report. At merge, the worker runs `docker compose up -d --build web` without piping it
-  through `tail` or anything else that hides the exit code, and puts that exit code and the new
-  image ID in the merge report. A 200 on :8234 is no proof: after a failed build the old
+- The image must always build. Before reporting READY, the worker runs `docker build .` (or
+  `docker build --target build .`) in its worktree and gives the exit code in the report.
+  Never run `docker compose build web` from a worktree: it retags `vegle:local`, the image the
+  running container of main uses. `docker compose up -d --build web` is for the repo root at
+  merge only: the merging worker runs it without piping it through `tail` or anything else that
+  hides the exit code, and puts that exit code and the new image ID in the merge report. A 200 on :8234 is no proof: after a failed build the old
   container keeps serving. The image's build stage runs the tests with `CI=true` (CI timing
   limits); a local `npm test` keeps the strict ones.
 - Report format (all sessions): verdict · change · branch + commit · tests · validate ·

@@ -18,8 +18,9 @@ container deployment). It does not match a planned row of its own.
   image use the CI limits (10 s for the speed guard). Only the build stage gets it; the nginx
   runtime stage doesn't.
 - A local `npm test` keeps the strict 4 s limit. The guard itself and its limits stay unchanged.
-- TEAM-SETUP.md section 5 gets a standing rule: a worker runs `docker compose build web` (or
-  `docker build .`) before reporting READY and gives the exit code in the report. At merge, the
+- TEAM-SETUP.md section 5 gets a standing rule: a worker runs `docker build .` (or
+  `docker build --target build .`) before reporting READY and gives the exit code in the report;
+  never `docker compose build web` from a worktree, which retags the running image. At merge, the
   rebuild's exit code goes into the merge report too.
 
 ## Capabilities
