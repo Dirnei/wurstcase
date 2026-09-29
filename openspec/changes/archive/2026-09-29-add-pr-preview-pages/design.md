@@ -168,3 +168,6 @@ Notes from applying (ui-worker):
   2–3 s locally, half the 5 s default, and one had hit it at 5,066 ms. The tempted describe's two
   shared runs happen at collection time, outside any test timeout. No other test file runs the
   simulation. No game code or balance numbers change.
+- **Speed guard on CI (test only):** the "60-minute game in under 4 seconds" guard allows 10 s
+  when `CI` is set (GitHub runners are about 1.5–2× slower) and keeps 4 s locally, so a slow
+  runner cannot block a live deploy while local runs still catch a real slowdown.

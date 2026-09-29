@@ -142,10 +142,14 @@ describe('simulate', () => {
   })
 
   // A guard against pathological slowdowns, not a benchmark: sized for a busy machine running
-  // several simulations at once, and still catches a run twice as slow as today's 2–3 s.
+  // several simulations at once, and still catches a run twice as slow as today's 2–3 s. CI
+  // runners are about 1.5–2× slower, and a red test there blocks the live deploy.
   it('runs a 60-minute game in under 4 seconds', { timeout: SLOW_SIM_TIMEOUT }, () => {
+    // The app's tsconfig has no Node types; vitest runs in Node, where CI is set on GitHub runners.
+    const { process } = globalThis as { process?: { env: Record<string, string | undefined> } }
+    const limit = process?.env.CI ? 10_000 : 4_000
     const start = performance.now()
     simulate({ minutes: 60, clicksPerSecond: 2 })
-    expect(performance.now() - start).toBeLessThan(4000)
+    expect(performance.now() - start).toBeLessThan(limit)
   })
 })
