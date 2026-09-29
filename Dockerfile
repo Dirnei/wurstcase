@@ -4,6 +4,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# The tests run as a CI run, so timing guards use their CI limits on a busy build machine; build
+# with --build-arg CI= for the strict local limits. The runtime stage below does not inherit it.
+ARG CI=true
+ENV CI=$CI
 RUN npm test && npm run check && npm run build
 
 # Runtime stage: only the built game, served by nginx as a non-root user on port 8080.
