@@ -1,7 +1,8 @@
-# Builds the game and publishes dist/ to GitHub Pages on every push to main.
-# Check, tests and build run first; a red step publishes nothing and the previous deployment
-# stays online. The operator details and the developer switch come from repository variables,
-# under the same names the container uses (see README, "GitHub Pages").
+# Builds the game and publishes dist/ to the root of the gh-pages branch on every push to main;
+# GitHub Pages serves that branch. Check, tests and build run first; a red step publishes nothing
+# and the previous deployment stays online. The preview/ folder with the pull request previews
+# (pr-preview.yml) is left alone. The operator details and the developer switch come from
+# repository variables, under the same names the container uses (see README, "GitHub Pages").
 name: Deploy to GitHub Pages
 
 on:
@@ -9,10 +10,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Pushing to the gh-pages branch is all the deployment needs.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 # One deployment at a time: a newer push replaces a queued run, while a running deployment is
 # left to complete, as in GitHub's Pages starter workflow.
@@ -23,9 +23,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,51 +61,17 @@ jobs:
           LEGAL_HOSTING_PROVIDER: ${{ vars.LEGAL_HOSTING_PROVIDER }}
           DEV_TOOLS: ${{ vars.DEV_TOOLS }}
           PAGES_CNAME: ${{ vars.PAGES_CNAME }}
-        run: |
-          set -eu
-          unset_vars=""
-          for name in LEGAL_NAME LEGAL_STREET LEGAL_POSTAL_CODE LEGAL_CITY LEGAL_COUNTRY LEGAL_EMAIL LEGAL_HOSTING_PROVIDER; do
-            if [ -z "${!name:-}" ]; then
-              unset_vars="$unset_vars $name"
-            fi
-          done
-          if [ -z "$unset_vars" ]; then
-            # JSON.stringify escapes quotes, backslashes and control characters; umlauts stay UTF-8.
-            node -e '
-              const { writeFileSync } = require("node:fs")
-              const keys = {
-                name: "LEGAL_NAME", street: "LEGAL_STREET", postalCode: "LEGAL_POSTAL_CODE",
-                city: "LEGAL_CITY", country: "LEGAL_COUNTRY", email: "LEGAL_EMAIL",
-                hostingProvider: "LEGAL_HOSTING_PROVIDER",
-              }
-              const details = Object.fromEntries(Object.entries(keys).map(([key, env]) => [key, process.env[env]]))
-              writeFileSync("dist/legal.json", JSON.stringify(details, null, 2) + "\n")
-            '
-            echo "legal.json written from the LEGAL_* repository variables"
-          else
-            echo "::warning title=Placeholder legal details::The Impressum shows placeholder details because these repository variables are unset:$unset_vars"
-          fi
+        run: bash .github/scripts/write-runtime-files.sh
 
-          if [ "${DEV_TOOLS:-}" = "true" ]; then
-            printf '{"enabled":true}\n' > dist/dev.json
-            echo "::notice title=Developer page::DEV_TOOLS=true, the developer page is enabled at #dev"
-          else
-            printf '{"enabled":false}\n' > dist/dev.json
-          fi
+      # An empty .nojekyll at the branch root makes Pages serve the files as they are (also those
+      # of the previews below it) instead of running Jekyll over them.
+      - name: Disable Jekyll
+        run: touch dist/.nojekyll
 
-          if [ -n "${PAGES_CNAME:-}" ]; then
-            printf '%s\n' "$PAGES_CNAME" > dist/CNAME
-            echo "CNAME written for $PAGES_CNAME"
-          fi
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
+      # Replaces the root of gh-pages with this build, but keeps the previews.
       - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v5
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: dist
+          clean-exclude: preview/

@@ -70,19 +70,26 @@ zip) never show it.
 
 ## GitHub Pages
 
-The workflow in `.github/workflows/pages.yml` publishes the game to GitHub Pages on every push
-to `main` (and on manual dispatch from the Actions tab). It runs `npm ci`, the type check, the
-tests and the build; if any of them fails, nothing is published and the previous deployment stays
-online.
+The workflow in `.github/workflows/pages.yml` publishes the game on every push to `main` (and on
+manual dispatch from the Actions tab). It runs `npm ci`, the type check, the tests and the build;
+if any of them fails, nothing is published and the previous deployment stays online. It pushes the
+build to the root of the `gh-pages` branch, which Pages serves, and leaves the `preview/` folder on
+that branch alone.
 
 One-time setup in the repository settings:
 
-1. Pages → Build and deployment → Source: **GitHub Actions**.
+1. Settings → Actions → General → Workflow permissions: **Read and write permissions**, so the
+   workflows may push to `gh-pages` and comment on pull requests.
 2. Settings → Secrets and variables → Actions → **Variables**: add the operator details under
    the same names as in `.env`: `LEGAL_NAME`, `LEGAL_STREET`, `LEGAL_POSTAL_CODE`, `LEGAL_CITY`,
    `LEGAL_COUNTRY`, `LEGAL_EMAIL`, `LEGAL_HOSTING_PROVIDER`. They are variables, not secrets: the
    Impressum shows them publicly anyway. While any of them is missing, the site shows the
    placeholders and the workflow run carries a warning naming the unset ones.
+3. After the first green run of `pages.yml` has created the `gh-pages` branch: Settings → Pages →
+   Build and deployment → Source: **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`.
+   With a custom domain, check that the domain field still shows it (the `CNAME` file on the
+   branch sets it) and that **Enforce HTTPS** is on. Until this switch, Pages keeps serving the
+   last deployment of the old "GitHub Actions" source, so the site stays up.
 
 After the first green run, the URL appears on the workflow run and under Settings → Pages,
 normally `https://<owner>.github.io/<repo>/`. The build uses relative URLs and hash routes, so
@@ -99,3 +106,16 @@ Optional variables:
 What Pages does not do compared with the container: it caches pages for up to 10 minutes, sets
 its own response headers (no custom security or cache headers), and offers no access logs. For
 leberkas.org as a container, those requirements stay with the Docker image.
+
+### Pull request previews
+
+`.github/workflows/pr-preview.yml` builds every pull request from a branch of this repository
+(opened, reopened, new commits) with the same check, tests and build, and publishes it to
+`<site>/preview/pr-<N>/`. One comment in the pull request links the preview and is updated on
+every run; closing or merging the pull request removes the preview. Pull requests from forks get
+no preview.
+
+Previews carry the same `legal.json` as the live site, always have the developer page on (`#dev`),
+and never a `CNAME`. A preview keeps its save, language and theme under storage keys of its own
+(`pr-<N>:vegle.*`), so it never reads or overwrites the live game's save or another preview's;
+every other URL (live site, container, dev server) keeps the plain `vegle.*` keys.

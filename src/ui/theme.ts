@@ -1,5 +1,5 @@
-// The boot script in index.html repeats the storage key and the resolve rule below, so the first
-// frame already has the right theme. Keep the two in step.
+// The boot script in index.html repeats the storage key, the preview prefix (src/save/storage-scope.ts)
+// and the resolve rule below, so the first frame already has the right theme. Keep them in step.
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
 export type Theme = 'light' | 'dark'

@@ -7,9 +7,11 @@
     <title>Wurst Case</title>
     <script>
       // Sets the theme before the first paint, so a reload never flashes the other theme.
-      // Same storage key and resolve rule as src/ui/theme.ts; keep the two in step.
+      // Same storage key and resolve rule as src/ui/theme.ts, and the same preview prefix as
+      // src/save/storage-scope.ts; keep them in step.
       try {
-        var choice = localStorage.getItem('vegle.theme')
+        var preview = /\/preview\/pr-(\d+)\//.exec(location.pathname)
+        var choice = localStorage.getItem((preview ? 'pr-' + preview[1] + ':' : '') + 'vegle.theme')
         var dark = choice === 'dark' || (choice !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
       } catch (error) {

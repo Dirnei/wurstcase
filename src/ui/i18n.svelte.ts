@@ -1,8 +1,10 @@
 import { detectLanguage } from '../i18n/detect'
 import type { Lang } from '../i18n/lang'
 import { translate, type TranslationKey, type TranslationParams } from '../i18n/translate'
+import { STORAGE_PREFIX } from '../save/storage-scope'
 
-const STORAGE_KEY = 'vegle.language'
+// A pull request preview keeps its own language choice.
+const STORAGE_KEY = STORAGE_PREFIX + 'vegle.language'
 
 let current = $state<Lang>(detectLanguage(readStoredLanguage(), navigator.languages))
 applyToDocument()

@@ -1,0 +1,79 @@
+# Publishes a playable build of every pull request to the gh-pages branch under
+# preview/pr-<N>/ and links it in one sticky PR comment; closing or merging the pull request
+# removes the preview. Check, tests and build run first; a red step publishes nothing and the
+# previous preview stays online. Previews get the same legal.json as the live site, the developer
+# page switched on, and never a CNAME (see README, "GitHub Pages").
+name: Pull request preview
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+# Pushing the preview to gh-pages and posting the comment.
+permissions:
+  contents: write
+  pull-requests: write
+
+# A newer push to the same pull request replaces a running or queued preview build.
+concurrency:
+  group: pr-preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    # Fork pull requests get no preview: their token cannot write to this repository.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        if: github.event.action != 'closed'
+        uses: actions/setup-node@v4
+        with:
+          # Same Node major as the Dockerfile's build stage.
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        if: github.event.action != 'closed'
+        run: npm ci
+
+      - name: Type check
+        if: github.event.action != 'closed'
+        run: npm run check
+
+      - name: Test
+        if: github.event.action != 'closed'
+        run: npm test
+
+      - name: Build
+        if: github.event.action != 'closed'
+        run: npm run build
+
+      # Same script and variables as the live deployment, but the developer page is always on
+      # and PAGES_CNAME stays empty, so a preview never claims the domain.
+      - name: Write runtime files
+        if: github.event.action != 'closed'
+        shell: bash
+        env:
+          LEGAL_NAME: ${{ vars.LEGAL_NAME }}
+          LEGAL_STREET: ${{ vars.LEGAL_STREET }}
+          LEGAL_POSTAL_CODE: ${{ vars.LEGAL_POSTAL_CODE }}
+          LEGAL_CITY: ${{ vars.LEGAL_CITY }}
+          LEGAL_COUNTRY: ${{ vars.LEGAL_COUNTRY }}
+          LEGAL_EMAIL: ${{ vars.LEGAL_EMAIL }}
+          LEGAL_HOSTING_PROVIDER: ${{ vars.LEGAL_HOSTING_PROVIDER }}
+          DEV_TOOLS: 'true'
+          PAGES_CNAME: ''
+        run: bash .github/scripts/write-runtime-files.sh
+
+      # Deploys on open and new commits, removes on close; keeps one sticky comment with the link.
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: dist
+          umbrella-dir: preview
+          action: auto
+          pages-base-url: ${{ vars.PAGES_CNAME || format('{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}

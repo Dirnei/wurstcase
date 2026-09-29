@@ -2,10 +2,11 @@ import { encodeSave, exportSave } from '../game/save'
 import { createInitialState, type GameState } from '../game/state'
 import { tick } from '../game/tick'
 import { createSaveSlots, type LoadResult } from '../save/slots'
+import { scopedStorage, STORAGE_PREFIX } from '../save/storage-scope'
 
 export type SaveNotice = 'restored-backup' | 'unreadable' | 'too-new' | 'cannot-save'
 
-const slots = createSaveSlots(() => localStorage)
+const slots = createSaveSlots(() => scopedStorage(localStorage, STORAGE_PREFIX))
 const loaded = slots.load()
 
 // The state stays a plain object outside Svelte's reactivity; this counter tells the UI it changed.
