@@ -83,22 +83,25 @@ less than turning it into the next stage and selling that to the biogas plant.
 - **THEN** the biogas plant offers to buy it for less than a customer pays, and MegaMeat does not
 
 ### Requirement: Selling in bulk
-The player SHALL be able to sell a resource to a buyer with one click, choosing one of three
-shares of the current stock: 10%, 50% or 100%. A sale SHALL take as many whole lots as fit in the
-chosen share of the stock (share × stock, rounded down to whole units and then to whole lots),
-leave the remainder in stock, and add what the sale pays (for MegaMeat, at the flooded market) to
-both the money and the total money earned. Each of the three buttons SHALL show how many units its
-sale takes and what it pays. A share SHALL be unavailable while it is smaller than one lot. The
-shares SHALL be content data.
+The player SHALL be able to sell a resource to a buyer with one click. One share choice for the
+whole bulk buyers panel SHALL decide how much of the current stock a sale takes: 10%, 50% or
+100%. It SHALL start at 100% each time the game is loaded, SHALL stay while the player switches
+tabs, and SHALL NOT be saved. A sale SHALL take as many whole lots as fit in the chosen share of
+the stock (share × stock, rounded down to whole units and then to whole lots), leave the remainder
+in stock, and add what the sale pays (for MegaMeat, at the flooded market) to both the money and
+the total money earned. For every resource a buyer takes there SHALL be one sell button, and it
+SHALL show how many units its sale at the chosen share takes and what it pays. A button SHALL be
+unavailable while the chosen share of the stock is smaller than one lot. The shares SHALL be
+content data.
 
 #### Scenario: Whole lots only
-- **WHEN** MegaMeat's soybean market is fresh at a full price of €3.15, the player has 47 soybeans
-  and sells 100% to MegaMeat
+- **WHEN** MegaMeat's soybean market is fresh at a full price of €3.15, the player has 47 soybeans,
+  chooses 100% and sells soybeans to MegaMeat
 - **THEN** 40 soybeans are sold, 7 remain, and money and total money earned grow by €121
 
 #### Scenario: Less than one lot
 - **WHEN** the player has 19 soybeans and MegaMeat's lot is 20
-- **THEN** all three soybean buttons at MegaMeat are unavailable and nothing changes
+- **THEN** MegaMeat's soybean button is unavailable at every share and nothing changes
 
 #### Scenario: Counts towards unlocks
 - **WHEN** total money earned is €29,950 and the player sells 20 soybeans to MegaMeat for €61
@@ -106,22 +109,31 @@ shares SHALL be content data.
 
 #### Scenario: Half the stock
 - **WHEN** MegaMeat's soybean market is fresh at a full price of €3.15, the player has 130
-  soybeans and sells 50%
+  soybeans, chooses 50% and sells soybeans to MegaMeat
 - **THEN** 60 soybeans are sold (65 rounded down to whole lots), 70 remain, and money grows by €178
 
 #### Scenario: A tenth
-- **WHEN** the player has 500 soybeans and sells 10% to MegaMeat in lots of 20
+- **WHEN** the player has 500 soybeans, chooses 10% and sells soybeans to MegaMeat in lots of 20
 - **THEN** 40 soybeans are sold and 460 remain
 
 #### Scenario: Share smaller than a lot
 - **WHEN** the player has 150 soybeans and MegaMeat's lot is 20
-- **THEN** the 10% button is unavailable (15 is less than one lot), and 50% and 100% sell 60 and 140
+- **THEN** at 10% MegaMeat's soybean button is unavailable (15 is less than one lot), and at 50%
+  and 100% it sells 60 and 140
 
 #### Scenario: Buttons show their sale
 - **WHEN** the player has 500 soybeans and MegaMeat's soybean market is fresh at a full price of
   €3.15
-- **THEN** the buttons read 10% with 40 for €121, 50% with 240 for €617, and 100% with 500 for
-  €1,091, each paid along the flooded market as if it were the only sale
+- **THEN** MegaMeat's soybean button reads 40 for €121 at 10%, 240 for €617 at 50%, and 500 for
+  €1,091 at 100%, each paid along the flooded market as if it were the only sale
+
+#### Scenario: Share starts at 100%
+- **WHEN** the player chose 10%, then reloads the page
+- **THEN** the share choice is 100%
+
+#### Scenario: Share stays across tabs
+- **WHEN** the player chooses 50%, opens the Produktion tab and returns to Verkauf
+- **THEN** the share choice is still 50%
 
 ### Requirement: Buyer flavour
 Each buyer SHALL be shown with its name and a short satirical line in the selected language.
@@ -152,16 +164,16 @@ Every sale to MegaMeat SHALL cost the player awareness and SHALL raise the MegaM
 awareness lost SHALL be 1 point per €10 the sale pays, rounded up, and awareness SHALL NOT drop
 below 0. A sale SHALL NOT take customers away: the customers the player has stay, and the price
 is paid in the customers campaigns win from then on (the MegaMeat scandal requirement). Sales to
-the biogas plant SHALL cost nothing. Before the sale, each of MegaMeat's three sell buttons SHALL
-show what its own sale would cost in awareness and how many percent less campaigns would win and
-customers would order right after it (one figure: the scandal factor's loss, rounded up to a
-whole percent). The euros per awareness point SHALL be content data.
+the biogas plant SHALL cost nothing. Before the sale, each of MegaMeat's sell buttons SHALL show
+what its sale at the chosen share would cost in awareness and how many percent less campaigns
+would win and customers would order right after it (one figure: the scandal factor's loss,
+rounded up to a whole percent). The euros per awareness point SHALL be content data.
 
 #### Scenario: Feed sale
 - **WHEN** the player has 1,000 customers and 100 awareness, the scandal is 0, and sells 200
   soybeans to MegaMeat at a fresh market for €529
 - **THEN** money grows by €529, customers stay 1,000, awareness drops to 47, and the scandal is
-  €529 (campaigns win 5.02% fewer customers and customers order 5.02% less; the buttons round
+  €529 (campaigns win 5.02% fewer customers and customers order 5.02% less; the button rounds
   that up to 6%)
 
 #### Scenario: Small sale still costs
@@ -181,14 +193,14 @@ whole percent). The euros per awareness point SHALL be content data.
 - **THEN** customers, awareness and the scandal are unchanged
 
 #### Scenario: Cost shown before the sale
-- **WHEN** the scandal is 0 and a MegaMeat sale would pay €60
+- **WHEN** the scandal is 0 and a MegaMeat sale at the chosen share would pay €60
 - **THEN** its button shows that it costs 6 awareness and 1% of campaigns and orders
 
 #### Scenario: Cost per share
 - **WHEN** the player has 500 soybeans, the scandal is 0, and MegaMeat's soybean market is fresh
   at a full price of €3.15
-- **THEN** the 10% button (€121) shows a cost of 13 awareness and 2%, and the 100% button
-  (€1,091) 110 awareness and 10%
+- **THEN** MegaMeat's soybean button shows a cost of 13 awareness and 2% at 10% (€121), and 110
+  awareness and 10% at 100% (€1,091)
 
 ### Requirement: Customer income
 The game SHALL keep the customer income: the euros per second customers pay for the products they
