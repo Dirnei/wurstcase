@@ -109,7 +109,8 @@ you ── wish ──► product-owner ── writes change, validate --strict 
                                                                           │
                             head: "merge" ──► worker: ff-only merge into main,
                                               delete the proposal folder in main,
-                                              docker compose up -d --build web
+                                              docker compose up -d --build web,
+                                              park worktree on main, branch -d
                                                                           │
                                         head updates QUEUE.md, names dependent changes
                                         to the product-owner, flags playtest items to you
@@ -131,6 +132,17 @@ you ── wish ──► product-owner ── writes change, validate --strict 
   and those get refreshed before release.
 - `C:\games\vegle` stays clean: only committed work, untracked proposals and `QUEUE.md`.
   Nobody edits files there except the product-owner's proposals.
+- Cleanup is part of the merge. The worker that merges also cleans up right after:
+  `git -C <its worktree> switch --detach main`, then
+  `git -C C:/games/vegle branch -d <its branch>`. Use `-d`, never `-D`: git refuses to
+  delete an unmerged branch, and that refusal is a signal to report, not to force.
+  The three worktrees stay and are reused. They are parked detached on main between
+  changes, and a new change starts with `git switch -c impl/<change> main` (or `ui/…`).
+  The validator's worktree is always detached, so it has no branches.
+- The head checks after each merge: `git branch` shows only `main` (plus branches of
+  changes in progress), and `git worktree list` shows exactly the four folders.
+  Worktrees are only removed (`git worktree remove`) if one is abandoned or broken, and
+  only on the head's say.
 - Commit messages: one subject line, max 74 characters, no body, no attribution.
 - Stop the Vite dev server before `openspec archive` (EPERM on Windows).
 - Hard balance gates: crossover (sets 1 and 24), tempted checks, fed check
@@ -144,6 +156,7 @@ you ── wish ──► product-owner ── writes change, validate --strict 
 |---|---|
 | `git -C C:/games/vegle status --short` | only untracked proposal folders, if any |
 | `git worktree list` | vegle, vegle-impl, vegle-ui, vegle-validator |
+| `git branch` | `main`, plus branches of changes in progress |
 | http://localhost:8234 | game loads |
 | `QUEUE.md` | matches what the head reports |
 | stray Vite servers | none; a leftover `node` holding a port blocks archiving |
