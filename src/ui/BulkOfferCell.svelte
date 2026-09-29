@@ -53,32 +53,51 @@
     })
   }
 
+  // A market at 100 % shows nothing in its slot; the slot keeps its width.
+  const level = $derived(offer.market ? Math.floor(offer.market.level * 100) : 100)
+
   const marketText = $derived(
-    offer.market
-      ? t('bulk.market', { percent: Math.floor(offer.market.level * 100) }) +
+    offer.market && level < 100
+      ? t('bulk.market', { percent: level }) +
           (offer.market.recover > 0
             ? `, ${t('bulk.recover', { percent: percent(recovered), time: clock(offer.market.recover) })}`
             : '')
       : '',
   )
+
+  const showCost = $derived(offer.sellable && (offer.cost.awareness > 0 || offer.cost.scandalLoss > 0))
 </script>
 
-<div class="offer" class:best={offer.paysMore}>
+{#snippet cost()}
+  {#if showCost}
+    <span class="pair">−{amount(offer.cost.awareness)}<ArtSlot kind="stat" id="awareness" size="sm" /></span>
+    <!-- How many percent less customers would order and campaigns would win after this sale. -->
+    <span class="pair" title={t('bulk.scandalLoss', { percent: offer.cost.scandalLoss })}
+      >−{offer.cost.scandalLoss} %<ArtSlot kind="misc" id="megaMeatMark" size="sm" /></span
+    >
+  {/if}
+{/snippet}
+
+<!--
+  Fixed tracks: price · flood slot · button · cost (MegaMeat only). Wide screens put them on one
+  line; narrower ones put price and flood slot above the button. Nothing but digits changes when
+  values tick, a market floods or recovers, or a sale becomes available.
+-->
+<div class="offer" class:best={offer.paysMore} class:feeds>
   <p class="price">
-    <span>{t('bulk.perUnit', { price: unitEuros(offer.perUnit) })}</span>
+    <span class="unit">{unitEuros(offer.perUnit)}</span><span class="per">{t('bulk.perUnit', { price: '' })}</span>
     <!-- Reserved, so a mark moving between buyers never re-wraps the line. -->
     <span class="mark" aria-hidden="true">{offer.paysMore ? '▲' : ''}</span>
     {#if offer.paysMore}<span class="visually-hidden">{t('bulk.paysMore')}</span>{/if}
   </p>
-  {#if offer.market}
-    <!-- Fixed tracks, so the recovering market only changes digits and the meter's fill. -->
-    <small class="market" title={marketText}>
+  <small class="market" title={marketText || undefined}>
+    {#if offer.market && level < 100}
       <span class="visually-hidden">{marketText}</span>
-      <span class="level" aria-hidden="true">{Math.floor(offer.market.level * 100)} %</span>
+      <span class="level" aria-hidden="true">{level} %</span>
       <span class="meter" aria-hidden="true"><span style:width="{offer.market.level * 100}%"></span></span>
       <span class="recover" aria-hidden="true">{offer.market.recover > 0 ? clock(offer.market.recover) : ''}</span>
-    </small>
-  {/if}
+    {/if}
+  </small>
   <button
     type="button"
     class="game-button sell"
@@ -94,34 +113,56 @@
       : t('bulk.sellShareNone', { percent: percent(share), resource: t(`resource.${resource}`) })}
     onclick={onsell}
   >
-    <!-- Units and price on lines of their own, so a growing value never re-wraps; a dash keeps the size. -->
+    <!-- A dash keeps the size while the share is less than a lot. -->
     <span class="units">{offer.sellable ? `${liveCount(offer.units)} →` : '–'}</span>
     <span class="value">{offer.sellable ? liveEuros(offer.value) : ''}</span>
     {#if feeds}
-      <!-- Reserved whether or not the sale costs anything. -->
-      <span class="cost">
-        {#if offer.sellable && (offer.cost.awareness > 0 || offer.cost.scandalLoss > 0)}
-          <span class="pair">−{amount(offer.cost.awareness)}<ArtSlot kind="stat" id="awareness" size="sm" /></span>
-          <!-- How many percent less customers would order and campaigns would win after this sale. -->
-          <span class="pair" title={t('bulk.scandalLoss', { percent: offer.cost.scandalLoss })}
-            >−{offer.cost.scandalLoss} %<ArtSlot kind="misc" id="megaMeatMark" size="sm" /></span
-          >
-        {/if}
-      </span>
+      <!-- Phones: the cost is the button's last line, reserved whether or not the sale costs anything. -->
+      <span class="cost inside" aria-hidden="true">{@render cost()}</span>
     {/if}
   </button>
+  {#if feeds}
+    <!-- Wider screens: the cost beside the button; the button's label already says it. -->
+    <span class="cost beside" aria-hidden="true">{@render cost()}</span>
+  {/if}
 </div>
 
 <style>
+  /* Track widths in ch of this font, sized for the longest figures (German thousands, 4-digit costs). */
   .offer {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    height: 100%;
-    padding: 5px;
+    --price-w: calc(7.5ch + 1.1em);
+    --flood-w: calc(9ch + 24px);
+    --cost-w: calc(9.5ch + 30px);
+    display: grid;
+    grid-template-columns: var(--price-w) var(--flood-w) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 6px;
+    min-width: 0;
+    padding: 2px 4px;
     border: 1.4px solid transparent;
     border-radius: var(--radius-sm);
+    font-size: 0.8rem;
     font-variant-numeric: tabular-nums;
+  }
+
+  .offer.feeds {
+    grid-template-columns: var(--price-w) var(--flood-w) minmax(0, 1fr) var(--cost-w);
+  }
+
+  .price {
+    grid-column: 1;
+  }
+
+  .market {
+    grid-column: 2;
+  }
+
+  .sell {
+    grid-column: 3;
+  }
+
+  .beside {
+    grid-column: 4;
   }
 
   /* The buyer that pays more per unit: a tint and a solid border, plus the ▲ mark, never colour alone. */
@@ -132,27 +173,36 @@
 
   .price {
     display: flex;
-    justify-content: space-between;
-    gap: 4px;
+    align-items: baseline;
     margin: 0;
-    font-size: 0.8rem;
     white-space: nowrap;
   }
 
   .mark {
-    width: 1.2em;
+    width: 1.1em;
+    margin-left: auto;
     color: var(--leaf-text);
     text-align: right;
   }
 
+  /* Wide screens: the header says "per unit" once per column, so the price stays short. */
+  .per {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   .market {
     display: grid;
-    grid-template-columns: 5.5ch minmax(8px, 1fr) 5ch;
-    white-space: nowrap;
+    grid-template-columns: 4.5ch minmax(8px, 1fr) 4.5ch;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
   }
 
   .meter {
@@ -173,53 +223,122 @@
     text-align: right;
   }
 
+  /* Units and price on one line; the track's width, not the digits, sets the button's size. */
   .sell {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.4ch;
     min-width: 0;
-    min-height: 44px;
-    margin-top: auto;
-    padding: 4px;
-    line-height: 1.25;
-  }
-
-  .units,
-  .value {
-    min-height: 1.25em;
-    font-size: 0.8rem;
+    min-height: 30px;
+    padding: 2px 4px;
+    font-size: 0.78rem;
+    line-height: 1.2;
     white-space: nowrap;
   }
 
-  /* Pairs of amount and icon wrap as a whole; phones reserve a second line, so the button never grows. */
   .cost {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: center;
+    align-items: center;
     gap: 0 4px;
-    min-height: 18px;
     color: var(--danger);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .inside {
+    display: none;
   }
 
   .pair {
     display: inline-flex;
     align-items: center;
     gap: 1px;
-    white-space: nowrap;
   }
 
   .pair :global(.slot) {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
   }
 
+  /*
+   * Below 1280 px the one-line tracks no longer fit beside the stock rail (German thousands need
+   * about 880 px): price and flood slot go on a small line above the button, cost beside it.
+   */
+  @media (max-width: 1279px) {
+    .offer {
+      row-gap: 1px;
+      padding: 1px 4px;
+    }
+
+    .price,
+    .market {
+      grid-row: 1;
+      font-size: 0.7rem;
+      line-height: 1.15;
+    }
+
+    .sell {
+      grid-row: 2;
+      grid-column: 1 / 4;
+      min-height: 28px;
+      padding: 1px 4px;
+    }
+
+    .beside {
+      grid-row: 2;
+    }
+  }
+
+  /* Below 1024 px the cells have room to say "per unit" themselves. */
+  @media (max-width: 1023px) {
+    .offer {
+      --price-w: calc(12ch + 1.1em);
+    }
+
+    .per {
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip: auto;
+    }
+  }
+
+  /* Phones: the button carries units, price and cost on lines of their own. */
   @media (max-width: 767px) {
-    .cost {
-      min-height: 36px;
+    .offer,
+    .offer.feeds {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .market {
+      grid-template-columns: 4.5ch minmax(6px, 1fr) 4ch;
+    }
+
+    .sell {
+      grid-column: 1 / -1;
+      flex-direction: column;
+      gap: 0;
+      min-height: 44px;
+      line-height: 1.1;
+    }
+
+    .per,
+    .beside {
+      display: none;
+    }
+
+    .inside {
+      display: flex;
+      justify-content: center;
+      min-height: 1.1em;
+    }
+
+    .inside .pair :global(.slot) {
+      width: 11px;
+      height: 11px;
     }
   }
 </style>

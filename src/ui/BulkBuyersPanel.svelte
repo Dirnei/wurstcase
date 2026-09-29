@@ -87,6 +87,16 @@
     act((state) => bulkSell(state, buyer, resource, share))
   }
 
+  // Wide screens: the resource, then one column per buyer; MegaMeat's also holds the cost track.
+  const columns = [
+    'minmax(0, 0.5fr)',
+    ...BUYERS.map((buyer) => (buyer.feedCost !== undefined ? 'minmax(0, 1.35fr)' : 'minmax(0, 1fr)')),
+  ].join(' ')
+
+  // The sticky bar's height, so rows snap (and scroll into view) just below it; the bar sticks
+  // 8 px above the tab's top edge, so that is its height minus 8 px, plus a 2 px gap.
+  let barHeight = $state(0)
+
   const isProduct = (resource: ResourceId) => PRODUCTS.includes(resource as (typeof PRODUCTS)[number])
 
   const percent = (value: number) => Math.round(value * 100)
@@ -109,8 +119,9 @@
 <section class="panel">
   <h2>{t('bulk.title')}</h2>
   <p class="muted">{t('bulk.hint')}</p>
-  <ScandalLine />
-  <div class="shares">
+  <!-- Phones: the scandal line above the bar, so the sticky bar stays one line tall. -->
+  <div class="scandal-narrow"><ScandalLine /></div>
+  <div class="shares" bind:clientHeight={barHeight}>
     <span class="shares-label" id="bulk-share-label">{t('bulk.shareChoice')}</span>
     <div class="segments" role="radiogroup" aria-labelledby="bulk-share-label" tabindex="-1" onkeydown={onShareKey}>
       {#each BULK_SHARES as option (option)}
@@ -126,16 +137,19 @@
         </button>
       {/each}
     </div>
+    <!-- Wider screens: the scandal line beside the share choice, in its reserved slot. -->
+    <div class="scandal-wide"><ScandalLine /></div>
   </div>
-  <div class="table" style:--buyers={BUYERS.length}>
+  <div class="table" style:--buyers={BUYERS.length} style:--columns={columns} style:--bar-height="{Math.max(0, barHeight - 6)}px">
     <div class="row header">
       <div class="corner"></div>
       {#each BUYERS as buyer (buyer.id)}
         <div class="who">
           <ArtSlot kind="buyer" id={buyer.id} size="md" />
-          <div>
+          <div class="who-text">
             <h3>{t(`bulk.${buyer.id}.name`)}</h3>
-            <p class="line">{t(`bulk.${buyer.id}.line`)}</p>
+            <p class="line" title={t(`bulk.${buyer.id}.line`)}>{t(`bulk.${buyer.id}.line`)}</p>
+            <p class="caption">{t('bulk.perUnitCaption')}</p>
           </div>
         </div>
       {/each}
@@ -187,22 +201,36 @@
     font-size: 0.875rem;
   }
 
-  /* Stays in view while the rows scroll past, in the tab's scroll area or on the phone's page. */
+  /*
+   * Stays in view while the rows scroll past, on an opaque bar. top: -8px undoes the tab's top
+   * padding (8px, App.svelte), so no row or chain label shows in the strip above the bar.
+   */
   .shares {
     position: sticky;
-    top: 0;
-    z-index: 1;
+    top: -8px;
+    z-index: 2;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 4px 10px;
-    padding: 6px 0;
+    padding: 14px 0 6px;
+    margin-top: -8px;
     background: var(--paper);
+    box-shadow: 0 1px 0 var(--line);
   }
 
   .shares-label {
     font-size: 0.875rem;
     font-weight: 600;
+  }
+
+  .scandal-wide {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
+
+  .scandal-narrow {
+    display: none;
   }
 
   .segments {
@@ -247,26 +275,46 @@
   /* One grid for the whole table: the resource, then one column per buyer; rows are subgrids. */
   .table {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(var(--buyers), minmax(0, 1.2fr));
-    gap: 4px 8px;
+    grid-template-columns: var(--columns);
+    column-gap: 8px;
   }
 
   .row {
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
-    row-gap: 4px;
+    align-items: center;
+    padding: 2px 0;
+  }
+
+  /*
+   * Rows and chain labels snap to just below the sticky bar when a scroll ends near them (the tab
+   * snaps with proximity, App.svelte), and keyboard focus scrolls them there too, so the bar
+   * never ends up covering part of the row below it.
+   */
+  .row:not(.header),
+  .chain {
+    scroll-snap-align: start;
+    scroll-margin-top: var(--bar-height);
   }
 
   .row:not(.header) {
-    padding-top: 4px;
     border-top: 1px solid var(--paper-2);
+  }
+
+  .header {
+    align-items: end;
+    padding-bottom: 4px;
   }
 
   .who {
     display: flex;
     gap: 8px;
-    align-items: flex-start;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .who-text {
     min-width: 0;
   }
 
@@ -276,17 +324,29 @@
     font-weight: 600;
   }
 
+  /* One line; the full line is the tooltip. */
   .line {
+    overflow: hidden;
+    color: var(--text-muted);
     font-size: 0.8rem;
     font-style: italic;
-    color: var(--text-muted);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .caption {
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   /* Chain labels, styled like the rail's stock groups, across every column. */
   .chain {
     grid-column: 1 / -1;
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 4px;
+    padding-top: 4px;
     border-top: 1px solid var(--line);
   }
 
@@ -301,17 +361,18 @@
   }
 
   .chain + .row {
-    padding-top: 0;
     border-top: none;
   }
 
   .resource {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: 'art name' '. stock';
-    align-content: center;
+    grid-template-areas: 'art name' 'art stock';
+    align-items: center;
     column-gap: 6px;
     min-width: 0;
+    font-size: 0.9rem;
+    line-height: 1.2;
   }
 
   .resource :global(.slot) {
@@ -328,6 +389,7 @@
   .stock {
     grid-area: stock;
     color: var(--text-muted);
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
@@ -338,27 +400,57 @@
     color: var(--text-muted);
   }
 
-  /* Phones: the resource line on top, the buyer cells side by side below. */
-  @media (max-width: 767px) {
+  /* Below 1280 px the cells have two small lines, so the rows lose their padding. */
+  @media (max-width: 1279px) {
+    .row {
+      padding: 0;
+    }
+  }
+
+  /* Below 1024 px: the resource line on top, the buyer cells side by side below. */
+  @media (max-width: 1023px) {
     .table {
       grid-template-columns: repeat(var(--buyers), minmax(0, 1fr));
     }
 
-    .corner {
+    .corner,
+    .caption {
       display: none;
+    }
+
+    .row {
+      row-gap: 1px;
+      align-items: stretch;
     }
 
     .resource {
       grid-column: 1 / -1;
       grid-template-columns: auto minmax(0, 1fr) auto;
       grid-template-areas: 'art name stock';
-      align-items: center;
+      font-size: 0.85rem;
+      line-height: 1.15;
+    }
+
+    .resource :global(.slot) {
+      width: 16px;
+      height: 16px;
     }
 
     /* Room for the stock to grow without squeezing the name. */
     .stock {
       min-width: 12ch;
       text-align: right;
+    }
+  }
+
+  /* Phones: the scandal line above the bar, which stays one line tall. */
+  @media (max-width: 767px) {
+    .scandal-narrow {
+      display: block;
+    }
+
+    .scandal-wide {
+      display: none;
     }
 
     .who :global(.slot) {

@@ -116,6 +116,7 @@
   "bulk.share": "{percent} %",
   "bulk.shareChoice": "Pro Klick verkaufen",
   "bulk.perUnit": "{price}/Stück",
+  "bulk.perUnitCaption": "Preise je Stück",
   "bulk.paysMore": "zahlt mehr",
   "bulk.stock": "Lager: {count}",
   "bulk.sellShare": "{percent} % {resource} an {buyer} verkaufen: {units} für {price}",

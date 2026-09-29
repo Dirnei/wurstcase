@@ -116,6 +116,7 @@
   "bulk.share": "{percent} %",
   "bulk.shareChoice": "Sell per click",
   "bulk.perUnit": "{price}/unit",
+  "bulk.perUnitCaption": "Prices per unit",
   "bulk.paysMore": "pays more",
   "bulk.stock": "Stock: {count}",
   "bulk.sellShare": "Sell {percent} % of {resource} to {buyer}: {units} for {price}",

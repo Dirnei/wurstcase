@@ -139,10 +139,18 @@
     min-height: 0;
   }
 
+  /*
+   * position: relative makes the scrolling area the containing block of absolutely positioned
+   * content inside it (such as .visually-hidden text), so that content scrolls and clips with
+   * the tab instead of stretching the page below the viewport.
+   */
   .tab-content {
+    position: relative;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    /* Only content that opts in (scroll-snap-align) snaps, and only when a scroll ends near it. */
+    scroll-snap-type: y proximity;
     display: flex;
     flex-direction: column;
     gap: 8px;

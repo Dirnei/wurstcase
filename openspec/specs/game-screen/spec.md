@@ -281,13 +281,14 @@ resize or re-wrap any other element on the tab:
   the amounts change.
 - The bulk buyers SHALL be shown as one table of resource rows with one column per buyer. Above
   the rows SHALL be the share choice (10%, 50%, 100%), with the current choice marked, and a
-  header that shows each buyer's illustration, name and line once, above its column.
+  header that shows each buyer's illustration, name and line once, above its column. The line
+  MAY be clamped to one line, with the full line as a tooltip.
 - Each row SHALL show the resource (icon, name and current stock) and, per buyer, one cell. A
   buyer that takes the resource SHALL show in its cell the current price per unit and one sell
   button for the chosen share with the units and price of that sale in digits of equal width. For
-  MegaMeat the cell SHALL also show the sale's cost in awareness and scandal, on a line that is
-  reserved whether or not the sale costs anything. For a flooded market the cell SHALL show the
-  market level line that the flooded market requires. An unavailable button SHALL keep its size
+  MegaMeat the cell SHALL also show the sale's cost in awareness and scandal, in a slot that is
+  reserved whether or not the sale costs anything. For a market that floods, the cell SHALL show
+  the flood slot that the Flooded market requirement asks for, on the same line as the price. An unavailable button SHALL keep its size
   and show a dash instead of the units and price. A buyer that does not take the resource SHALL
   show a dash in its cell; MegaMeat's dash for a finished product SHALL carry the note that it
   takes no vegan products, as text for assistive technology and as a tooltip.
@@ -298,9 +299,18 @@ resize or re-wrap any other element on the tab:
   SHALL list each chain's resources in production order: raw ingredient, intermediate, product. A
   resource SHALL have a row while it is shown in the game and at least one buyer takes it, whether
   or not there is stock to sell; a group SHALL be shown only while at least one of its rows is.
-- On a viewport narrower than 768 px, each row SHALL show the resource and stock on one line and
-  the buyer cells side by side below it, and the share choice SHALL stay visible while the player
-  scrolls through the rows.
+- On a viewport 1024 px or wider, each row SHALL be one line: the resource, then each buyer's
+  price, flood slot, sell button (units and price on one line) and, for MegaMeat, the cost slot
+  beside the button. A row SHALL be at most 48 px tall.
+- On a viewport narrower than 1024 px, each row SHALL show the resource and stock on one line and
+  the buyer cells side by side below it, each cell's price and flood slot on one line above its
+  button. MegaMeat's cost MAY move into its button as a second text line. A row SHALL be at most
+  64 px tall from 768 to 1023 px, and at most 100 px tall below 768 px.
+- While the player scrolls through the rows, the share choice SHALL stay visible on an opaque bar.
+  No row, chain separator or other content SHALL show above or through that bar, and it SHALL NOT
+  cover the row directly below it.
+- The Verkauf tab SHALL follow the Screen fits without page scrolling requirement however tall the
+  bulk rows are: only the tab's own content area scrolls, and the page does not.
 - Demand, income and the sold amounts SHALL use the fixed-decimal form of the number format. The
   stock and the units on the bulk sell buttons SHALL use the whole-count form, and prices the
   fixed-decimal form.
@@ -356,6 +366,33 @@ resize or re-wrap any other element on the tab:
 - **WHEN** the viewport is 375 px wide and the player opens the Verkauf tab
 - **THEN** the figure grid, the sold table, the share choice and both buyer cells of each row fit
   without horizontal scrolling, each button at least 44 px tall
+
+#### Scenario: One line per row on a laptop
+- **WHEN** the viewport is 1280 × 800 px, the soy, oat and wheat chains are unlocked, MegaMeat's
+  soybean market is flooded to 33 % and the player has stock of every good
+- **THEN** every resource row is at most 48 px tall, and the soybean row shows MegaMeat's price,
+  the 33 % meter with its recovery time, the sell button and the cost on that one line
+
+#### Scenario: Fresh market shows no meter
+- **WHEN** MegaMeat's tofu market is at 100 %
+- **THEN** MegaMeat's tofu cell shows no level, meter or time, and its button sits where it sits
+  when the market is flooded
+
+#### Scenario: No page scroll with all rows
+- **WHEN** the viewport is 1280 × 720 px, the soy, oat and wheat chains are unlocked and the player
+  opens the Verkauf tab
+- **THEN** the page has no vertical scrollbar and can't be scrolled, and only the tab's content
+  area scrolls to reach the wheat rows
+
+#### Scenario: Compact phone rows
+- **WHEN** the viewport is 375 px wide and the soy, oat and wheat chains are unlocked
+- **THEN** every resource row is at most 100 px tall, and each sell button is at least 44 px tall
+
+#### Scenario: Share choice doesn't cover rows
+- **WHEN** the viewport is 1280 × 800 px and the player scrolls the Verkauf tab halfway down the
+  bulk rows
+- **THEN** the share choice is visible on an opaque bar, no chain separator or row shows above it,
+  and the row directly below it is fully visible
 
 #### Scenario: Share choice on a phone
 - **WHEN** the viewport is 375 px wide and the player scrolls down to the wheat rows

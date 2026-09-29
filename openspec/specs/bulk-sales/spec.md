@@ -240,10 +240,17 @@ SHALL fall the same whether time passes in one tick or many. Player actions othe
 that buyer SHALL NOT change it. K and H SHALL be content data, the same for both buyers; K =
 €1,575 and H = 20 s are the values the balancing page settled on.
 
-Each offer of a flooded market SHALL show the market's current level as a percentage of the full
-price, a meter of that level, and while it is below 95% the game time until it is back at 95%.
-These figures SHALL sit in slots that are reserved whether or not they show, in digits of equal
-width, so the recovering market never moves or resizes anything on the Verkauf tab.
+Each offer of a market that floods SHALL show, while the market is below 100%, the market's
+current level as a percentage of the full price, a meter of that level, and while it is below 95%
+the game time until it is back at 95%. These figures SHALL sit in one flood slot on the offer's
+line, which is reserved at the same width whether or not they show, in digits of equal width, so
+the market flooding or recovering never moves or resizes anything on the Verkauf tab. At 100% the
+slot SHALL stay empty.
+
+#### Scenario: Fresh market has an empty slot
+- **WHEN** MegaMeat's soybean market is at 100%
+- **THEN** its soybean offer shows no level, meter or time, and after the player sells soybeans
+  to MegaMeat, the level and meter appear in that slot without moving the offer's price or button
 
 #### Scenario: Fresh market
 - **WHEN** nothing has been sold to MegaMeat and the player sells 20 soybeans at a full price of
