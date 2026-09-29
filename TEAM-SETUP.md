@@ -2,9 +2,13 @@
 
 How the Claude session team works on this repo. After a reboot, follow section 1.
 
+All paths here are relative to the repo root (the folder that holds this file). The three
+worktrees sit next to it: `../vegle-impl`, `../vegle-ui` and `../vegle-validator`. Every
+session starts in the repo root, so these paths work as written.
+
 ## 1. Start after a reboot
 
-**Quick way:** run `powershell -ExecutionPolicy Bypass -File C:\games\vegle\start-team.ps1`.
+**Quick way:** run `powershell -ExecutionPolicy Bypass -File .\start-team.ps1` in the repo root.
 It starts Docker and the web container. Then it opens one Windows Terminal window with five
 tabs in a single `wt` call. Each tab starts `claude -n <name> --permission-mode auto` with a
 kickoff prompt that points to that session's section below. The starts are 8 s apart and the
@@ -17,11 +21,13 @@ manual way.
 **Manual way:**
 
 1. **Start Docker Desktop.** The web container restarts by itself (`restart: unless-stopped`).
-   If it's missing: `docker compose up -d --build web` in `C:\games\vegle`, then open
+   If it's missing: `docker compose up -d --build web` in the repo root, then open
    http://localhost:8234. Never `docker compose down`.
-2. **Open five terminals, all in `C:\games\vegle`.** All sessions have to start in this
+2. **Open five terminals, all in the repo root.** All sessions have to start in this
    folder, not in a worktree, because it's what makes them share one project memory
-   (`~/.claude/projects/C--games-vegle/memory`).
+   (`~/.claude/projects/<repo path, separators as dashes>/memory`, here
+   `C--games-vegle`). A checkout at another path starts with an empty memory folder;
+   copy the old one over.
 3. **In each terminal:** run `claude`, switch to **auto mode**, then `/rename <name>`,
    then paste that session's kickoff prompt from section 2.
    All five sessions need the same permission mode, otherwise messages between them
@@ -29,24 +35,25 @@ manual way.
 4. **Start the head last.** It reads `QUEUE.md`, checks that the others are up, and tells
    each of them what to do next.
 
-The worktrees `C:\games\vegle-impl`, `C:\games\vegle-ui` and `C:\games\vegle-validator` are
-plain folders on disk and survive a reboot. Nothing to recreate.
+The worktrees `../vegle-impl`, `../vegle-ui` and `../vegle-validator` are plain folders on
+disk and survive a reboot. Nothing to recreate. On a fresh checkout, create them with
+`git worktree add --detach ../vegle-impl main` (same for `vegle-ui` and `vegle-validator`).
 
 ## 2. Sessions and kickoff prompts
 
 | Name | Job | Works in |
 |---|---|---|
-| `product-owner` | Turns your wishes into OpenSpec changes; design questions with you | `C:\games\vegle\openspec\changes\` (untracked proposals only) |
+| `product-owner` | Turns your wishes into OpenSpec changes; design questions with you | `openspec/changes/` (untracked proposals only) |
 | `head-of-development` | Priority, routing, decisions, merge go; keeps `QUEUE.md` | reads only; talks to everyone |
-| `implementation-worker` | Logic and balance changes | `C:\games\vegle-impl` on `impl/<change>` |
-| `ui-worker` | UI-only and tooling changes | `C:\games\vegle-ui` on `ui/<change>` |
-| `validator` | Feasibility before a change starts; verification before merge | `C:\games\vegle-validator` (detached) |
+| `implementation-worker` | Logic and balance changes | `../vegle-impl` on `impl/<change>` |
+| `ui-worker` | UI-only and tooling changes | `../vegle-ui` on `ui/<change>` |
+| `validator` | Feasibility before a change starts; verification before merge | `../vegle-validator` (detached) |
 
 **product-owner**
 ```
 /rename product-owner
-You are the product-owner for Wurst Case (C:\games\vegle). Read MEMORY.md and
-multi-session-roles.md in the project memory, then C:\games\vegle\QUEUE.md. You write
+You are the product-owner for Wurst Case (the repo root). Read MEMORY.md and
+multi-session-roles.md in the project memory, then QUEUE.md in the repo root. You write
 OpenSpec changes and announce each one to head-of-development in its own message: name,
 summary, dependencies, urgency, UI-only or logic/balance. Balance changes name their
 knobs, ranges, fallbacks, stop conditions and hard gates. Never touch src/, never message
@@ -58,7 +65,7 @@ the workers directly. Wait for my wishes or the head's requests.
 /rename implementation-worker
 You are the implementation-worker for Wurst Case. Read MEMORY.md, multi-session-roles.md
 and impl-worker-worktree.md in the project memory. You apply logic/balance changes that
-head-of-development assigns, in C:\games\vegle-impl on impl/<change>. Report in the fixed
+head-of-development assigns, in ../vegle-impl on impl/<change>. Report in the fixed
 format and merge into main only on the head's "merge". Tell head-of-development you are
 up, and the state of your worktree (git status, branch).
 ```
@@ -68,7 +75,7 @@ up, and the state of your worktree (git status, branch).
 /rename ui-worker
 You are the ui-worker for Wurst Case. Read MEMORY.md, multi-session-roles.md and
 ui-worker-checklist.md in the project memory. You apply UI-only and tooling changes that
-head-of-development assigns, in C:\games\vegle-ui on ui/<change>. Browser check at
+head-of-development assigns, in ../vegle-ui on ui/<change>. Browser check at
 1280/900/375/320 in DE and EN. Merge only on the head's "merge". Tell
 head-of-development you are up, and the state of your worktree.
 ```
@@ -77,16 +84,16 @@ head-of-development you are up, and the state of your worktree.
 ```
 /rename validator
 You are the validator for Wurst Case. Read MEMORY.md, multi-session-roles.md and
-validator-worktree.md in the project memory. You never edit C:\games\vegle and never
+validator-worktree.md in the project memory. You never edit the repo root and never
 commit. You run feasibility sims on proposals and verify worker branches before merge,
-in C:\games\vegle-validator. Report verdict first. Tell head-of-development you are up.
+in ../vegle-validator. Report verdict first. Tell head-of-development you are up.
 ```
 
 **head-of-development** (start this one last)
 ```
 /rename head-of-development
 You are head-of-development for Wurst Case. Read MEMORY.md, multi-session-roles.md,
-queue-file.md and C:\games\vegle\TEAM-SETUP.md, then C:\games\vegle\QUEUE.md. Run
+queue-file.md and TEAM-SETUP.md, then QUEUE.md (both in the repo root). Run
 ListAgents, check that the four other sessions are up, check git status and
 git worktree list, then tell me the queue state and send each session its next step.
 ```
@@ -130,11 +137,11 @@ you ── wish ──► product-owner ── writes change, validate --strict 
   `openspec validate <change> --strict` must pass before hand-over.
 - When a change lands, the head tells the product-owner which queued changes depend on it,
   and those get refreshed before release.
-- `C:\games\vegle` stays clean: only committed work, untracked proposals and `QUEUE.md`.
+- The repo root stays clean: only committed work, untracked proposals and `QUEUE.md`.
   Nobody edits files there except the product-owner's proposals.
 - Cleanup is part of the merge. The worker that merges also cleans up right after:
   `git -C <its worktree> switch --detach main`, then
-  `git -C C:/games/vegle branch -d <its branch>`. Use `-d`, never `-D`: git refuses to
+  `git -C <repo root> branch -d <its branch>`. Use `-d`, never `-D`: git refuses to
   delete an unmerged branch, and that refusal is a signal to report, not to force.
   The three worktrees stay and are reused. They are parked detached on main between
   changes, and a new change starts with `git switch -c impl/<change> main` (or `ui/…`).
@@ -154,7 +161,7 @@ you ── wish ──► product-owner ── writes change, validate --strict 
 
 | Check | Expected |
 |---|---|
-| `git -C C:/games/vegle status --short` | only untracked proposal folders, if any |
+| `git status --short` (in the repo root) | only untracked proposal folders, if any |
 | `git worktree list` | vegle, vegle-impl, vegle-ui, vegle-validator |
 | `git branch` | `main`, plus branches of changes in progress |
 | http://localhost:8234 | game loads |

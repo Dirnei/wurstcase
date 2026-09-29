@@ -4,7 +4,7 @@
 # staggered so the sessions don't race each other on ~/.claude.json at startup, and the tab
 # stays open (-NoExit) so you can read any error. head-of-development starts last.
 #
-# Usage (PowerShell):  powershell -ExecutionPolicy Bypass -File C:\games\vegle\start-team.ps1
+# Usage (PowerShell):  powershell -ExecutionPolicy Bypass -File .\start-team.ps1   (from the repo root)
 # Options:             -SkipDocker   don't start Docker Desktop or the container
 #                      -Model opus   pass a model to every session (default: your default)
 #                      -DryRun       print the wt command instead of opening the window
@@ -19,18 +19,23 @@ param(
     [int]$Stagger = 8
 )
 
-$Repo = 'C:\games\vegle'
+$Repo = $PSScriptRoot  # the script sits in the repo root, wherever it is checked out
 $Self = $MyInvocation.MyCommand.Path
+# Full path, so wt never has to look powershell up on PATH (it fails with 0x80070002 if it can't).
+$PowerShellExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 
 # --- Tab mode: one session ---------------------------------------------------------------
 if ($Session) {
     $Host.UI.RawUI.WindowTitle = $Session
+    # wt can hand the tab a stripped PATH (no claude, git, node, docker), so rebuild it from the registry.
+    $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                [Environment]::GetEnvironmentVariable('Path', 'User')
     if ($Delay -gt 0) {
         Write-Host "$Session starts in $Delay s..."
         Start-Sleep -Seconds $Delay
     }
     Set-Location $Repo
-    $prompt = "You are the $Session session of the Wurst Case team. Read C:\games\vegle\TEAM-SETUP.md " +
+    $prompt = "You are the $Session session of the Wurst Case team. Read $Repo\TEAM-SETUP.md " +
               "and follow the kickoff for $Session in section 2. Your session name is already set."
     $claudeArgs = @('-n', $Session, '--permission-mode', 'auto')
     if ($Model) { $claudeArgs += @('--model', $Model) }
@@ -68,7 +73,7 @@ for ($i = 0; $i -lt $order.Count; $i++) {
     $wait = $i * $Stagger
     if ($name -eq 'head-of-development') { $wait += 2 * $Stagger }
     $extra = if ($Model) { " -Model $Model" } else { '' }
-    $tabs += "new-tab --title $name -d `"$Repo`" powershell -NoExit -ExecutionPolicy Bypass " +
+    $tabs += "new-tab --title $name -d `"$Repo`" `"$PowerShellExe`" -NoExit -ExecutionPolicy Bypass " +
              "-File `"$Self`" -Session $name -Delay $wait$extra"
 }
 $wtArgs = $tabs -join ' ; '
