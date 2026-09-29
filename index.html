@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./assets/logo-XDxN_gNs.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wurst Case</title>
+    <script>
+      // Sets the theme before the first paint, so a reload never flashes the other theme.
+      // Same storage key and resolve rule as src/ui/theme.ts, and the same preview prefix as
+      // src/save/storage-scope.ts; keep them in step.
+      try {
+        var preview = /\/preview\/pr-(\d+)\//.exec(location.pathname)
+        var choice = localStorage.getItem((preview ? 'pr-' + preview[1] + ':' : '') + 'vegle.theme')
+        var dark = choice === 'dark' || (choice !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      } catch (error) {
+        document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      }
+    </script>
+    <script type="module" crossorigin src="./assets/index-xKwt2Lem.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DhFXFkfQ.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

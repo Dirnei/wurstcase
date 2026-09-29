@@ -1,0 +1,9 @@
+{
+  "name": "Max Mustermann",
+  "street": "Musterstraße 1",
+  "postalCode": "12345",
+  "city": "Musterstadt",
+  "country": "Deutschland",
+  "email": "kontakt@example.com",
+  "hostingProvider": "Muster Hosting GmbH, Musterweg 2, 12345 Musterstadt"
+}
